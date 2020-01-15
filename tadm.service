@@ -1,0 +1,11 @@
+[Unit]
+Description=Testrun account management administration web API 
+After=network.target
+
+[Service]
+User=root 
+ExecStart=/home/hpk/.venv/bin/gunicorn -b localhost:3960 -w 1 tadm:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
