@@ -7,6 +7,6 @@ def test_help(cmd):
 
 
 def test_adduser(cmd):
-    cmd.run_ok(["add-email-account", "-h"], """
+    cmd.run_ok(["add", "-h"], """
         *add*e-mail*user*
     """)

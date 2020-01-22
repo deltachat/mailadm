@@ -52,7 +52,7 @@ class MailUser:
 
     def add_email_account(self, email, password=None):
         if not email.endswith(self.domain):
-            raise ValueError("email {!r} is not on domain {!r}")
+            raise ValueError("email {!r} is not on domain {!r}".format(email, self.domain))
         with self.modify_lines(self.path_virtual_mailboxes, pm=True) as lines:
             for line in lines:
                 if line.startswith(email):

@@ -20,34 +20,35 @@ import click
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("--basedir", type=click.Path(),
-              default=click.get_app_dir("testrun"),
-              envvar="TESTRUN_BASEDIR",
+              default=click.get_app_dir("tadm"),
               help="directory where testrun tool state is stored")
+@click.option("--domain", type=str, default="testrun.org", envvar="TADM_DOMAIN",
+              help="domain to be used")
 @click.version_option()
 @click.pass_context
-def tadm_main(context, basedir):
+def tadm_main(context, domain, basedir):
     """testrun management command line interface. """
     basedir = os.path.abspath(os.path.expanduser(basedir))
     if not os.path.exists(basedir):
         os.makedirs(basedir)
     context.basedir = basedir
+    context.domain = domain
 
 
-@click.command("add-email-account")
+@click.command()
 @click.argument("emailadr", type=str, required=True)
-@click.option("--domain", type=str, default="testrun.org",
-              help="domain to be used")
 @click.option("--password", type=str, default=None,
               help="if not specified, generate a random password")
 @click.option("-n", "--dryrun", type=str,
               help="don't change any files, only show what would be changed.")
 @click.pass_context
-def add_email_account(ctx, emailadr, password, domain, dryrun):
+def add(ctx, emailadr, password, dryrun):
     """add a e-mail user to postfix and dovecot configurations
     """
     if "@" not in emailadr:
         fail(ctx, "invalid email address: {}".format(msg))
 
+    domain = ctx.parent.domain
     mu = MailUser(domain=domain, dryrun=dryrun)
     mu.add_email_account(email=emailadr, password=password)
 
@@ -80,7 +81,7 @@ def serve(ctx, debug):
 
 
 
-tadm_main.add_command(add_email_account)
+tadm_main.add_command(add)
 #bot_main.add_command(info)
 tadm_main.add_command(serve)
 
