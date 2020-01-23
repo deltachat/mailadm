@@ -32,3 +32,37 @@ def test_add_user_dry(mailuser_maker, capfd):
     print(cap.out)
     assert cap.out.strip().endswith("123")
     assert os.path.exists(mu.path_virtual_mailboxes + ".db")
+
+def test_remove_user(mailuser_maker, capfd):
+    mu = mailuser_maker(domain="xyz.com")
+
+    email = "tmp_{}@xyz.com".format(random.randint(0, 1023123123123))
+    mu.add_email_account(email, password="123")
+    cap = capfd.readouterr()
+    print(cap.out)
+    assert cap.out.strip().endswith("123")
+    assert os.path.exists(mu.path_virtual_mailboxes + ".db")
+
+    email2 = "tmp_{}@xyz.com".format(random.randint(0, 1023123123123))
+    mu.add_email_account(email2, password="456")
+    cap = capfd.readouterr()
+    print(cap.out)
+    assert cap.out.strip().endswith("456")
+
+    email3 = "somebody@xyz.com"
+    mu.add_email_account(email3, password="789")
+    cap = capfd.readouterr()
+    print(cap.out)
+    assert cap.out.strip().endswith("789")
+
+    accounts = mu.find_email_accounts(prefix="tmp_")
+    assert len(accounts) == 2
+    assert accounts[0].startswith("tmp_")
+    assert accounts[1].startswith("tmp_")
+
+    mu.remove_accounts(accounts)
+    assert not mu.find_email_accounts(prefix="tmp_")
+    accounts = mu.find_email_accounts()
+    assert len(accounts) == 1
+    assert accounts[0].startswith("somebody@xyz.com")
+

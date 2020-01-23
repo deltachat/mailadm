@@ -50,6 +50,22 @@ class MailUser:
         self.log("writing", path)
         os.rename(tmp_path, path)
 
+    def find_email_accounts(self, prefix=None):
+        path = str(self.path_virtual_mailboxes)
+        return [line for line in open(path)
+                    if line.strip() and (prefix is None or line.startswith(prefix))]
+
+    def remove_accounts(self, account_lines):
+        to_remove = set(map(str.strip, account_lines))
+        with self.modify_lines(self.path_virtual_mailboxes, pm=True) as lines:
+            newlines = []
+            for line in lines:
+                if line.strip() in to_remove:
+                    self.log("remove", line)
+                    continue
+                newlines.append(line)
+            lines[:] = newlines
+
     def add_email_account(self, email, password=None):
         if not email.endswith(self.domain):
             raise ValueError("email {!r} is not on domain {!r}".format(email, self.domain))
