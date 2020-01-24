@@ -17,6 +17,7 @@ def create_app(config):
             mu = MailUser("testrun.org", dryrun=False,
                           path_dovecot_users=config["path_dovecot_users"],
                           path_virtual_mailboxes=config["path_virtual_mailboxes"],
+                          path_vmaildir=config["path_vmaildir"],
             )
             username = json_data.get("username")
             if not username:

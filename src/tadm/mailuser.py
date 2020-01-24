@@ -12,13 +12,17 @@ import contextlib
 
 
 class MailUser:
-    def __init__(self, domain, dryrun=False,
-                 path_virtual_mailboxes="/etc/postfix/virtual_mailboxes",
-                 path_dovecot_users="/etc/dovecot/users"):
+    def __init__(self, domain,
+                 path_virtual_mailboxes,  # "/etc/postfix/virtual_mailboxes",
+                 path_dovecot_users,  # "/etc/dovecot/users",
+                 path_vmaildir,  # "/home/vmail/",
+                 dryrun=False
+                ):
         self.domain = domain
         self.dryrun = dryrun
         self.path_virtual_mailboxes = path_virtual_mailboxes
         self.path_dovecot_users = path_dovecot_users
+        self.path_vmaildir = path_vmaildir
 
     def log(self, *args):
         print(*args)
@@ -29,6 +33,7 @@ class MailUser:
         self.log("reading", path)
         with open(path) as f:
             content = f.read().rstrip()
+
         lines = content.split("\n")
         old_lines = lines[:]
         yield lines
@@ -37,6 +42,7 @@ class MailUser:
             return
         content = "\n".join(lines)
         self.write_fn(path, content)
+
         if pm:
             self.postmap(path)
 
@@ -61,10 +67,31 @@ class MailUser:
             newlines = []
             for line in lines:
                 if line.strip() in to_remove:
-                    self.log("remove", line)
+                    self.log("remove virtual mailbox:", line)
                     continue
                 newlines.append(line)
             lines[:] = newlines
+
+        to_remove_emails = set(x.split()[0] for x in to_remove)
+
+        to_remove_vmail = []
+        with self.modify_lines(self.path_dovecot_users) as lines:
+            newlines = []
+            for line in lines:
+                email = line.split(":", 1)[0]
+                if email in to_remove_emails:
+                    self.log("removing dovecot-user:", email)
+                    to_remove_vmail.append(email)
+                    continue
+                newlines.append(line)
+
+            self.log(line)
+            lines.append(line)
+
+        for email in to_remove_vmail:
+            path = os.path.join(self.path_vmaildir, email)
+            if os.path.isdir(path):
+                print("removing vmail user:", path)
 
     def add_email_account(self, email, password=None):
         if not email.endswith(self.domain):
@@ -85,6 +112,11 @@ class MailUser:
             self.log("adding line to users")
             self.log(line)
             lines.append(line)
+
+        p = os.path.join(self.path_vmaildir, email)
+        if not os.path.exists(p):
+            os.mkdir(p)
+        self.log("vmaildir:", p)
         self.log("email:", email)
         self.log("password:", clear_password)
         self.log(email, clear_password)
