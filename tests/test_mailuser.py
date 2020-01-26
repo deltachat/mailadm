@@ -63,8 +63,11 @@ def test_remove_user(mailuser_maker, capfd):
     assert accounts[0].startswith("tmp_")
     assert accounts[1].startswith("tmp_")
 
-    mu.remove_accounts(accounts)
+    dirs = mu.remove_accounts(accounts)
     assert not mu.find_email_accounts(prefix="tmp_")
+    assert len(dirs) == 2
+    for email, path in dirs:
+        assert "vmail" in path
     accounts = mu.find_email_accounts()
     assert len(accounts) == 1
     assert accounts[0].startswith("somebody@xyz.com")

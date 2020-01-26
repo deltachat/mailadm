@@ -62,6 +62,8 @@ class MailUser:
                     if line.strip() and (prefix is None or line.startswith(prefix))]
 
     def remove_accounts(self, account_lines):
+        """ remove accounts and return directories which were used by
+        these accounts. """
         to_remove = set(map(str.strip, account_lines))
         with self.modify_lines(self.path_virtual_mailboxes, pm=True) as lines:
             newlines = []
@@ -88,10 +90,12 @@ class MailUser:
             self.log(line)
             lines.append(line)
 
+        to_remove_dirs = []
         for email in to_remove_vmail:
             path = os.path.join(self.path_vmaildir, email)
             if os.path.isdir(path):
-                print("removing vmail user:", path)
+                to_remove_dirs.append((email, path))
+        return to_remove_dirs
 
     def add_email_account(self, email, password=None):
         if not email.endswith(self.domain):
