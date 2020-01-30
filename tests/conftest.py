@@ -1,6 +1,7 @@
 
 import pytest
 from _pytest.pytester import LineMatcher
+from textwrap import dedent
 
 
 class ClickRunner:
@@ -59,7 +60,26 @@ def cmd():
 
 
 @pytest.fixture
-def mycmd(cmd, tmpdir, request):
-    cmd.set_basedir(tmpdir.mkdir("tadmdir").strpath)
-    return cmd
+def make_ini(tmpdir):
+    made = []
+    def make(source):
+        p = tmpdir.join("tadm-{}.ini".format(len(made)))
+        p.write(dedent(source))
+        made.append(p)
+        return p.strpath
+    return make
 
+@pytest.fixture
+def make_ini_from_values(make_ini):
+    def make_ini_from_values(**kw):
+        return make_ini("""
+            [token:{name}]
+            token = {token}
+            path_virtual_mailboxes = {path_virtual_mailboxes}
+            path_dovecot_users = {path_dovecot_users}
+            path_vmaildir = {path_vmaildir}
+            webdomain = {webdomain}
+            domain = {domain}
+            prefix = tmp_
+        """.format(**kw))
+    return make_ini_from_values

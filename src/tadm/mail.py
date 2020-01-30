@@ -11,11 +11,11 @@ import subprocess
 import contextlib
 
 
-class MailUser:
+class MailController:
     def __init__(self, domain,
                  path_virtual_mailboxes,  # "/etc/postfix/virtual_mailboxes",
-                 path_dovecot_users,  # "/etc/dovecot/users",
-                 path_vmaildir,  # "/home/vmail/",
+                 path_dovecot_users,      # "/etc/dovecot/users",
+                 path_vmaildir,           # "/home/vmail/",
                  dryrun=False
                 ):
         self.domain = domain

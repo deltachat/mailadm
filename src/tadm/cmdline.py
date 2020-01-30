@@ -13,26 +13,36 @@ import sys
 import subprocess
 import contextlib
 
-from .mailuser import MailUser
+import iniconfig
+
+from .mail import MailController
+from .config import Config
 
 import click
 
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
-@click.option("--basedir", type=click.Path(),
-              default=click.get_app_dir("tadm"),
-              help="directory where testrun tool state is stored")
-@click.option("--domain", type=str, default="testrun.org", envvar="TADM_DOMAIN",
-              help="domain to be used")
+@click.option("--config", type=click.Path(), envvar="TADM_CONFIG",
+              help="config file for tadm")
 @click.version_option()
 @click.pass_context
-def tadm_main(context, domain, basedir):
+def tadm_main(context, config):
     """testrun management command line interface. """
-    basedir = os.path.abspath(os.path.expanduser(basedir))
-    if not os.path.exists(basedir):
-        os.makedirs(basedir)
-    context.basedir = basedir
-    context.domain = domain
+    if config is None:
+        config = "/etc/tadm/config.ini"
+    context.config = Config(config)
+
+
+@click.command()
+@click.pass_context
+def tokens(ctx):
+    """list available tokens """
+    config = ctx.parent.config
+    for mail_config in config.get_token_configs():
+        click.echo(mail_config.name)
+        click.echo("https://{webdomain}/new_email?t={token}"
+            .format(**mail_config.__dict__)
+        )
 
 
 @click.command()
@@ -49,20 +59,9 @@ def add(ctx, emailadr, password, dryrun):
         fail(ctx, "invalid email address: {}".format(msg))
 
     domain = ctx.parent.domain
-    mu = MailUser(domain=domain, dryrun=dryrun)
+    mu = MailController(domain=domain, dryrun=dryrun)
     mu.add_email_account(email=emailadr, password=password)
 
-
-@click.command()
-@click.pass_context
-def info(ctx):
-    """show information about configured account. """
-    acc = get_account(ctx.parent.basedir)
-    if not acc.is_configured():
-        fail(ctx, "account not configured, use 'deltabot init'")
-
-    info = acc.get_infostring()
-    print(info)
 
 
 @click.command()
@@ -81,6 +80,7 @@ def serve(ctx, debug):
 
 
 
+tadm_main.add_command(tokens)
 tadm_main.add_command(add)
 #bot_main.add_command(info)
 tadm_main.add_command(serve)

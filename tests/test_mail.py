@@ -2,26 +2,26 @@ import pytest
 import random
 import sys
 import os
-from tadm.mailuser import MailUser
+from tadm.mail import MailController
 
 
 @pytest.fixture
-def mailuser_maker(tmpdir):
+def mail_controller_maker(tmpdir):
     path_virtual_mailboxes = tmpdir.ensure("postfix_virtual_mailboxes").strpath
     path_dovecot_users = tmpdir.ensure("dovecot_users").strpath
     path_vmaildir = tmpdir.ensure("vmaildir", dir=1).strpath
 
-    def make_mailuser(domain="testrun.org", dryrun=False):
-        mu = MailUser(domain=domain, dryrun=dryrun,
+    def make_mail_controller(domain="testrun.org", dryrun=False):
+        mu = MailController(domain=domain, dryrun=dryrun,
                       path_virtual_mailboxes=path_virtual_mailboxes,
                       path_dovecot_users=path_dovecot_users,
                       path_vmaildir=path_vmaildir)
         return mu
-    return make_mailuser
+    return make_mail_controller
 
 
-def test_add_user(mailuser_maker, capfd):
-    mu = mailuser_maker(domain="xyz.com")
+def test_add_user(mail_controller_maker, capfd):
+    mu = mail_controller_maker(domain="xyz.com")
     with pytest.raises(ValueError):
         email = "tmp_{}@testrun.org".format(random.randint(0, 1023123123123))
         mu.add_email_account(email)
@@ -36,8 +36,8 @@ def test_add_user(mailuser_maker, capfd):
     assert os.path.exists(os.path.join(mu.path_vmaildir, email))
 
 
-def test_remove_user(mailuser_maker, capfd):
-    mu = mailuser_maker(domain="xyz.com")
+def test_remove_user(mail_controller_maker, capfd):
+    mu = mail_controller_maker(domain="xyz.com")
 
     email = "tmp_{}@xyz.com".format(random.randint(0, 1023123123123))
     mu.add_email_account(email, password="123")

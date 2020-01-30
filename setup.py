@@ -23,7 +23,7 @@ def main():
         author_email='holger@merlinux.eu',
         package_dir={'': 'src'},
         packages = setuptools.find_packages('src'),
-        classifiers=['Development Status :: 3 - Alpha',
+        classifiers=['Development Status :: 4 - Beta',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
                      'Operating System :: POSIX',
@@ -35,7 +35,7 @@ def main():
             [console_scripts]
             tadm=tadm.cmdline:tadm_main
         ''',
-        install_requires = ["flask", "click>=6.0"],
+        install_requires = ["flask", "click>=6.0", "iniconfig>=1.0"],
         zip_safe=False,
     )
 
