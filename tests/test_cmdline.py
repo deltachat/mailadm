@@ -7,6 +7,7 @@ def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
     p = make_ini_from_values(
         name = "burner1",
         token = "1w_Zeeg1RSOK4e3Nh0V",
+        prefix = "",
         domain = "xyz.abc",
         webdomain = "web.domain",
         path_dovecot_users = path.ensure("path_dovecot_users"),
@@ -34,7 +35,12 @@ def test_tokens(mycmd, make_ini):
         *https://web.domain/new_email?t=1w_Zeeg1RSOK4e3Nh0V*
     """)
 
-def test_adduser(mycmd):
-    mycmd.run_ok(["add", "-h"], """
+def test_adduser_help(mycmd):
+    mycmd.run_ok(["local-add", "-h"], """
         *add*e-mail*user*
+    """)
+
+def test_adduser(mycmd):
+    mycmd.run_ok(["local-add", "x@xyz.abc"], """
+        *added*x@xyz.abc*
     """)

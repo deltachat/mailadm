@@ -16,9 +16,14 @@ class Config:
     def __init__(self, path):
         self.cfg = iniconfig.IniConfig(path)
 
-    def get_mail_config(self, token):
+    def get_mail_config_from_token(self, token):
         for mc in self.get_token_configs():
             if mc.token == token:
+                return mc
+
+    def get_mail_config_from_email(self, email):
+        for mc in self.get_token_configs():
+            if email.endswith("@" + mc.domain) and email.startswith(mc.prefix):
                 return mc
 
     def get_token_configs(self):

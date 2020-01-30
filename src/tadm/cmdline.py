@@ -30,6 +30,9 @@ def tadm_main(context, config):
     """testrun management command line interface. """
     if config is None:
         config = "/etc/tadm/config.ini"
+    if not os.path.exists(config):
+        click.exit("no config file found: {}".format(config))
+
     context.config = Config(config)
 
 
@@ -52,14 +55,14 @@ def tokens(ctx):
 @click.option("-n", "--dryrun", type=str,
               help="don't change any files, only show what would be changed.")
 @click.pass_context
-def add(ctx, emailadr, password, dryrun):
+def local_add(ctx, emailadr, password, dryrun):
     """add a e-mail user to postfix and dovecot configurations
     """
     if "@" not in emailadr:
         fail(ctx, "invalid email address: {}".format(msg))
 
-    domain = ctx.parent.domain
-    mu = MailController(domain=domain, dryrun=dryrun)
+    config = ctx.parent.config
+    mu = config.get_mail_config_from_email(emailadr).make_controller()
     mu.add_email_account(email=emailadr, password=password)
 
 
@@ -67,7 +70,7 @@ def add(ctx, emailadr, password, dryrun):
 @click.command()
 @click.pass_context
 @click.option("--debug", is_flag=True, default=False,
-              help="run server in debug mode and don't change any files, only show what would be changed.")
+              help="run server in debug mode and don't change any files")
 def serve(ctx, debug):
     """(danger: debugging-only!) serve http account creation with a default token"""
     from .web import create_app
@@ -81,8 +84,7 @@ def serve(ctx, debug):
 
 
 tadm_main.add_command(tokens)
-tadm_main.add_command(add)
-#bot_main.add_command(info)
+tadm_main.add_command(local_add)
 tadm_main.add_command(serve)
 
 

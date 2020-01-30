@@ -80,6 +80,6 @@ def make_ini_from_values(make_ini):
             path_vmaildir = {path_vmaildir}
             webdomain = {webdomain}
             domain = {domain}
-            prefix = tmp_
+            prefix = {prefix}
         """.format(**kw))
     return make_ini_from_values

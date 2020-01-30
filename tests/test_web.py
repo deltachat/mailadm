@@ -10,6 +10,7 @@ def app(request, tmpdir, monkeypatch, make_ini_from_values):
     inipath = make_ini_from_values(
                 name = "test123",
                 token = "123123",
+                prefix = "tmp_",
                 domain = "testdomain.org",
                 webdomain = "testdomain.org",
                 path_virtual_mailboxes=tmpdir.ensure("virtualmailboxes").strpath,
