@@ -1,6 +1,7 @@
 import pytest
 import random
 import sys
+import time
 import os
 from tadm.mail import MailController
 from tadm.config import Config
@@ -8,8 +9,8 @@ from tadm.config import Config
 
 @pytest.fixture
 def mail_controller_maker(make_ini_from_values):
-    def make_mail_controller(name="test", domain="testrun.org", dryrun=False):
-        inipath = make_ini_from_values(name=name, domain=domain)
+    def make_mail_controller(name="test", domain="testrun.org", expiry="never", dryrun=False):
+        inipath = make_ini_from_values(name=name, expiry=expiry, domain=domain)
         config = Config(inipath)
         mail_config = config.get_mail_config_from_name(name)
         return mail_config.make_controller()
@@ -31,6 +32,20 @@ def test_add_user(mail_controller_maker, capfd):
     assert cap.out.strip().endswith("123")
     assert os.path.exists(mu.mail_config.path_virtual_mailboxes + ".db")
     assert os.path.exists(os.path.join(mu.mail_config.path_vmaildir, email))
+
+
+def test_add_user_auto_remove(mail_controller_maker, monkeypatch):
+    mu = mail_controller_maker(domain="xyz.com", expiry="1w")
+    mu.add_email_account("tmp_123@xyz.com", password="123")
+
+    # create a current account
+    now = time.time()
+    monkeypatch.setattr(time, "time", lambda: 10.0)
+    mu.add_email_account("tmp_old@xyz.com", password="123")
+    monkeypatch.undo()
+
+    accounts = list(mu.get_expired_accounts())
+    assert accounts == ["tmp_old@xyz.com"]
 
 
 def test_remove_user(mail_controller_maker, capfd):

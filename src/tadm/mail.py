@@ -4,10 +4,12 @@ User object for modifying virtual_mailbox and dovecot-users
 
 from __future__ import print_function
 
+import datetime
 import os
 import base64
 import sys
 import subprocess
+import time
 import contextlib
 
 
@@ -90,6 +92,22 @@ class MailController:
                 to_remove_dirs.append((email, path))
         return to_remove_dirs
 
+    def get_expired_accounts(self):
+        one_week = datetime.timedelta(weeks=1).total_seconds()
+
+        with self.modify_lines(self.mail_config.path_virtual_mailboxes) as lines:
+            for line in lines:
+                if not line.strip():
+                    continue
+                try:
+                    email, timestamp, expiry, origin = line.split()
+                except ValueError:
+                    continue
+                if expiry == "1w":
+                    if time.time() - float(timestamp) > one_week:
+                        yield email
+
+
     def add_email_account(self, email, password=None):
         mc = self.mail_config
         if not email.endswith(mc.domain):
@@ -98,8 +116,9 @@ class MailController:
             for line in lines:
                 if line.startswith(email):
                     raise ValueError("account {!r} already exists".format(email))
-            # lines.append("# test account")
-            lines.append("{} TMP".format(email))
+            lines.append("{email} {timestamp} {expiry} {origin}".format(
+                email=email, timestamp=time.time(), expiry=mc.expiry, origin=mc.name
+            ))
         self.log("added {!r} to {}".format(lines[-1], mc.path_virtual_mailboxes))
 
         clear_password, hash_pw = self.get_doveadm_pw(password=password)
