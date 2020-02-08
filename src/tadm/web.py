@@ -7,8 +7,11 @@ from .config import Config
 
 def create_app_from_file(config_fn):
     config = Config(config_fn)
+    return create_app_from_config(config)
 
-    app = Flask("testrun-account-server")
+
+def create_app_from_config(config):
+    app = Flask("tadm-account-server")
 
     @app.route('/new_email', methods=["POST"])
     def new_email():

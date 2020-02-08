@@ -2,15 +2,7 @@ import iniconfig
 import random
 from .mail import MailController
 
-# example tadm.config file:
-#
-# [token:burner1]
-# domain = testrun.org
-# prefix = tmp_
-# secret = 1w_7wDioPeeXyZx96v3
-# path_dovecot_users= /etc/dovecot/users
-# path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
-# path_vmaildir = /home/vmail/testrun.org
+# example tadm.config file, see test_config.py
 
 class Config:
     def __init__(self, path):

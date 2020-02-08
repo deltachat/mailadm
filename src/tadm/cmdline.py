@@ -19,6 +19,7 @@ from .mail import MailController
 from .config import Config
 
 import click
+from click import style
 
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
@@ -30,22 +31,29 @@ def tadm_main(context, config):
     """e-mail account creation admin tool and web service. """
     if config is None:
         config = "/etc/tadm/config.ini"
-    if not os.path.exists(config):
+    context.config_path = config
+
+
+def get_tadm_config(ctx, show=True):
+    config_path = ctx.parent.config_path
+    if not os.path.exists(config_path):
         context.exit("TADM_CONFIG not set, "
                      "--config option missing and no config file found: {}".format(config))
-
-    context.config = Config(config)
-    click.secho("using config file: {}".format(config), file=sys.stderr)
+    cfg = Config(config_path)
+    if show:
+        click.secho("using config file: {}".format(cfg.cfg.path), file=sys.stderr)
+    return cfg
 
 
 @click.command()
 @click.pass_context
 def list_tokens(ctx):
     """list available tokens """
-    config = ctx.parent.config
+    config = get_tadm_config(ctx)
     for mail_config in config.get_token_configs():
-        click.echo(mail_config.name)
-        click.echo("https://{webdomain}/new_email?t={token}"
+        click.echo(style("token:{}".format(mail_config.name), fg="green"))
+        click.echo("  prefix = ".format(mail_config.prefix))
+        click.echo("  add_user_url = https://{webdomain}/new_email?t={token}"
             .format(**mail_config.__dict__)
         )
 
@@ -63,7 +71,7 @@ def add_local_user(ctx, emailadr, password, dryrun):
     if "@" not in emailadr:
         fail(ctx, "invalid email address: {}".format(msg))
 
-    config = ctx.parent.config
+    config = get_tadm_config(ctx)
     mu = config.get_mail_config_from_email(emailadr).make_controller()
     mu.add_email_account(email=emailadr, password=password)
 
@@ -75,12 +83,9 @@ def add_local_user(ctx, emailadr, password, dryrun):
               help="run server in debug mode and don't change any files")
 def serve(ctx, debug):
     """(debugging-only!) serve http account creation with a default token"""
-    from .web import create_app
-    config = {"token_create_user": 42424242,
-              "path_virtual_mailboxes": "/etc/postfix/virtual_mailboxes",
-              "path_dovecot_users": "/etc/dovecot/users"
-    }
-    app = create_app(config)
+    from .web import create_app_from_config
+    config = get_tadm_config(ctx)
+    app = create_app_from_config(config)
     app.run(debug=debug, host="0.0.0.0", port=3960)
 
 
