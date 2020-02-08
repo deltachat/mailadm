@@ -1,3 +1,5 @@
+import time
+import datetime
 import pytest
 
 
@@ -45,3 +47,22 @@ def test_adduser(mycmd):
     mycmd.run_ok(["add-local-user", "x@xyz.abc"], """
         *added*x@xyz.abc*
     """)
+    mycmd.run_fail(["add-local-user", "x@xyz.abc"], """
+        *failed to add*x@xyz.abc*
+    """)
+
+def test_adduser_and_expire(mycmd, monkeypatch):
+    mycmd.run_ok(["add-local-user", "x@xyz.abc"], """
+        *added*x@xyz.abc*
+    """)
+
+    to_expire = time.time() - datetime.timedelta(weeks=1).total_seconds() - 1
+
+    # create an old account that should expire
+    monkeypatch.setattr(time, "time", lambda: to_expire)
+    mycmd.run_ok(["add-local-user", "y@xyz.abc"], """
+        *added*y@xyz.abc*
+    """)
+    monkeypatch.undo()
+
+    mycmd.run_ok(["prune-expired", "-n"])

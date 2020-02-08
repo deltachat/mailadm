@@ -92,20 +92,28 @@ class MailController:
                 to_remove_dirs.append((email, path))
         return to_remove_dirs
 
-    def get_expired_accounts(self):
+    def prune_expired_accounts(self, dryrun=False):
         one_week = datetime.timedelta(weeks=1).total_seconds()
+        pruned = []
 
         with self.modify_lines(self.mail_config.path_virtual_mailboxes) as lines:
+            newlines = []
             for line in lines:
                 if not line.strip():
                     continue
                 try:
                     email, timestamp, expiry, origin = line.split()
                 except ValueError:
+                    newlines.append(line)
                     continue
                 if expiry == "1w":
                     if time.time() - float(timestamp) > one_week:
-                        yield email
+                        pruned.append(email)
+                        continue
+                newlines.append(line)
+            if not dryrun:
+                lines[:] = newlines
+        return pruned
 
 
     def add_email_account(self, email, password=None):

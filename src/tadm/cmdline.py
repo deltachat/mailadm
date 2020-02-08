@@ -22,6 +22,10 @@ import click
 from click import style
 
 
+option_dryrun = click.option("-n", "--dryrun", is_flag=True,
+              help="don't change any files, only show what would be changed.")
+
+
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("--config", type=click.Path(), envvar="TADM_CONFIG",
               help="config file for tadm")
@@ -63,8 +67,7 @@ def list_tokens(ctx):
 @click.argument("emailadr", type=str, required=True)
 @click.option("--password", type=str, default=None,
               help="if not specified, generate a random password")
-@click.option("-n", "--dryrun", type=str,
-              help="don't change any files, only show what would be changed.")
+@option_dryrun
 @click.pass_context
 def add_local_user(ctx, emailadr, password, dryrun):
     """add user to postfix and dovecot configurations
@@ -74,7 +77,22 @@ def add_local_user(ctx, emailadr, password, dryrun):
 
     config = get_tadm_config(ctx)
     mu = config.get_mail_config_from_email(emailadr).make_controller()
-    mu.add_email_account(email=emailadr, password=password)
+    try:
+        mu.add_email_account(email=emailadr, password=password)
+    except ValueError as e:
+        ctx.exit("failed to add e-mail account: {}".format(e))
+
+
+@click.command()
+@option_dryrun
+@click.pass_context
+def prune_expired(ctx, dryrun):
+    """prune expired users from postfix and dovecot configurations """
+    config = get_tadm_config(ctx)
+    for mc in config.get_token_configs():
+        mu = mc.make_controller()
+        for email in mu.prune_expired_accounts(dryrun=dryrun):
+            click.secho(email, fg="red")
 
 
 
@@ -93,6 +111,7 @@ def serve(ctx, debug):
 
 tadm_main.add_command(list_tokens)
 tadm_main.add_command(add_local_user)
+tadm_main.add_command(prune_expired)
 tadm_main.add_command(serve)
 
 
