@@ -27,18 +27,20 @@ import click
 @click.version_option()
 @click.pass_context
 def tadm_main(context, config):
-    """testrun management command line interface. """
+    """e-mail account creation admin tool and web service. """
     if config is None:
         config = "/etc/tadm/config.ini"
     if not os.path.exists(config):
-        click.exit("no config file found: {}".format(config))
+        context.exit("TADM_CONFIG not set, "
+                     "--config option missing and no config file found: {}".format(config))
 
     context.config = Config(config)
+    click.secho("using config file: {}".format(config), file=sys.stderr)
 
 
 @click.command()
 @click.pass_context
-def tokens(ctx):
+def list_tokens(ctx):
     """list available tokens """
     config = ctx.parent.config
     for mail_config in config.get_token_configs():
@@ -55,8 +57,8 @@ def tokens(ctx):
 @click.option("-n", "--dryrun", type=str,
               help="don't change any files, only show what would be changed.")
 @click.pass_context
-def local_add(ctx, emailadr, password, dryrun):
-    """add a e-mail user to postfix and dovecot configurations
+def add_local_user(ctx, emailadr, password, dryrun):
+    """add user to postfix and dovecot configurations
     """
     if "@" not in emailadr:
         fail(ctx, "invalid email address: {}".format(msg))
@@ -72,7 +74,7 @@ def local_add(ctx, emailadr, password, dryrun):
 @click.option("--debug", is_flag=True, default=False,
               help="run server in debug mode and don't change any files")
 def serve(ctx, debug):
-    """(danger: debugging-only!) serve http account creation with a default token"""
+    """(debugging-only!) serve http account creation with a default token"""
     from .web import create_app
     config = {"token_create_user": 42424242,
               "path_virtual_mailboxes": "/etc/postfix/virtual_mailboxes",
@@ -83,8 +85,8 @@ def serve(ctx, debug):
 
 
 
-tadm_main.add_command(tokens)
-tadm_main.add_command(local_add)
+tadm_main.add_command(list_tokens)
+tadm_main.add_command(add_local_user)
 tadm_main.add_command(serve)
 
 

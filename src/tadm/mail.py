@@ -12,6 +12,7 @@ import contextlib
 
 
 class MailController:
+    """ Mail MTA read/write methods for adding/removing users. """
     def __init__(self, domain,
                  path_virtual_mailboxes,  # "/etc/postfix/virtual_mailboxes",
                  path_dovecot_users,      # "/etc/dovecot/users",

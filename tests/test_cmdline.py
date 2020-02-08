@@ -26,21 +26,21 @@ def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
 
 def test_help(cmd):
     cmd.run_ok([], """
-        *testrun management*
+        *account creation*
     """)
 
 def test_tokens(mycmd, make_ini):
-    mycmd.run_ok(["tokens"], """
+    mycmd.run_ok(["list-tokens"], """
         *burner1*
         *https://web.domain/new_email?t=1w_Zeeg1RSOK4e3Nh0V*
     """)
 
 def test_adduser_help(mycmd):
-    mycmd.run_ok(["local-add", "-h"], """
-        *add*e-mail*user*
+    mycmd.run_ok(["add-local-user", "-h"], """
+        *add*user*
     """)
 
 def test_adduser(mycmd):
-    mycmd.run_ok(["local-add", "x@xyz.abc"], """
+    mycmd.run_ok(["add-local-user", "x@xyz.abc"], """
         *added*x@xyz.abc*
     """)
