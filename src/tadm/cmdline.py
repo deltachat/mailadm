@@ -34,15 +34,15 @@ option_dryrun = click.option("-n", "--dryrun", is_flag=True,
 def tadm_main(context, config):
     """e-mail account creation admin tool and web service. """
     if config is None:
-        config = "/etc/tadm/config.ini"
+        config = "/etc/tadm/tadm.config"
     context.config_path = config
 
 
 def get_tadm_config(ctx, show=True):
     config_path = ctx.parent.config_path
     if not os.path.exists(config_path):
-        context.exit("TADM_CONFIG not set, "
-                     "--config option missing and no config file found: {}".format(config))
+        ctx.exit("TADM_CONFIG not set, "
+                     "--config option missing and no config file found: {}".format(config_path))
     cfg = Config(config_path)
     if show:
         click.secho("using config file: {}".format(cfg.cfg.path), file=sys.stderr)
