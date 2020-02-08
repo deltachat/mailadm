@@ -5,9 +5,10 @@ import pytest
 def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
     path = tmpdir.join("paths")
     p = make_ini_from_values(
-        name = "burner1",
+        name = "oneweek",
         token = "1w_Zeeg1RSOK4e3Nh0V",
         prefix = "",
+        expiry = "1w",
         domain = "xyz.abc",
         webdomain = "web.domain",
         path_dovecot_users = path.ensure("path_dovecot_users"),
@@ -31,7 +32,7 @@ def test_help(cmd):
 
 def test_tokens(mycmd, make_ini):
     mycmd.run_ok(["list-tokens"], """
-        *burner1*
+        *oneweek*
         *https://web.domain/new_email?t=1w_Zeeg1RSOK4e3Nh0V*
     """)
 

@@ -8,6 +8,7 @@ def test_simple(make_ini):
         [token:burner1]
         domain = testrun.org
         prefix = tmp_
+        expiry = 1w
         path_dovecot_users= /etc/dovecot/users
         path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
         path_vmaildir = /home/vmail/testrun.org
@@ -28,6 +29,7 @@ def test_email_check(make_ini):
         [token:burner1]
         domain = testrun.org
         prefix = tmp_
+        expiry = 1w
         path_dovecot_users= /etc/dovecot/users
         path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
         path_vmaildir = /home/vmail/testrun.org
@@ -36,6 +38,7 @@ def test_email_check(make_ini):
         [token:burner2]
         domain = testrun.org
         prefix =
+        expiry = never
         path_dovecot_users= /etc/dovecot/users
         path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
         path_vmaildir = /home/vmail/testrun.org
@@ -45,6 +48,8 @@ def test_email_check(make_ini):
     assert config.get_mail_config_from_email("xyz@testrun.o123") is None
     mc = config.get_mail_config_from_email("xyz@testrun.org")
     assert mc.name == "burner2"
+    assert mc.expiry == "never"
 
     mc = config.get_mail_config_from_email("tmp_xyz@testrun.org")
     assert mc.name == "burner1"
+    assert mc.expiry == "1w"

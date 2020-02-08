@@ -3,20 +3,17 @@ import random
 import sys
 import os
 from tadm.mail import MailController
+from tadm.config import Config
 
 
 @pytest.fixture
-def mail_controller_maker(tmpdir):
-    path_virtual_mailboxes = tmpdir.ensure("postfix_virtual_mailboxes").strpath
-    path_dovecot_users = tmpdir.ensure("dovecot_users").strpath
-    path_vmaildir = tmpdir.ensure("vmaildir", dir=1).strpath
+def mail_controller_maker(make_ini_from_values):
+    def make_mail_controller(name="test", domain="testrun.org", dryrun=False):
+        inipath = make_ini_from_values(name=name, domain=domain)
+        config = Config(inipath)
+        mail_config = config.get_mail_config_from_name(name)
+        return mail_config.make_controller()
 
-    def make_mail_controller(domain="testrun.org", dryrun=False):
-        mu = MailController(domain=domain, dryrun=dryrun,
-                      path_virtual_mailboxes=path_virtual_mailboxes,
-                      path_dovecot_users=path_dovecot_users,
-                      path_vmaildir=path_vmaildir)
-        return mu
     return make_mail_controller
 
 
@@ -32,8 +29,8 @@ def test_add_user(mail_controller_maker, capfd):
     cap = capfd.readouterr()
     print(cap.out)
     assert cap.out.strip().endswith("123")
-    assert os.path.exists(mu.path_virtual_mailboxes + ".db")
-    assert os.path.exists(os.path.join(mu.path_vmaildir, email))
+    assert os.path.exists(mu.mail_config.path_virtual_mailboxes + ".db")
+    assert os.path.exists(os.path.join(mu.mail_config.path_vmaildir, email))
 
 
 def test_remove_user(mail_controller_maker, capfd):
@@ -44,7 +41,7 @@ def test_remove_user(mail_controller_maker, capfd):
     cap = capfd.readouterr()
     print(cap.out)
     assert cap.out.strip().endswith("123")
-    assert os.path.exists(mu.path_virtual_mailboxes + ".db")
+    assert os.path.exists(mu.mail_config.path_virtual_mailboxes + ".db")
 
     email2 = "tmp_{}@xyz.com".format(random.randint(0, 1023123123123))
     mu.add_email_account(email2, password="456")

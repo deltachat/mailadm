@@ -13,17 +13,9 @@ import contextlib
 
 class MailController:
     """ Mail MTA read/write methods for adding/removing users. """
-    def __init__(self, domain,
-                 path_virtual_mailboxes,  # "/etc/postfix/virtual_mailboxes",
-                 path_dovecot_users,      # "/etc/dovecot/users",
-                 path_vmaildir,           # "/home/vmail/",
-                 dryrun=False
-                ):
-        self.domain = domain
+    def __init__(self, mail_config, dryrun=False):
+        self.mail_config = mail_config
         self.dryrun = dryrun
-        self.path_virtual_mailboxes = path_virtual_mailboxes
-        self.path_dovecot_users = path_dovecot_users
-        self.path_vmaildir = path_vmaildir
 
     def log(self, *args):
         print(*args)
@@ -41,7 +33,7 @@ class MailController:
         if old_lines == lines:
             self.log("no changes", path)
             return
-        content = "\n".join(lines)
+        content = "\n".join(lines) + "\n"
         self.write_fn(path, content)
 
         if pm:
@@ -58,7 +50,7 @@ class MailController:
         os.rename(tmp_path, path)
 
     def find_email_accounts(self, prefix=None):
-        path = str(self.path_virtual_mailboxes)
+        path = str(self.mail_config.path_virtual_mailboxes)
         return [line for line in open(path)
                     if line.strip() and (prefix is None or line.startswith(prefix))]
 
@@ -66,7 +58,7 @@ class MailController:
         """ remove accounts and return directories which were used by
         these accounts. """
         to_remove = set(map(str.strip, account_lines))
-        with self.modify_lines(self.path_virtual_mailboxes, pm=True) as lines:
+        with self.modify_lines(self.mail_config.path_virtual_mailboxes, pm=True) as lines:
             newlines = []
             for line in lines:
                 if line.strip() in to_remove:
@@ -78,7 +70,7 @@ class MailController:
         to_remove_emails = set(x.split()[0] for x in to_remove)
 
         to_remove_vmail = []
-        with self.modify_lines(self.path_dovecot_users) as lines:
+        with self.modify_lines(self.mail_config.path_dovecot_users) as lines:
             newlines = []
             for line in lines:
                 email = line.split(":", 1)[0]
@@ -93,24 +85,25 @@ class MailController:
 
         to_remove_dirs = []
         for email in to_remove_vmail:
-            path = os.path.join(self.path_vmaildir, email)
+            path = os.path.join(self.mail_config.path_vmaildir, email)
             if os.path.isdir(path):
                 to_remove_dirs.append((email, path))
         return to_remove_dirs
 
     def add_email_account(self, email, password=None):
-        if not email.endswith(self.domain):
-            raise ValueError("email {!r} is not on domain {!r}".format(email, self.domain))
-        with self.modify_lines(self.path_virtual_mailboxes, pm=True) as lines:
+        mc = self.mail_config
+        if not email.endswith(mc.domain):
+            raise ValueError("email {!r} is not on domain {!r}".format(email, mc.domain))
+        with self.modify_lines(mc.path_virtual_mailboxes, pm=True) as lines:
             for line in lines:
                 if line.startswith(email):
                     raise ValueError("account {!r} already exists".format(email))
             # lines.append("# test account")
             lines.append("{} TMP".format(email))
-        self.log("added {!r} to {}".format(lines[-1], self.path_virtual_mailboxes))
+        self.log("added {!r} to {}".format(lines[-1], mc.path_virtual_mailboxes))
 
         clear_password, hash_pw = self.get_doveadm_pw(password=password)
-        with self.modify_lines(self.path_dovecot_users) as lines:
+        with self.modify_lines(mc.path_dovecot_users) as lines:
             for line in lines:
                 assert not line.startswith(email), line
             line = "{}:{}::::::".format(email, hash_pw)
@@ -118,7 +111,7 @@ class MailController:
             self.log(line)
             lines.append(line)
 
-        p = os.path.join(self.path_vmaildir, email)
+        p = os.path.join(mc.path_vmaildir, email)
         if not os.path.exists(p):
             os.mkdir(p)
         self.log("vmaildir:", p)

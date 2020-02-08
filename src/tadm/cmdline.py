@@ -50,11 +50,12 @@ def get_tadm_config(ctx, show=True):
 def list_tokens(ctx):
     """list available tokens """
     config = get_tadm_config(ctx)
-    for mail_config in config.get_token_configs():
-        click.echo(style("token:{}".format(mail_config.name), fg="green"))
-        click.echo("  prefix = ".format(mail_config.prefix))
+    for mc in config.get_token_configs():
+        click.echo(style("token:{}".format(mc.name), fg="green"))
+        click.echo("  prefix = {}".format(mc.prefix))
+        click.echo("  expiry = {}".format(mc.expiry))
         click.echo("  add_user_url = https://{webdomain}/new_email?t={token}"
-            .format(**mail_config.__dict__)
+            .format(webdomain=mc.webdomain, token=mc.token)
         )
 
 

@@ -8,6 +8,11 @@ class Config:
     def __init__(self, path):
         self.cfg = iniconfig.IniConfig(path)
 
+    def get_mail_config_from_name(self, name):
+        for mc in self.get_token_configs():
+            if mc.name == name:
+                return mc
+
     def get_mail_config_from_token(self, token):
         for mc in self.get_token_configs():
             if mc.token == token:
@@ -27,6 +32,8 @@ class Config:
 class MailConfig:
     def __init__(self, name, dic):
         self.name = name
+        assert dic["expiry"] in ["1w", "never"], dic["expiry"]
+        assert "prefix" in dic, dic
         self.__dict__.update(dic)
 
     def make_email_address(self):
@@ -34,9 +41,4 @@ class MailConfig:
         return "{}{}@{}".format(self.prefix, num, self.domain)
 
     def make_controller(self):
-        return MailController(
-            domain = self.domain,
-            path_virtual_mailboxes = self.path_virtual_mailboxes,
-            path_dovecot_users = self.path_dovecot_users,
-            path_vmaildir = self.path_vmaildir,
-        )
+        return MailController(mail_config = self)

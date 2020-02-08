@@ -70,16 +70,35 @@ def make_ini(tmpdir):
     return make
 
 @pytest.fixture
-def make_ini_from_values(make_ini):
-    def make_ini_from_values(**kw):
+def make_ini_from_values(make_ini, tmpdir):
+    def make_ini_from_values(
+        name = "oneweek",
+        token = "1w_Zeeg1RSOK4e3Nh0V",
+        prefix = "",
+        expiry = "1w",
+        domain = "xyz.abc",
+        webdomain = "web.domain",
+        path_dovecot_users = None,
+        path_virtual_mailboxes = None,
+        path_vmaildir = None,
+    ):
+        path = tmpdir.mkdir(name)
+        if path_dovecot_users is None:
+            path_dovecot_users = path.ensure("path_dovecot_users")
+        if path_virtual_mailboxes is None:
+            path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
+        if path_vmaildir is None:
+            path_vmaildir = path.ensure("path_vmaildir", dir=1)
+
         return make_ini("""
             [token:{name}]
             token = {token}
+            expiry = {expiry}
             path_virtual_mailboxes = {path_virtual_mailboxes}
             path_dovecot_users = {path_dovecot_users}
             path_vmaildir = {path_vmaildir}
             webdomain = {webdomain}
             domain = {domain}
             prefix = {prefix}
-        """.format(**kw))
+        """.format(**locals()))
     return make_ini_from_values
