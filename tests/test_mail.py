@@ -43,14 +43,21 @@ def test_add_user_auto_remove(mail_controller_maker, monkeypatch):
     monkeypatch.setattr(time, "time", lambda: 10.0)
     mu.add_email_account("tmp_old@xyz.com", password="123")
     monkeypatch.undo()
+    mu.add_email_account("tmp_456@xyz.com", password="123")
 
-    accounts = mu.prune_expired_accounts(dryrun=True)
-    assert accounts == ["tmp_old@xyz.com"]
+    assert len(mu.find_email_accounts()) == 3
 
-    accounts = mu.prune_expired_accounts(dryrun=False)
-    assert accounts == ["tmp_old@xyz.com"]
+    # prune it in dryrun
+    assert mu.prune_expired_accounts(dryrun=True) == ["tmp_old@xyz.com"]
+    assert len(mu.find_email_accounts()) == 3
 
+    # prune it for real
+    assert mu.prune_expired_accounts(dryrun=False) == ["tmp_old@xyz.com"]
+
+    # check there is no expired account left
     assert not mu.prune_expired_accounts(dryrun=False)
+
+    assert len(mu.find_email_accounts()) == 2
 
 
 def test_remove_user(mail_controller_maker, capfd):
