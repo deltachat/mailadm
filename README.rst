@@ -59,7 +59,7 @@ Here is an example systemd example config file:
 
     [Service]
     User=root
-    ExecStart=/home/mailadm/venv/bin/gunicorn -b localhost:3960 -w 1 mailadm.app:app
+    ExecStart=/home/mailadm/venv/bin/gunicorn -b localhost:3961 -w 1 mailadm.app:app
     Restart=always
 
     [Install]
