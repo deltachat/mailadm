@@ -58,7 +58,8 @@ class MailController:
 
     def remove_accounts(self, account_lines):
         """ remove accounts and return directories which were used by
-        these accounts. """
+        these accounts. Note that the returned directories do not neccessarily
+        exist as they are only created from the MDA when it delivers mail """
         to_remove = set(map(str.strip, account_lines))
         with self.modify_lines(self.mail_config.path_virtual_mailboxes, pm=True) as lines:
             newlines = []
@@ -88,8 +89,7 @@ class MailController:
         to_remove_dirs = []
         for email in to_remove_vmail:
             path = os.path.join(self.mail_config.path_vmaildir, email)
-            if os.path.isdir(path):
-                to_remove_dirs.append((email, path))
+            to_remove_dirs.append((email, path))
         return to_remove_dirs
 
     def prune_expired_accounts(self, dryrun=False):

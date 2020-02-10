@@ -31,7 +31,9 @@ def test_add_user(mail_controller_maker, capfd):
     print(cap.out)
     assert cap.out.strip().endswith("123")
     assert os.path.exists(mu.mail_config.path_virtual_mailboxes + ".db")
-    assert os.path.exists(os.path.join(mu.mail_config.path_vmaildir, email))
+
+    # the mail controller leaves creation of vmail directories to dovecot (the MDA) 
+    # assert os.path.exists(os.path.join(mu.mail_config.path_vmaildir, email))
 
 
 def test_add_user_auto_remove(mail_controller_maker, monkeypatch):
