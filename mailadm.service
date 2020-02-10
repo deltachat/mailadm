@@ -1,10 +1,10 @@
 [Unit]
-Description=Testrun account management administration web API 
+Description=Account management administration web API 
 After=network.target
 
 [Service]
 User=root 
-ExecStart=/home/hpk/.venv/bin/gunicorn -b localhost:3960 -w 1 mailadm.app:app
+ExecStart=/home/mailadm/venv/bin/gunicorn -b localhost:3960 -w 1 mailadm.app:app
 Restart=always
 
 [Install]
