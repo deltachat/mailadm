@@ -1,10 +1,12 @@
+
 import pytest
+import json
 from mailadm.web import create_app_from_file
 
 
-@pytest.fixture(params=["static", "env"])
-def app(request, tmpdir, monkeypatch, make_ini_from_values):
-    inipath = make_ini_from_values(
+@pytest.fixture
+def inipath(tmpdir, make_ini_from_values):
+    return make_ini_from_values(
                 name = "test123",
                 token = "123123",
                 prefix = "tmp_",
@@ -15,17 +17,19 @@ def app(request, tmpdir, monkeypatch, make_ini_from_values):
                 path_dovecot_users=tmpdir.ensure("dovecot_users").strpath,
                 path_vmaildir=tmpdir.ensure("vmaildir", dir=1).strpath,
     )
-    app = create_app_from_file(inipath)
-    app.debug = True
-    return app.test_client()
 
 
-def test_newuser_random(app):
-    r = app.post('/new_email?t=00000')
-    assert r.status_code == 403
-    r = app.post('/new_email?t=123123')
-    assert r.status_code == 200
-    assert "tmp_" in r.json["email"]
-    assert r.json["password"]
+def test_no_config(monkeypatch):
+    monkeypatch.delenv("MAILADM_CONFIG", raising=False)
+    with pytest.raises(RuntimeError):
+        import mailadm.app
 
 
+def test_env(inipath, monkeypatch):
+    monkeypatch.setenv("MAILADM_CONFIG", inipath)
+    from mailadm.app import app
+    assert app.mailadm_config.cfg.path == inipath
+
+
+def test_sysconfig_path():
+    from mailadm.app import TADM_SYSCONFIG_PATH

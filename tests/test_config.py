@@ -1,7 +1,7 @@
 import textwrap
 import pytest
 
-from tadm.config import Config
+from mailadm.config import Config
 
 def test_simple(make_ini):
     inipath = make_ini("""

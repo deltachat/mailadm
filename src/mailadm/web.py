@@ -11,7 +11,8 @@ def create_app_from_file(config_fn):
 
 
 def create_app_from_config(config):
-    app = Flask("tadm-account-server")
+    app = Flask("mailadm-account-server")
+    app.mailadm_config = config
 
     @app.route('/new_email', methods=["POST"])
     def new_email():

@@ -27,21 +27,21 @@ option_dryrun = click.option("-n", "--dryrun", is_flag=True,
 
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
-@click.option("--config", type=click.Path(), envvar="TADM_CONFIG",
-              help="config file for tadm")
+@click.option("--config", type=click.Path(), envvar="MAILADM_CONFIG",
+              help="config file for mailadm")
 @click.version_option()
 @click.pass_context
-def tadm_main(context, config):
+def mailadm_main(context, config):
     """e-mail account creation admin tool and web service. """
     if config is None:
-        config = "/etc/tadm/tadm.config"
+        config = "/etc/mailadm/mailadm.config"
     context.config_path = config
 
 
-def get_tadm_config(ctx, show=True):
+def get_mailadm_config(ctx, show=True):
     config_path = ctx.parent.config_path
     if not os.path.exists(config_path):
-        ctx.exit("TADM_CONFIG not set, "
+        ctx.exit("MAILADM_CONFIG not set, "
                      "--config option missing and no config file found: {}".format(config_path))
     cfg = Config(config_path)
     if show:
@@ -53,7 +53,7 @@ def get_tadm_config(ctx, show=True):
 @click.pass_context
 def list_tokens(ctx):
     """list available tokens """
-    config = get_tadm_config(ctx)
+    config = get_mailadm_config(ctx)
     for mc in config.get_token_configs():
         click.echo(style("token:{}".format(mc.name), fg="green"))
         click.echo("  prefix = {}".format(mc.prefix))
@@ -75,7 +75,7 @@ def add_local_user(ctx, emailadr, password, dryrun):
     if "@" not in emailadr:
         fail(ctx, "invalid email address: {}".format(msg))
 
-    config = get_tadm_config(ctx)
+    config = get_mailadm_config(ctx)
     mu = config.get_mail_config_from_email(emailadr).make_controller()
     try:
         mu.add_email_account(email=emailadr, password=password)
@@ -88,7 +88,7 @@ def add_local_user(ctx, emailadr, password, dryrun):
 @click.pass_context
 def prune_expired(ctx, dryrun):
     """prune expired users from postfix and dovecot configurations """
-    config = get_tadm_config(ctx)
+    config = get_mailadm_config(ctx)
     for mc in config.get_token_configs():
         mu = mc.make_controller()
         for email in mu.prune_expired_accounts(dryrun=dryrun):
@@ -103,18 +103,18 @@ def prune_expired(ctx, dryrun):
 def serve(ctx, debug):
     """(debugging-only!) serve http account creation with a default token"""
     from .web import create_app_from_config
-    config = get_tadm_config(ctx)
+    config = get_mailadm_config(ctx)
     app = create_app_from_config(config)
     app.run(debug=debug, host="0.0.0.0", port=3960)
 
 
 
-tadm_main.add_command(list_tokens)
-tadm_main.add_command(add_local_user)
-tadm_main.add_command(prune_expired)
-tadm_main.add_command(serve)
+mailadm_main.add_command(list_tokens)
+mailadm_main.add_command(add_local_user)
+mailadm_main.add_command(prune_expired)
+mailadm_main.add_command(serve)
 
 
 if __name__ == "__main__":
-    tadm_main()
+    mailadm_main()
 

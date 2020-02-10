@@ -3,8 +3,8 @@ import random
 import sys
 import time
 import os
-from tadm.mail import MailController
-from tadm.config import Config
+from mailadm.mail import MailController
+from mailadm.config import Config
 
 
 @pytest.fixture

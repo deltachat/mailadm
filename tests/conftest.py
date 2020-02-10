@@ -55,15 +55,15 @@ def _perform_match(output, fnl):
 @pytest.fixture
 def cmd():
     """ invoke a command line subcommand. """
-    from tadm.cmdline import tadm_main
-    return ClickRunner(tadm_main)
+    from mailadm.cmdline import mailadm_main
+    return ClickRunner(mailadm_main)
 
 
 @pytest.fixture
 def make_ini(tmpdir):
     made = []
     def make(source):
-        p = tmpdir.join("tadm-{}.ini".format(len(made)))
+        p = tmpdir.join("mailadm-{}.ini".format(len(made)))
         p.write(dedent(source))
         made.append(p)
         return p.strpath

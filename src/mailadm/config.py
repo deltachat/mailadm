@@ -2,7 +2,7 @@ import iniconfig
 import random
 from .mail import MailController
 
-# example tadm.config file, see test_config.py
+# example mailadm.config file, see test_config.py
 
 class Config:
     def __init__(self, path):

@@ -2,7 +2,7 @@ import os
 import setuptools
 
 def main():
-    with open(os.path.join("src","tadm", "__init__.py")) as f:
+    with open(os.path.join("src","mailadm", "__init__.py")) as f:
         for line in f:
             if "__version__" in line.strip():
                 version = line.split("=", 1)[1].strip().strip('"')
@@ -12,7 +12,7 @@ def main():
         long_desc = f.read()
 
     setuptools.setup(
-        name='tadm',
+        name='mailadm',
         description='testrun.org control program (WIP)',
         long_description = long_desc,
         version=version,
@@ -33,7 +33,7 @@ def main():
                      'Programming Language :: Python'],
         entry_points='''
             [console_scripts]
-            tadm=tadm.cmdline:tadm_main
+            mailadm=mailadm.cmdline:mailadm_main
         ''',
         install_requires = ["flask", "click>=6.0", "iniconfig>=1.0"],
         zip_safe=False,

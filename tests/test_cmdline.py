@@ -20,7 +20,7 @@ def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
     if request.param == "file":
         cmd._rootargs.extend(["--config", p])
     elif request.param == "env":
-        monkeypatch.setenv("TADM_CONFIG", p)
+        monkeypatch.setenv("MAILADM_CONFIG", p)
     else:
         assert 0
 
@@ -59,10 +59,10 @@ def test_adduser_and_expire(mycmd, monkeypatch):
     to_expire = time.time() - datetime.timedelta(weeks=1).total_seconds() - 1
 
     # create an old account that should expire
-    monkeypatch.setattr(time, "time", lambda: to_expire)
-    mycmd.run_ok(["add-local-user", "y@xyz.abc"], """
-        *added*y@xyz.abc*
-    """)
-    monkeypatch.undo()
+    with monkeypatch.context() as m:
+        m.setattr(time, "time", lambda: to_expire)
+        mycmd.run_ok(["add-local-user", "y@xyz.abc"], """
+            *added*y@xyz.abc*
+        """)
 
     mycmd.run_ok(["prune-expired", "-n"])
