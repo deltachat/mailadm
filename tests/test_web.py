@@ -26,6 +26,7 @@ def test_newuser_random(app):
     r = app.post('/new_email?t=123123')
     assert r.status_code == 200
     assert "tmp_" in r.json["email"]
+    assert r.json["email"].endswith("@testdomain.org")
     assert r.json["password"]
 
 

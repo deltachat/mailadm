@@ -2,6 +2,12 @@
 import pytest
 from _pytest.pytester import LineMatcher
 from textwrap import dedent
+import mailadm
+
+
+@pytest.fixture(autouse=True)
+def _change_sys_config(monkeypatch):
+    monkeypatch.setattr(mailadm, "MAILADM_SYSCONFIG_PATH", "/tmp/not/existent/i/hope")
 
 
 class ClickRunner:

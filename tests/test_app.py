@@ -32,4 +32,4 @@ def test_env(inipath, monkeypatch):
 
 
 def test_sysconfig_path():
-    from mailadm.app import TADM_SYSCONFIG_PATH
+    from mailadm.app import MAILADM_SYSCONFIG_PATH

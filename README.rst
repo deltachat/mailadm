@@ -69,10 +69,15 @@ Here is an example systemd example config file:
 creating a temporary account
 +++++++++++++++++++++++++++++++++
 
-::
+from a shell::
+
+   curl -X POST https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3
+
+
+from python::
 
     import requests
     r = requests.post("https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3")
     account = r.json()
-    assert "@" in account["email"]
+    assert "@" in account["email"] and account["email"].startswith("tmp_")
     assert len(account["password"]) > 10
