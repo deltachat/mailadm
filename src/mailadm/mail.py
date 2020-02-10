@@ -139,8 +139,6 @@ class MailController:
             lines.append(line)
 
         p = os.path.join(mc.path_vmaildir, email)
-        if not os.path.exists(p):
-            os.mkdir(p)
         self.log("vmaildir:", p)
         self.log("email:", email)
         self.log("password:", clear_password)
