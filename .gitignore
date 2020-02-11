@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+_build/
+*.swp
+playground/
 
 # C extensions
 *.so
