@@ -37,6 +37,9 @@ class MailConfig:
         assert "prefix" in dic, dic
         self.__dict__.update(dic)
 
+    def get_maxdays(self):
+        return parse_expiry_code(self.expiry) / (24 * 60 * 60)
+
     def make_email_address(self):
         num = random.randint(0, 10000000000000000)
         return "{}{}@{}".format(self.prefix, num, self.domain)

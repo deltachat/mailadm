@@ -54,6 +54,7 @@ def test_email_check(make_ini):
     mc = config.get_mail_config_from_email("tmp_xyz@testrun.org")
     assert mc.name == "burner1"
     assert mc.expiry == "1w"
+    assert mc.get_maxdays() == 7
 
 
 @pytest.mark.parametrize("code,duration", [

@@ -70,9 +70,36 @@ Here is an example systemd example config file:
 creating a temporary account
 +++++++++++++++++++++++++++++++++
 
-from a shell::
+::
+
+   DCACCOUNT:https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3&usermod&maxdays=<NUMDAYS>
+
+   &usermod is present if the server will allow setting a desired username
+   &maxdays indicates the maximum number of days for this account
+
+To get a random e-mail address with a random password you may issue::
 
    curl -X POST https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3
+
+To get a specific e-mail address with a random password you may issue::
+
+   curl -X POST https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3&username=<name>
+
+To get a specific e-mail address with a specific password you may issue::
+
+   curl -X POST https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3&username=<name>&password=<password>
+
+In each case, the server will return :
+
+- 409 status code if the name is already taken.
+
+- 200 status code and json content with these keys::
+
+      email: <final e-mail address>
+      password: <final password>
+      expires: <expiration UTC timestamp in seconds>
+
+is
 
 
 from python::
