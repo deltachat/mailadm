@@ -2,7 +2,7 @@ import pytest
 import random
 import time
 import os
-from mailadm.config import Config
+from mailadm.config import Config, parse_expiry_code
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ def test_add_user_auto_remove(mail_controller_maker, monkeypatch):
     mu.add_email_account("tmp_123@xyz.com", password="123")
 
     # create a current account
-    outdated = time.time() - mu.mail_config.get_expiry_seconds() - 1
+    outdated = time.time() - parse_expiry_code(mu.mail_config.expiry) - 1
     monkeypatch.setattr(time, "time", lambda: outdated)
     mu.add_email_account("tmp_old@xyz.com", password="123")
     monkeypatch.undo()

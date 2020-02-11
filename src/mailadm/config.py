@@ -33,14 +33,9 @@ class Config:
 class MailConfig:
     def __init__(self, name, dic):
         self.name = name
-        assert dic["expiry"] in ["1w", "never"], dic["expiry"]
+        assert "expiry" in dic, dic
         assert "prefix" in dic, dic
         self.__dict__.update(dic)
-
-    def get_expiry_seconds(self):
-        if self.expiry == "never":
-            return None
-        return parse_expiry_code(self.expiry)
 
     def make_email_address(self):
         num = random.randint(0, 10000000000000000)
