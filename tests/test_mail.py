@@ -32,7 +32,7 @@ def test_add_user(mail_controller_maker, capfd):
     assert cap.out.strip().endswith("123")
     assert os.path.exists(mu.mail_config.path_virtual_mailboxes + ".db")
 
-    # the mail controller leaves creation of vmail directories to dovecot (the MDA) 
+    # the mail controller leaves creation of vmail directories to dovecot (the MDA)
     # assert os.path.exists(os.path.join(mu.mail_config.path_vmaildir, email))
 
 
@@ -41,8 +41,8 @@ def test_add_user_auto_remove(mail_controller_maker, monkeypatch):
     mu.add_email_account("tmp_123@xyz.com", password="123")
 
     # create a current account
-    now = time.time()
-    monkeypatch.setattr(time, "time", lambda: 10.0)
+    outdated = time.time() - mu.mail_config.get_expiry_seconds() - 1
+    monkeypatch.setattr(time, "time", lambda: outdated)
     mu.add_email_account("tmp_old@xyz.com", password="123")
     monkeypatch.undo()
     mu.add_email_account("tmp_456@xyz.com", password="123")

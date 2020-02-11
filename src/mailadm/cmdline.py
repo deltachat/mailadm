@@ -16,7 +16,7 @@ import contextlib
 import iniconfig
 
 from .mail import MailController
-from .config import Config
+from .config import Config, parse_expiry_code
 from . import MAILADM_SYSCONFIG_PATH
 
 import click
@@ -35,7 +35,7 @@ option_dryrun = click.option("-n", "--dryrun", is_flag=True,
 def mailadm_main(context, config):
     """e-mail account creation admin tool and web service. """
     if config is None:
-        config = MAILADM_SYSCONFIG_PATH 
+        config = MAILADM_SYSCONFIG_PATH
     context.config_path = config
 
 

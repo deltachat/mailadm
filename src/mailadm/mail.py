@@ -11,6 +11,7 @@ import sys
 import subprocess
 import time
 import contextlib
+from .config import parse_expiry_code
 
 
 class MailController:
@@ -93,7 +94,6 @@ class MailController:
         return to_remove_dirs
 
     def prune_expired_accounts(self, dryrun=False):
-        one_week = datetime.timedelta(weeks=1).total_seconds()
         pruned = []
 
         with self.modify_lines(self.mail_config.path_virtual_mailboxes) as lines:
@@ -106,10 +106,9 @@ class MailController:
                 except ValueError:
                     newlines.append(line)
                     continue
-                if expiry == "1w":
-                    if time.time() - float(timestamp) > one_week:
-                        pruned.append(email)
-                        continue
+                if time.time() - float(timestamp) > parse_expiry_code(expiry):
+                    pruned.append(email)
+                    continue
                 newlines.append(line)
             if not dryrun:
                 lines[:] = newlines
