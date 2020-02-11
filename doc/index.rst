@@ -9,6 +9,10 @@ standard text files.
 On a debian system mailadm can be run as a wsgi server app
 that you can run via systemd (see mailadm.service example).
 
+The development repository is at
+
+    https://github.com/deltachat/mailadm
+
 
 Installing and Configuring the server part
 -------------------------------------------
