@@ -116,12 +116,14 @@ class MailController:
         mc = self.mail_config
         if not email.endswith(mc.domain):
             raise ValueError("email {!r} is not on domain {!r}".format(email, mc.domain))
+
+        now = time.time()
         with self.modify_lines(mc.path_virtual_mailboxes, pm=True) as lines:
             for line in lines:
                 if line.startswith(email):
                     raise ValueError("account {!r} already exists".format(email))
             lines.append("{email} {timestamp} {expiry} {origin}".format(
-                email=email, timestamp=time.time(), expiry=mc.expiry, origin=mc.name
+                email=email, timestamp=now, expiry=mc.expiry, origin=mc.name
             ))
         self.log("added {!r} to {}".format(lines[-1], mc.path_virtual_mailboxes))
 
@@ -142,6 +144,7 @@ class MailController:
         return {
             "email": email,
             "password": clear_password,
+            "expires": now + parse_expiry_code(mc.expiry)
         }
 
     def get_doveadm_pw(self, password=None):

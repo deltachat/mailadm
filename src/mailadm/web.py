@@ -22,6 +22,7 @@ def create_app_from_config(config):
             return "token {} is invalid".format(token), 403
 
         username = request.args.get("username")
+        password = request.args.get("password")
 
         try:
             email = mailconfig.make_email_address(username)
@@ -30,7 +31,7 @@ def create_app_from_config(config):
 
         mc = mailconfig.make_controller()
         try:
-            d = mc.add_email_account(email)
+            d = mc.add_email_account(email, password=password)
         except ValueError as e:
             return str(e), 409
         return jsonify(d)

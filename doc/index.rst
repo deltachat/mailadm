@@ -70,12 +70,12 @@ Here is an example systemd example config file:
 creating a temporary account
 +++++++++++++++++++++++++++++++++
 
-::
+A typical `DCACCOUNT` code specifies the token-configuration in URL format::
 
    DCACCOUNT:https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3&usermod&maxdays=<NUMDAYS>
 
-   &usermod is present if the server will allow setting a desired username
-   &maxdays indicates the maximum number of days for this account
+   &usermod is present if the server will allow setting a username and password
+   &maxdays indicates the number of days after which the account is removed
 
 To get a random e-mail address with a random password you may issue::
 
