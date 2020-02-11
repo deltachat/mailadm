@@ -5,12 +5,12 @@ from mailadm.web import create_app_from_file
 @pytest.fixture(params=["static", "env"])
 def app(request, tmpdir, monkeypatch, make_ini_from_values):
     inipath = make_ini_from_values(
-                name = "test123",
-                token = "123123",
-                prefix = "tmp_",
-                expiry = "1w",
-                domain = "testdomain.org",
-                webdomain = "testdomain.org",
+                name="test123",
+                token="123123",
+                prefix="tmp_",
+                expiry="1w",
+                domain="testdomain.org",
+                webdomain="testdomain.org",
                 path_virtual_mailboxes=tmpdir.ensure("virtualmailboxes").strpath,
                 path_dovecot_users=tmpdir.ensure("dovecot_users").strpath,
                 path_vmaildir=tmpdir.ensure("vmaildir", dir=1).strpath,
@@ -28,5 +28,3 @@ def test_newuser_random(app):
     assert "tmp_" in r.json["email"]
     assert r.json["email"].endswith("@testdomain.org")
     assert r.json["password"]
-
-

@@ -1,9 +1,7 @@
 import pytest
 import random
-import sys
 import time
 import os
-from mailadm.mail import MailController
 from mailadm.config import Config
 
 

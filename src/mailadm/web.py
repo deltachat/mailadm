@@ -1,7 +1,4 @@
-import os
-import pprint
 from flask import Flask, request, jsonify
-from .mail import MailController
 from .config import Config
 
 

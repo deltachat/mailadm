@@ -4,10 +4,8 @@ User object for modifying virtual_mailbox and dovecot-users
 
 from __future__ import print_function
 
-import datetime
 import os
 import base64
-import sys
 import subprocess
 import time
 import contextlib
@@ -113,7 +111,6 @@ class MailController:
             if not dryrun:
                 lines[:] = newlines
         return pruned
-
 
     def add_email_account(self, email, password=None):
         mc = self.mail_config

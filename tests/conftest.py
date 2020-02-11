@@ -39,7 +39,7 @@ class ClickRunner:
         res = self.runner.invoke(self._main, argv, catch_exceptions=False,
                                  input=input)
         if res.exit_code == 0 or (code is not None and res.exit_code != code):
-            print (res.output)
+            print(res.output)
             raise Exception("got exit code {!r}, expected {!r}, output: {}".format(
                 res.exit_code, code, res.output))
         return _perform_match(res.output, fnl)
@@ -68,6 +68,7 @@ def cmd():
 @pytest.fixture
 def make_ini(tmpdir):
     made = []
+
     def make(source):
         p = tmpdir.join("mailadm-{}.ini".format(len(made)))
         p.write(dedent(source))
@@ -75,18 +76,19 @@ def make_ini(tmpdir):
         return p.strpath
     return make
 
+
 @pytest.fixture
 def make_ini_from_values(make_ini, tmpdir):
     def make_ini_from_values(
-        name = "oneweek",
-        token = "1w_Zeeg1RSOK4e3Nh0V",
-        prefix = "",
-        expiry = "1w",
-        domain = "xyz.abc",
-        webdomain = "web.domain",
-        path_dovecot_users = None,
-        path_virtual_mailboxes = None,
-        path_vmaildir = None,
+        name="oneweek",
+        token="1w_Zeeg1RSOK4e3Nh0V",
+        prefix="",
+        expiry="1w",
+        domain="xyz.abc",
+        webdomain="web.domain",
+        path_dovecot_users=None,
+        path_virtual_mailboxes=None,
+        path_vmaildir=None,
     ):
         path = tmpdir.mkdir(name)
         if path_dovecot_users is None:

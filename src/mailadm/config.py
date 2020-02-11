@@ -4,6 +4,7 @@ import sys
 
 # example mailadm.config file, see test_config.py
 
+
 class Config:
     def __init__(self, path):
         self.cfg = iniconfig.IniConfig(path)
@@ -24,7 +25,6 @@ class Config:
                 return mc
 
     def get_token_configs(self):
-        x = 3
         for section in self.cfg:
             if section.name.startswith("token:"):
                 yield MailConfig(section.name[6:], dict(section.items()))
@@ -48,7 +48,7 @@ class MailConfig:
 
     def make_controller(self):
         from .mail import MailController
-        return MailController(mail_config = self)
+        return MailController(mail_config=self)
 
 
 def parse_expiry_code(code):

@@ -1,8 +1,8 @@
-import textwrap
 import pytest
 import sys
 
 from mailadm.config import Config, parse_expiry_code
+
 
 def test_simple(make_ini):
     inipath = make_ini("""
@@ -58,11 +58,11 @@ def test_email_check(make_ini):
 
 @pytest.mark.parametrize("code,duration", [
     ("never", sys.maxsize),
-    ("1w", 7*24*60*60),
-    ("2w", 2*7*24*60*60),
-    ("2d", 2*24*60*60),
-    ("5h", 5*60*60),
-    ("15h", 15*60*60),
+    ("1w", 7 * 24 * 60 * 60),
+    ("2w", 2 * 7 * 24 * 60 * 60),
+    ("2d", 2 * 24 * 60 * 60),
+    ("5h", 5 * 60 * 60),
+    ("15h", 15 * 60 * 60),
     ("0h", 0),
 ])
 def test_parse_expiries(code, duration):
