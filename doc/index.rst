@@ -1,5 +1,5 @@
-mailadm: adding and purging e-mail accounts remote or locally
-=================================================================
+mailadm: adding and purging e-mail accounts as a service
+========================================================
 
 mailadm is a simple administration tool for managing e-mail accounts at
 https://testrun.org. This e-mail server uses Debian9 and a
