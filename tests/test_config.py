@@ -50,6 +50,7 @@ def test_email_check(make_ini):
     mc = config.get_mail_config_from_email("xyz@testrun.org")
     assert mc.name == "burner2"
     assert mc.expiry == "never"
+    assert mc.make_email_address(username="hello") == "hello@testrun.org"
 
     mc = config.get_mail_config_from_email("tmp_xyz@testrun.org")
     assert mc.name == "burner1"

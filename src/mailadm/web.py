@@ -21,7 +21,13 @@ def create_app_from_config(config):
         if mailconfig is None:
             return "token {} is invalid".format(token), 403
 
-        email = mailconfig.make_email_address()
+        username = request.args.get("username")
+
+        try:
+            email = mailconfig.make_email_address(username)
+        except ValueError:
+            return "username can not be set", 403
+
         mc = mailconfig.make_controller()
         try:
             d = mc.add_email_account(email)

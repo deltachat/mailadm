@@ -40,9 +40,14 @@ class MailConfig:
     def get_maxdays(self):
         return parse_expiry_code(self.expiry) / (24 * 60 * 60)
 
-    def make_email_address(self):
-        num = random.randint(0, 10000000000000000)
-        return "{}{}@{}".format(self.prefix, num, self.domain)
+    def make_email_address(self, username=None):
+        if username is None:
+            num = random.randint(0, 10000000000000000)
+            username = "{}{}".format(self.prefix, num)
+        elif self.prefix:
+            raise ValueError("can not set username")
+        assert "@" not in username
+        return "{}@{}".format(username, self.domain)
 
     def make_controller(self):
         from .mail import MailController
