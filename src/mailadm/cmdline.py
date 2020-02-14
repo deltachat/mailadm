@@ -55,7 +55,7 @@ def list_tokens(ctx):
         click.echo(style("token:{}".format(mc.name), fg="green"))
         click.echo("  prefix = {}".format(mc.prefix))
         click.echo("  expiry = {}".format(mc.expiry))
-        click.echo("  add_user_url = https://{webdomain}/new_email?t={token}"
+        click.echo("  DCC_NEW_TMP_EMAIL=https://{webdomain}/new_email?t={token}"
                    .format(webdomain=mc.webdomain, token=mc.token))
         usermod = "&usermod" if not mc.prefix else ""
         maxdays = "&maxdays={}".format(mc.get_maxdays())
