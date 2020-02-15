@@ -1,13 +1,11 @@
 mailadm: adding and purging e-mail accounts as a service
 ========================================================
 
-mailadm is a simple administration tool for managing e-mail accounts at
-https://testrun.org. This e-mail server uses Debian9 and a
-standard dovecot/postfix installation, configured through
-standard text files.
-
-On a debian system mailadm can be run as a wsgi server app
-that you can run via systemd (see mailadm.service example).
+mailadm is a simple administration command lihne tool for creating and
+purging e-mail accounts in Dovecot/Postfix installations that work with
+text files.  Mailadm can be run as a web app that allows remote creation
+of e-mail accounts, based on using secret tokens.  On the server you
+can configure multiple tokens
 
 The development repository is at
 

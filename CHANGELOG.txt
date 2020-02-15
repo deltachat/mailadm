@@ -2,6 +2,16 @@
 next
 -------------
 
+- improved README
+
+- rename subcommand "add-local-user" to "add-user"
+  because virtually all command line options are local-options
+
+- rename subcommand "prune-expired" to "prune"
+  because pruning is about expired accounts
+
+- use setuptools_scm for automatic versioning
+
 
 0.9.0
 ---------------

@@ -2,20 +2,15 @@ import os
 import setuptools
 
 def main():
-    with open(os.path.join("src","mailadm", "__init__.py")) as f:
-        for line in f:
-            if "__version__" in line.strip():
-                version = line.split("=", 1)[1].strip().strip('"')
-                break
-
     with open("README.rst") as f:
         long_desc = f.read()
 
     setuptools.setup(
         name='mailadm',
-        description='testrun.org control program (WIP)',
+        description='mail user creation und purging for simple postfix/dovecot servers',
         long_description = long_desc,
-        version=version,
+        setup_requires=['setuptools_scm'],
+        use_scm_version = True,
         url='https://github.com/deltachat/playground',
         license='GPL',
         platforms=['unix', 'linux'],

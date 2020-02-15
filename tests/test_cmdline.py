@@ -53,22 +53,22 @@ def test_tokens_usermod(cmd, make_ini_from_values):
 
 
 def test_adduser_help(mycmd):
-    mycmd.run_ok(["add-local-user", "-h"], """
+    mycmd.run_ok(["add-user", "-h"], """
         *add*user*
     """)
 
 
 def test_adduser(mycmd):
-    mycmd.run_ok(["add-local-user", "x@xyz.abc"], """
+    mycmd.run_ok(["add-user", "x@xyz.abc"], """
         *added*x@xyz.abc*
     """)
-    mycmd.run_fail(["add-local-user", "x@xyz.abc"], """
+    mycmd.run_fail(["add-user", "x@xyz.abc"], """
         *failed to add*x@xyz.abc*
     """)
 
 
 def test_adduser_and_expire(mycmd, monkeypatch):
-    mycmd.run_ok(["add-local-user", "x@xyz.abc"], """
+    mycmd.run_ok(["add-user", "x@xyz.abc"], """
         *added*x@xyz.abc*
     """)
 
@@ -77,8 +77,8 @@ def test_adduser_and_expire(mycmd, monkeypatch):
     # create an old account that should expire
     with monkeypatch.context() as m:
         m.setattr(time, "time", lambda: to_expire)
-        mycmd.run_ok(["add-local-user", "y@xyz.abc"], """
+        mycmd.run_ok(["add-user", "y@xyz.abc"], """
             *added*y@xyz.abc*
         """)
 
-    mycmd.run_ok(["prune-expired", "-n"])
+    mycmd.run_ok(["prune", "-n"])

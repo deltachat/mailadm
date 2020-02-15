@@ -70,7 +70,7 @@ def list_tokens(ctx):
               help="if not specified, generate a random password")
 @option_dryrun
 @click.pass_context
-def add_local_user(ctx, emailadr, password, dryrun):
+def add_user(ctx, emailadr, password, dryrun):
     """add user to postfix and dovecot configurations
     """
     if "@" not in emailadr:
@@ -87,7 +87,7 @@ def add_local_user(ctx, emailadr, password, dryrun):
 @click.command()
 @option_dryrun
 @click.pass_context
-def prune_expired(ctx, dryrun):
+def prune(ctx, dryrun):
     """prune expired users from postfix and dovecot configurations """
     config = get_mailadm_config(ctx)
     for mc in config.get_token_configs():
@@ -109,8 +109,8 @@ def serve(ctx, debug):
 
 
 mailadm_main.add_command(list_tokens)
-mailadm_main.add_command(add_local_user)
-mailadm_main.add_command(prune_expired)
+mailadm_main.add_command(add_user)
+mailadm_main.add_command(prune)
 mailadm_main.add_command(serve)
 
 
