@@ -12,6 +12,8 @@ next
 
 - use setuptools_scm for automatic versioning
 
+- added circle-ci config for running python tests
+
 
 0.9.0
 ---------------
