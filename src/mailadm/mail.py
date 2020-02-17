@@ -167,10 +167,3 @@ class MailController:
         print("postmap", path)
         if not self.dryrun:
             subprocess.check_call(["/usr/sbin/postmap", path])
-
-    def reload_services(self):
-        if self.dryrun:
-            print("would reload services")
-        else:
-            subprocess.check_call(["/usr/sbin/service", "postfix", "reload"])
-            subprocess.check_call(["/usr/sbin/service", "dovecot", "reload"])
