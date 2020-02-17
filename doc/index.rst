@@ -20,49 +20,104 @@ Assumptions used in this doc:
 - you are using `dovecot` as MDA (mail delivery agent)
   and `postfix` as MTA (mail transport agent).
 
-- `/home/vmail/testrun.org` is the directory where
-  mail directories are created and managed from dovecot.
-
-- `/home/mailadm` is the home directory of the "mailadm" user
-  where the application is installed in the virtualenv environment
-  located at `/home/mailadm/venv`.
-
 - You have Python and virtualenv installed.
 
+- `/home/vmail/testrun.org/` is the base directory where all user mail
+  directories are created by dovecot. This directory is managed by dovecot
+  by the `vmail` user and dirs/files are created by the dovecot service.
 
-mailadm Configuration file
-+++++++++++++++++++++++++++++
-
-Example config:
-
-.. include:: ../example_mailadm.config
-    :literal:
-
+- `/home/mailadm` ("$HOME") is the home directory of the "mailadm" user
+  where mailadm configuration is managed and where mailadm
+  is installed in the virtualenv `/home/mailadm/venv` environment.
 
 
-mailadm http web application
-++++++++++++++++++++++++++++
+installing mailadm
++++++++++++++++++++++++++++++++++
 
-The http interface is a FLASK application that exposes a
-``/new_email?t=<TOKEN>`` http-POST endpoint which creates a new e-mail
-user.  Typically this small web app is run through a `gunicorn
-<https://gunicorn.org/>` invocation like this::
+Create and activate a Python virtualenv and install mailadm::
 
-    gunicorn -b localhost:3961 -w 1 mailadm.app:app
+    # go to mailadm home directory
+    cd ~mailadm
 
-Here is an example systemd example config file:
+    python3 -m venv venv
+    venv/bin/pip install mailadm
 
+    # activate venv, and set mailadm config path on login
+    echo "source venv/bin/activate venv" >> .bashrc
+    echo "export MAILADM_CONFIG=\$HOME/mailadm.config" >> .bashrc
+
+Now do `source $HOME/.bashrc` so you have the new settings.
+
+
+mailadm core configuration file
++++++++++++++++++++++++++++++++++
+
+Example `$HOME/mailadm.config` file which configures one token
+that allows creating e-mail accounts, of the form `tmp.*@testrun.org`::
+
+    # content of $HOME/mailadm.config
+    [token:oneweek]
+    domain = testrun.org
+    webdomain = testrun.org
+    expiry = 1w
+    prefix = tmp.
+    path_dovecot_users= /home/mailadm/dovecot-users
+    path_virtual_mailboxes= /home/mailadm/postfix-users
+    path_vmaildir = /home/mailadm/vmail
+    token = 1w_7wDioPeeXyZx96v3
+
+You should now be able to run a first mailadm subcommand::
+
+    mailadm list-tokens
+
+which should show you::
+
+    token:oneweek
+      prefix = tmp.
+      expiry = 1w
+      DCACCOUNT:https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3
+
+
+mailadm systemd unit file
+++++++++++++++++++++++++++
+
+You may copy this file to a systemd service directory::
+
+    # content of /etc/systemd/system/mailadm.service
     [Unit]
-    Description=Testrun account management administration web API
+    Description=Account management administration web API
     After=network.target
 
     [Service]
-    User=root
+    User=mailadm
+    Environment="MAILADM_CONFIG=/home/mailadm/mailadm.config"
     ExecStart=/home/mailadm/venv/bin/gunicorn -b localhost:3961 -w 1 mailadm.app:app
     Restart=always
 
     [Install]
     WantedBy=multi-user.target
+
+You can then start the web service (on localhost port 3961) like this::
+
+    systemctl enable mailadm
+    systemctl start mailadm
+
+
+nginx configuration
+++++++++++++++++++++++++++++
+
+If your nginx serves a domain you may add this endpoint to its config
+to make mailadm available through the web::
+
+You can configure your nginx site config by including this endpoint::
+
+    # add these lines to your nginx-site config
+    # (/etc/nginx/sites-enabled/XXX)
+    location /new_email {
+        proxy_pass http://localhost:3961/new_email;
+    }
+
+We assume here that the site is exposed as `testrun.org` (see `webdomain` in the `mailadm.config` file)
 
 
 creating a temporary account
