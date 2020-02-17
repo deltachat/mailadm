@@ -1,8 +1,20 @@
+"""
+Parsing the mailadm config file, and making sections available.
+
+for a example mailadm.config file, see test_config.py
+"""
+
 import iniconfig
 import random
 import sys
 
-# example mailadm.config file, see test_config.py
+
+# character set for creating random email accounts
+# we don't use "0o 1l b6" chars to minimize misunderstandings
+# when speaking/hearing/writing/reading the password
+
+TMP_EMAIL_CHARS = "2345789acdefghjkmnpqrstuvwxyz"
+TMP_EMAIL_LEN = 5
 
 
 class Config:
@@ -42,8 +54,10 @@ class MailConfig:
 
     def make_email_address(self, username=None):
         if username is None:
-            num = random.randint(0, 10000000000000000)
-            username = "{}{}".format(self.prefix, num)
+            username = "{}{}".format(
+                self.prefix,
+                "".join(random.choice(TMP_EMAIL_CHARS) for i in range(TMP_EMAIL_LEN))
+            )
         elif self.prefix:
             raise ValueError("can not set username")
         assert "@" not in username
