@@ -12,6 +12,7 @@ import click
 from click import style
 
 from .config import Config
+from .mail import AccountExists
 from . import MAILADM_SYSCONFIG_PATH
 
 
@@ -80,7 +81,7 @@ def add_user(ctx, emailadr, password, dryrun):
     mu = config.get_mail_config_from_email(emailadr).make_controller()
     try:
         mu.add_email_account(email=emailadr, password=password)
-    except ValueError as e:
+    except AccountExists as e:
         ctx.exit("failed to add e-mail account: {}".format(e))
 
 
