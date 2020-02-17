@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from .config import Config
+from .mail import AccountExists
 
 
 def create_app_from_file(config_fn):
@@ -24,16 +25,25 @@ def create_app_from_config(config):
         username = request.args.get("username")
         password = request.args.get("password")
 
-        try:
-            email = mailconfig.make_email_address(username)
-        except ValueError:
-            return "username can not be set", 403
-
         mc = mailconfig.make_controller()
-        try:
-            d = mc.add_email_account(email, password=password)
-        except ValueError as e:
-            return str(e), 409
-        return jsonify(d)
+
+        # we trying multiple times to generate a password
+        # because an account might already be taken
+        repeat = 1 if username else 10
+
+        for i in range(repeat):
+            try:
+                email = mailconfig.make_email_address(username)
+            except ValueError:
+                return "username can not be set", 403
+
+            try:
+                d = mc.add_email_account(email, password=password)
+            except ValueError as e:
+                return str(e), 409
+            except AccountExists:
+                continue
+            return jsonify(d)
+        return "all accounts taken", 410
 
     return app

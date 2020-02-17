@@ -58,6 +58,28 @@ def test_email_check(make_ini):
     assert mc.get_maxdays() == 7
 
 
+def test_email_tmp_gen(make_ini):
+    inipath = make_ini("""
+        [token:burner1]
+        domain = testrun.org
+        prefix = tmp.
+        expiry = 1w
+        path_dovecot_users= /etc/dovecot/users
+        path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
+        path_vmaildir = /home/vmail/testrun.org
+        token = 1w_7wDioPeeXyZx96v3
+    """)
+    config = Config(inipath)
+    mc = config.get_mail_config_from_name("burner1")
+    assert mc.name == "burner1"
+    username = mc.make_email_address().split("@")[0]
+    assert username.startswith("tmp.")
+    username = username[4:]
+    assert len(username) == 5
+    for c in username:
+        assert c in "2345789acdefghjkmnpqrstuvwxyz"
+
+
 @pytest.mark.parametrize("code,duration", [
     ("never", sys.maxsize),
     ("1w", 7 * 24 * 60 * 60),

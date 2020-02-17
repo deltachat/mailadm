@@ -12,6 +12,10 @@ import contextlib
 from .config import parse_expiry_code
 
 
+class AccountExists(Exception):
+    """ Account already exists in user database. """
+
+
 class MailController:
     """ Mail MTA read/write methods for adding/removing users. """
     def __init__(self, mail_config, dryrun=False):
@@ -121,7 +125,7 @@ class MailController:
         with self.modify_lines(mc.path_virtual_mailboxes, pm=True) as lines:
             for line in lines:
                 if line.startswith(email):
-                    raise ValueError("account {!r} already exists".format(email))
+                    raise AccountExists("account {!r} already exists".format(email))
             lines.append("{email} {timestamp} {expiry} {origin}".format(
                 email=email, timestamp=now, expiry=mc.expiry, origin=mc.name
             ))
