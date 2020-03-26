@@ -155,7 +155,7 @@ class MailController:
         if password is None:
             password = self.gen_password()
         hash_pw = subprocess.check_output(
-            ["/usr/bin/doveadm", "pw", "-s", "SHA512-CRYPT", "-p", password])
+            ["doveadm", "pw", "-s", "SHA512-CRYPT", "-p", password])
         return password, hash_pw.decode("ascii").strip()
 
     def gen_password(self):
@@ -166,4 +166,4 @@ class MailController:
     def postmap(self, path):
         print("postmap", path)
         if not self.dryrun:
-            subprocess.check_call(["/usr/sbin/postmap", path])
+            subprocess.check_call(["postmap", path])
