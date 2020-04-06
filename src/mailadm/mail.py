@@ -3,13 +3,13 @@ User object for modifying virtual_mailbox and dovecot-users
 """
 
 from __future__ import print_function
-
-import os
+from .config import parse_expiry_code
 import base64
+import contextlib
+import crypt
+import os
 import subprocess
 import time
-import contextlib
-from .config import parse_expiry_code
 
 
 class AccountExists(Exception):
@@ -55,7 +55,7 @@ class MailController:
         os.rename(tmp_path, path)
 
     def find_email_accounts(self, prefix=None):
-        path = str(self.mail_config.path_virtual_mailboxes)
+        path = str(self.mail_config.path_mailadm_db)
         return [line for line in open(path)
                     if line.strip() and (prefix is None or line.startswith(prefix))]
 
@@ -64,7 +64,7 @@ class MailController:
         these accounts. Note that the returned directories do not neccessarily
         exist as they are only created from the MDA when it delivers mail """
         to_remove = set(map(str.strip, account_lines))
-        with self.modify_lines(self.mail_config.path_virtual_mailboxes, pm=True) as lines:
+        with self.modify_lines(self.mail_config.path_mailadm_db) as lines:
             newlines = []
             for line in lines:
                 if line.strip() in to_remove:
@@ -89,6 +89,16 @@ class MailController:
             self.log(line)
             lines.append(line)
 
+        with self.modify_lines(self.mail_config.path_virtual_mailboxes, pm=True) as lines:
+            newlines = []
+            for line in lines:
+                email = line.split(" ", 1)[0]
+                if email in to_remove_emails:
+                    self.log("removing virtual mailbox:", email)
+                else:
+                    newlines.append(line)
+            lines[:] = newlines
+
         to_remove_dirs = []
         for email in to_remove_vmail:
             path = os.path.join(self.mail_config.path_vmaildir, email)
@@ -98,7 +108,7 @@ class MailController:
     def prune_expired_accounts(self, dryrun=False):
         pruned = []
 
-        with self.modify_lines(self.mail_config.path_virtual_mailboxes) as lines:
+        with self.modify_lines(self.mail_config.path_mailadm_db) as lines:
             newlines = []
             for line in lines:
                 if not line.strip():
@@ -122,23 +132,28 @@ class MailController:
             raise ValueError("email {!r} is not on domain {!r}".format(email, mc.domain))
 
         now = time.time()
-        with self.modify_lines(mc.path_virtual_mailboxes, pm=True) as lines:
+        with self.modify_lines(mc.path_mailadm_db) as lines:
             for line in lines:
                 if line.startswith(email):
                     raise AccountExists("account {!r} already exists".format(email))
             lines.append("{email} {timestamp} {expiry} {origin}".format(
                 email=email, timestamp=now, expiry=mc.expiry, origin=mc.name
             ))
-        self.log("added {!r} to {}".format(lines[-1], mc.path_virtual_mailboxes))
+        self.log("added {!r} to {}".format(lines[-1], mc.path_mailadm_db))
 
         clear_password, hash_pw = self.get_doveadm_pw(password=password)
         with self.modify_lines(mc.path_dovecot_users) as lines:
             for line in lines:
                 assert not line.startswith(email), line
-            line = "{}:{}::::::".format(email, hash_pw)
+            line = f"{email}:{hash_pw}:{mc.dovecot_uid}:{mc.dovecot_gid}::{mc.path_vmaildir}::"
             self.log("adding line to users")
             self.log(line)
             lines.append(line)
+
+        with self.modify_lines(mc.path_virtual_mailboxes, pm=True) as lines:
+            for line in lines:
+                assert not line.startswith(email), line
+            lines.append(f"{email} {email}")
 
         p = os.path.join(mc.path_vmaildir, email)
         self.log("vmaildir:", p)
@@ -154,9 +169,8 @@ class MailController:
     def get_doveadm_pw(self, password=None):
         if password is None:
             password = self.gen_password()
-        hash_pw = subprocess.check_output(
-            ["doveadm", "pw", "-s", "SHA512-CRYPT", "-p", password])
-        return password, hash_pw.decode("ascii").strip()
+        hash_pw = crypt.crypt(password)
+        return password, hash_pw
 
     def gen_password(self):
         with open("/dev/urandom", "rb") as f:
