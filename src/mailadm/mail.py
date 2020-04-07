@@ -39,25 +39,32 @@ class MailController:
             self.log("no changes", path)
             return
         content = "\n".join(lines) + "\n"
-        self.write_fn(path, content)
+        # Write inplace if postmap is used. Postmap is atomic anyway and it
+        # helps us with symlinks.
+        self.write_fn(path, content, inplace=pm)
 
         if pm:
             self.postmap(path)
 
-    def write_fn(self, path, content):
+    def write_fn(self, path, content, *, inplace=False):
         if self.dryrun:
             self.log("would write", path)
             return
-        tmp_path = path + "_tmp"
+        if inplace:
+            tmp_path = path
+        else:
+            tmp_path = path + "_tmp"
         with open(tmp_path, "w") as f:
             f.write(content)
         self.log("writing", path)
-        os.rename(tmp_path, path)
+        if not inplace:
+            os.rename(tmp_path, path)
 
     def find_email_accounts(self, prefix=None):
         path = str(self.mail_config.path_mailadm_db)
         return [line for line in open(path)
-                    if line.strip() and (prefix is None or line.startswith(prefix))]
+                if line.strip() and (
+                    prefix is None or line.startswith(prefix))]
 
     def remove_accounts(self, account_lines):
         """ remove accounts and return directories which were used by
