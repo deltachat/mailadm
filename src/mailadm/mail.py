@@ -7,9 +7,14 @@ from .config import parse_expiry_code
 import base64
 import contextlib
 import crypt
+import fasteners
 import os
 import subprocess
 import time
+
+
+def locked(f):
+    return fasteners.interprocess_locked('.mailadm.lock')(f)
 
 
 class AccountExists(Exception):
@@ -66,6 +71,7 @@ class MailController:
                 if line.strip() and (
                     prefix is None or line.startswith(prefix))]
 
+    @locked
     def remove_accounts(self, account_lines):
         """ remove accounts and return directories which were used by
         these accounts. Note that the returned directories do not neccessarily
@@ -112,6 +118,7 @@ class MailController:
             to_remove_dirs.append((email, path))
         return to_remove_dirs
 
+    @locked
     def prune_expired_accounts(self, dryrun=False):
         pruned = []
 
@@ -133,6 +140,7 @@ class MailController:
                 lines[:] = newlines
         return pruned
 
+    @locked
     def add_email_account(self, email, password=None):
         mc = self.mail_config
         if not email.endswith(mc.domain):

@@ -17,7 +17,7 @@ def main():
         author='holger',
         author_email='holger@merlinux.eu',
         package_dir={'': 'src'},
-        packages = setuptools.find_packages('src'),
+        packages=setuptools.find_packages('src'),
         classifiers=['Development Status :: 4 - Beta',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
@@ -30,7 +30,12 @@ def main():
             [console_scripts]
             mailadm=mailadm.cmdline:mailadm_main
         ''',
-        install_requires = ["flask", "click>=6.0", "iniconfig>=1.0"],
+        install_requires=[
+            "click>=6.0",
+            "fasteners",
+            "flask",
+            "iniconfig>=1.0",
+        ],
         zip_safe=False,
     )
 
