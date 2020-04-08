@@ -160,7 +160,9 @@ class MailController:
         with self.modify_lines(mc.path_dovecot_users) as lines:
             for line in lines:
                 assert not line.startswith(email), line
-            line = f"{email}:{hash_pw}:{mc.dovecot_uid}:{mc.dovecot_gid}::{mc.path_vmaildir}::"
+            line = (
+                "{email}:{hash_pw}:{mc.dovecot_uid}:{mc.dovecot_gid}::"
+                "{mc.path_vmaildir}::".format(**locals()))
             self.log("adding line to users")
             self.log(line)
             lines.append(line)
@@ -168,7 +170,7 @@ class MailController:
         with self.modify_lines(mc.path_virtual_mailboxes, pm=True) as lines:
             for line in lines:
                 assert not line.startswith(email), line
-            lines.append(f"{email} {email}")
+            lines.append("{email} {email}".format(**locals()))
 
         p = os.path.join(mc.path_vmaildir, email)
         self.log("vmaildir:", p)
