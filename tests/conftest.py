@@ -89,6 +89,9 @@ def make_ini_from_values(make_ini, tmpdir):
         path_dovecot_users=None,
         path_virtual_mailboxes=None,
         path_vmaildir=None,
+        path_mailadm_db=None,
+        dovecot_uid=1000,
+        dovecot_gid=2000,
     ):
         path = tmpdir.mkdir(name)
         if path_dovecot_users is None:
@@ -97,6 +100,8 @@ def make_ini_from_values(make_ini, tmpdir):
             path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
         if path_vmaildir is None:
             path_vmaildir = path.ensure("path_vmaildir", dir=1)
+        if path_mailadm_db is None:
+            path_mailadm_db = path.ensure("path_mailadm_db")
 
         return make_ini("""
             [token:{name}]
@@ -104,9 +109,12 @@ def make_ini_from_values(make_ini, tmpdir):
             expiry = {expiry}
             path_virtual_mailboxes = {path_virtual_mailboxes}
             path_dovecot_users = {path_dovecot_users}
+            path_mailadm_db = {path_mailadm_db}
             path_vmaildir = {path_vmaildir}
             webdomain = {webdomain}
             domain = {domain}
             prefix = {prefix}
+            dovecot_uid = {dovecot_uid}
+            dovecot_gid = {dovecot_gid}
         """.format(**locals()))
     return make_ini_from_values
