@@ -43,7 +43,7 @@ Create and activate a Python virtualenv and install mailadm::
     venv/bin/pip install mailadm
 
     # activate venv, and set mailadm config path on login
-    echo "source venv/bin/activate venv" >> .bashrc
+    echo "source ~/venv/bin/activate venv" >> .bashrc
     echo "export MAILADM_CONFIG=\$HOME/mailadm.config" >> .bashrc
 
 Now do `source $HOME/.bashrc` so you have the new settings.
