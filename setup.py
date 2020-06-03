@@ -35,6 +35,8 @@ def main():
             "fasteners",
             "flask",
             "iniconfig>=1.0",
+            "Pillow",
+            "qrcode"
         ],
         zip_safe=False,
     )
