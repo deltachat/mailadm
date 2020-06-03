@@ -37,6 +37,16 @@ def test_tokens(mycmd, make_ini):
     """)
 
 
+def test_gen_qr(mycmd, make_ini, tmpdir, monkeypatch):
+    mycmd.run_ok(["list-tokens"])
+    monkeypatch.chdir(tmpdir)
+    mycmd.run_ok(["gen-qr", "oneweek"], """
+        *dcaccount-xyz.abc-oneweek.png*
+    """)
+    p = tmpdir.join("dcaccount-xyz.abc-oneweek.png")
+    assert p.exists()
+
+
 def test_tokens_usermod(cmd, make_ini_from_values):
     p = make_ini_from_values(
         name="forever",

@@ -16,9 +16,6 @@ from .mail import AccountExists
 from . import MAILADM_SYSCONFIG_PATH
 
 
-DOMAIN = "testrun.org"
-
-
 option_dryrun = click.option(
     "-n", "--dryrun", is_flag=True,
     help="don't change any files, only show what would be changed.")
@@ -66,6 +63,28 @@ def list_tokens(ctx):
 
 
 @click.command()
+@click.argument("token", type=str, required=True)
+@click.pass_context
+def gen_qr(ctx, token):
+    """generate qr code image for a token. """
+    from .gen_qr import gen_qr
+
+    config = get_mailadm_config(ctx)
+    mc = config.get_mail_config_from_name(token)
+
+    usermod = "&usermod" if not mc.prefix else ""
+    url = "DCACCOUNT:https://{webdomain}/new_email?t={token}{usermod}{maxdays}".format(
+            webdomain=mc.webdomain, token=mc.token, usermod=usermod, maxdays=mc.get_maxdays())
+    fn = "dcaccount-{domain}-{name}.png".format(domain=mc.domain, name=mc.name)
+    text = ("Scan with Delta Chat app\n"
+            "@{domain} {expiry} {name}").format(
+            domain=mc.domain, expiry=mc.expiry, name=mc.name)
+    image = gen_qr(url, text)
+    image.save(fn)
+    print("{} written for token '{}'".format(fn, mc.name))
+
+
+@click.command()
 @click.argument("emailadr", type=str, required=True)
 @click.option("--password", type=str, default=None,
               help="if not specified, generate a random password")
@@ -110,6 +129,7 @@ def serve(ctx, debug):
 
 
 mailadm_main.add_command(list_tokens)
+mailadm_main.add_command(gen_qr)
 mailadm_main.add_command(add_user)
 mailadm_main.add_command(prune)
 mailadm_main.add_command(serve)
