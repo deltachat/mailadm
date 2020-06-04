@@ -18,6 +18,7 @@ def main():
         author_email='holger@merlinux.eu',
         package_dir={'': 'src'},
         packages=setuptools.find_packages('src'),
+        package_data={'mailadm': ['data/*']},
         classifiers=['Development Status :: 4 - Beta',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',
@@ -35,6 +36,8 @@ def main():
             "fasteners",
             "flask",
             "iniconfig>=1.0",
+            "pillow",
+            "qrcode"
         ],
         zip_safe=False,
     )
