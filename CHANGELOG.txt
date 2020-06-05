@@ -4,6 +4,8 @@ next
 
 - improved README
 
+- gen-qr subcommand creates a QR code with basic explanation text
+
 - rename subcommand "add-local-user" to "add-user"
   because virtually all command line options are local-options
 
