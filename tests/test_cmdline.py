@@ -10,8 +10,8 @@ def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
         token="1w_Zeeg1RSOK4e3Nh0V",
         prefix="",
         expiry="1w",
-        domain="xyz.abc",
-        webdomain="web.domain",
+        mail_domain="xyz.abc",
+        web_endpoint="https://web.domain",
     )
     if request.param == "file":
         cmd._rootargs.extend(["--config", p])
@@ -32,7 +32,7 @@ def test_help(cmd):
 def test_tokens(mycmd, make_ini):
     mycmd.run_ok(["list-tokens"], """
         *oneweek*
-        *https://web.domain/new_email?t=1w_Zeeg1RSOK4e3Nh0V*
+        *https://web.domain*
         *DCACCOUNT*
     """)
 
@@ -53,12 +53,12 @@ def test_tokens_usermod(cmd, make_ini_from_values):
         token="1w_Zeeg1RSOK4e3Nh0V",
         prefix="",
         expiry="10000d",
-        domain="xyz.abc",
-        webdomain="web.domain",
+        mail_domain="xyz.abc",
+        web_endpoint="https://web.domain",
     )
     cmd._rootargs.extend(["--config", p])
     cmd.run_ok(["list-tokens"], """
-        *DCACCOUNT*usermod&maxdays=10000*
+        *DCACCOUNT*&n=forever
     """)
 
 

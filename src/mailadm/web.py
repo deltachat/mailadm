@@ -12,7 +12,7 @@ def create_app_from_config(config):
     app = Flask("mailadm-account-server")
     app.mailadm_config = config
 
-    @app.route('/new_email', methods=["POST"])
+    @app.route('/', methods=["POST"])
     def new_email():
         token = request.args.get("t")
         if token is None:

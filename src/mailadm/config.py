@@ -33,7 +33,7 @@ class Config:
 
     def get_mail_config_from_email(self, email):
         for mc in self.get_token_configs():
-            if email.endswith("@" + mc.domain) and email.startswith(mc.prefix):
+            if email.endswith("@" + mc.mail_domain) and email.startswith(mc.prefix):
                 return mc
 
     def get_token_configs(self):
@@ -61,11 +61,18 @@ class MailConfig:
         elif self.prefix:
             raise ValueError("can not set username")
         assert "@" not in username
-        return "{}@{}".format(username, self.domain)
+        return "{}@{}".format(username, self.mail_domain)
 
     def make_controller(self):
         from .mail import MailController
         return MailController(mail_config=self)
+
+    def get_web_url(self):
+        return ("{web}?t={token}&n={name}".format(
+                web=self.web_endpoint, token=self.token, name=self.name))
+
+    def get_qr_uri(self):
+        return ("DCACCOUNT:" + self.get_web_url())
 
 
 def parse_expiry_code(code):

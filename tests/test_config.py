@@ -7,7 +7,8 @@ from mailadm.config import Config, parse_expiry_code
 def test_simple(make_ini):
     inipath = make_ini("""
         [token:burner1]
-        domain = testrun.org
+        mail_domain = testrun.org
+        web_endpoint = https://web.domain
         prefix = tmp_
         expiry = 1w
         path_dovecot_users= /etc/dovecot/users
@@ -18,7 +19,7 @@ def test_simple(make_ini):
     config = Config(inipath)
     assert config.get_mail_config_from_token("1qwljkewe") is None
     mc = config.get_mail_config_from_token("1w_7wDioPeeXyZx96v3")
-    assert mc.domain == "testrun.org"
+    assert mc.mail_domain == "testrun.org"
     assert mc.prefix == "tmp_"
     assert mc.path_dovecot_users == "/etc/dovecot/users"
     assert mc.path_virtual_mailboxes == "/etc/postfix/virtual_mailboxes"
@@ -28,7 +29,8 @@ def test_simple(make_ini):
 def test_email_check(make_ini):
     inipath = make_ini("""
         [token:burner1]
-        domain = testrun.org
+        mail_domain = testrun.org
+        web_endpoint = https://web.domain
         prefix = tmp_
         expiry = 1w
         path_dovecot_users= /etc/dovecot/users
@@ -37,7 +39,8 @@ def test_email_check(make_ini):
         token = 1w_7wDioPeeXyZx96v3
 
         [token:burner2]
-        domain = testrun.org
+        mail_domain = testrun.org
+        web_endpoint = https://web.domain
         prefix =
         expiry = never
         path_dovecot_users= /etc/dovecot/users
@@ -61,7 +64,8 @@ def test_email_check(make_ini):
 def test_email_tmp_gen(make_ini):
     inipath = make_ini("""
         [token:burner1]
-        domain = testrun.org
+        mail_domain = testrun.org
+        web_endpoint = https://testrun.org
         prefix = tmp.
         expiry = 1w
         path_dovecot_users= /etc/dovecot/users
