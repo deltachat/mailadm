@@ -143,8 +143,8 @@ class MailController:
     @locked
     def add_email_account(self, email, password=None):
         mc = self.mail_config
-        if not email.endswith(mc.domain):
-            raise ValueError("email {!r} is not on domain {!r}".format(email, mc.domain))
+        if not email.endswith(mc.mail_domain):
+            raise ValueError("email {!r} is not on domain {!r}".format(email, mc.mail_domain))
 
         now = time.time()
         with self.modify_lines(mc.path_mailadm_db) as lines:
