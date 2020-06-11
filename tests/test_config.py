@@ -4,23 +4,25 @@ import sys
 from mailadm.config import Config, parse_expiry_code
 
 
-def test_sysconfigsimple(make_ini):
+def test_sysconfigsimple(make_ini, tmp_path):
+    dbpath = tmp_path.joinpath("db")
+
     inipath = make_ini("""
         [sysconfig]
         mail_domain = testrun.org
         web_endpoint = https://web.domain
-        path_mailadm_db= /home/mailadm/mailadm.db
+        path_mailadm_db= {}
         path_dovecot_users= /etc/dovecot/users
         path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
         path_vmaildir = /home/vmail/testrun.org
-    """, autosysconfig=False)
+    """.format(dbpath))
     config = Config(inipath)
     sysconfig = config.sysconfig
     assert sysconfig.mail_domain == "testrun.org"
     assert sysconfig.path_dovecot_users == "/etc/dovecot/users"
     assert sysconfig.path_virtual_mailboxes == "/etc/postfix/virtual_mailboxes"
     assert sysconfig.path_vmaildir == "/home/vmail/testrun.org"
-    assert sysconfig.path_mailadm_db == "/home/mailadm/mailadm.db"
+    assert sysconfig.path_mailadm_db == str(dbpath)
 
 
 def test_email_check(make_ini):

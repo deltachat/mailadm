@@ -14,7 +14,7 @@ def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
     if request.param == "file":
         cmd._rootargs.extend(["--config", p])
     elif request.param == "env":
-        monkeypatch.setenv("MAILADM_CONFIG", p)
+        monkeypatch.setenv("MAILADM_CONFIG", str(p))
     else:
         assert 0
 

@@ -4,9 +4,14 @@ Parsing the mailadm config file, and making sections available.
 for a example mailadm.config file, see test_config.py
 """
 
+import pathlib
+
 import iniconfig
 import random
 import sys
+
+
+from .db import Storage
 
 
 sysconfig_names = (
@@ -37,6 +42,8 @@ class Config:
         self.path = path
         self.cfg = iniconfig.IniConfig(path)
         self.sysconfig = self._parse_sysconfig()
+        dbpath = pathlib.Path(self.sysconfig.path_mailadm_db)
+        self.conn = Storage(dbpath).get_connection()
 
     def get_token_config_from_name(self, name):
         for mc in self.get_token_configs():

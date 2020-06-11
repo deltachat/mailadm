@@ -4,12 +4,12 @@ import pytest
 
 @pytest.fixture
 def inipath(tmpdir, make_ini_from_values):
-    return make_ini_from_values(
+    return str(make_ini_from_values(
         name="test123",
         token="123123",
         prefix="tmp_",
         expiry="1w",
-    )
+    ))
 
 
 def test_no_config(monkeypatch):

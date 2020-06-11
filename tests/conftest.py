@@ -66,27 +66,28 @@ def cmd():
 
 
 @pytest.fixture
-def make_ini(tmpdir):
+def make_ini(tmp_path):
     made = []
 
-    def make(source, autosysconfig=True):
-        p = tmpdir.join("mailadm-{}.ini".format(len(made)))
+    def make(source):
+        p = tmp_path.joinpath("mailadm-{}.ini".format(len(made)))
         data = dedent(source)
-        if autosysconfig:
+        if "[sysconfig]" not in data:
+            dbpath = tmp_path.joinpath("mailadm.db")
             data += "\n" + dedent("""
                 [sysconfig]
                 mail_domain = testrun.org
                 web_endpoint = https://testrun.org
-                path_mailadm_db= /etc/dovecot/mailadmdb
+                path_mailadm_db= {dbpath}
                 path_dovecot_users= /etc/dovecot/users
                 path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
                 path_vmaildir = /home/vmail/testrun.org
                 dovecot_uid = 1000
                 dovecot_gid = 1000
-            """)
-        p.write(data)
+            """.format(dbpath=dbpath))
+        p.write_text(data)
         made.append(p)
-        return p.strpath
+        return p
     return make
 
 
@@ -120,5 +121,5 @@ def make_ini_from_values(make_ini, tmpdir):
             token = {token}
             expiry = {expiry}
             prefix = {prefix}
-        """.format(**locals()), autosysconfig=False)
+        """.format(**locals()))
     return make_ini_from_values
