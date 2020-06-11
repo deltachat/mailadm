@@ -18,7 +18,7 @@ def create_app_from_config(config):
         if token is None:
             return "?t (token) parameter not specified", 403
 
-        mailconfig = config.get_mail_config_from_token(token)
+        mailconfig = config.get_token_config_from_token(token)
         if mailconfig is None:
             return "token {} is invalid".format(token), 403
 

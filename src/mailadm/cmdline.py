@@ -65,7 +65,7 @@ def gen_qr(ctx, token):
     from .gen_qr import gen_qr
 
     config = get_mailadm_config(ctx)
-    mc = config.get_mail_config_from_name(token)
+    mc = config.get_token_config_from_name(token)
 
     text = ("Scan with Delta Chat app\n"
             "@{domain} {expiry} {name}").format(
@@ -89,7 +89,7 @@ def add_user(ctx, emailadr, password, dryrun):
         ctx.exit("invalid email address: {}".format(emailadr))
 
     config = get_mailadm_config(ctx)
-    mu = config.get_mail_config_from_email(emailadr).make_controller()
+    mu = config.get_token_config_from_email(emailadr).make_controller()
     try:
         mu.add_email_account(email=emailadr, password=password)
     except AccountExists as e:

@@ -21,17 +21,17 @@ class Config:
     def __init__(self, path):
         self.cfg = iniconfig.IniConfig(path)
 
-    def get_mail_config_from_name(self, name):
+    def get_token_config_from_name(self, name):
         for mc in self.get_token_configs():
             if mc.name == name:
                 return mc
 
-    def get_mail_config_from_token(self, token):
+    def get_token_config_from_token(self, token):
         for mc in self.get_token_configs():
             if mc.token == token:
                 return mc
 
-    def get_mail_config_from_email(self, email):
+    def get_token_config_from_email(self, email):
         for mc in self.get_token_configs():
             if email.endswith("@" + mc.mail_domain) and email.startswith(mc.prefix):
                 return mc
@@ -39,10 +39,10 @@ class Config:
     def get_token_configs(self):
         for section in self.cfg:
             if section.name.startswith("token:"):
-                yield MailConfig(section.name[6:], dict(section.items()))
+                yield TokenConfig(section.name[6:], dict(section.items()))
 
 
-class MailConfig:
+class TokenConfig:
     def __init__(self, name, dic):
         self.name = name
         assert "expiry" in dic, dic

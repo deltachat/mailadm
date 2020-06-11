@@ -17,8 +17,8 @@ def test_simple(make_ini):
         token = 1w_7wDioPeeXyZx96v3
     """)
     config = Config(inipath)
-    assert config.get_mail_config_from_token("1qwljkewe") is None
-    mc = config.get_mail_config_from_token("1w_7wDioPeeXyZx96v3")
+    assert config.get_token_config_from_token("1qwljkewe") is None
+    mc = config.get_token_config_from_token("1w_7wDioPeeXyZx96v3")
     assert mc.mail_domain == "testrun.org"
     assert mc.prefix == "tmp_"
     assert mc.path_dovecot_users == "/etc/dovecot/users"
@@ -49,13 +49,13 @@ def test_email_check(make_ini):
         token = 1w_7wDioPeeXyZx96v3
     """)
     config = Config(inipath)
-    assert config.get_mail_config_from_email("xyz@testrun.o123") is None
-    mc = config.get_mail_config_from_email("xyz@testrun.org")
+    assert config.get_token_config_from_email("xyz@testrun.o123") is None
+    mc = config.get_token_config_from_email("xyz@testrun.org")
     assert mc.name == "burner2"
     assert mc.expiry == "never"
     assert mc.make_email_address(username="hello") == "hello@testrun.org"
 
-    mc = config.get_mail_config_from_email("tmp_xyz@testrun.org")
+    mc = config.get_token_config_from_email("tmp_xyz@testrun.org")
     assert mc.name == "burner1"
     assert mc.expiry == "1w"
     assert mc.get_maxdays() == 7
@@ -74,7 +74,7 @@ def test_email_tmp_gen(make_ini):
         token = 1w_7wDioPeeXyZx96v3
     """)
     config = Config(inipath)
-    mc = config.get_mail_config_from_name("burner1")
+    mc = config.get_token_config_from_name("burner1")
     assert mc.name == "burner1"
     username = mc.make_email_address().split("@")[0]
     assert username.startswith("tmp.")

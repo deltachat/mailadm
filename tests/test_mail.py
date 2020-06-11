@@ -10,7 +10,7 @@ def mail_controller_maker(make_ini_from_values):
     def make_mail_controller(name="test", mail_domain="testrun.org", expiry="never", dryrun=False):
         inipath = make_ini_from_values(name=name, expiry=expiry, mail_domain=mail_domain)
         config = Config(inipath)
-        mail_config = config.get_mail_config_from_name(name)
+        mail_config = config.get_token_config_from_name(name)
         return mail_config.make_controller()
 
     return make_mail_controller
