@@ -35,16 +35,22 @@ class TestTokenAccounts:
         conn.commit()
         return conn
 
+    def test_add_with_wrong_token(self, conn):
+        now = 10000
+        addr = "tmp.123@testrun.org"
+        with pytest.raises(ValueError):
+            conn.add_user(addr=addr, date=now, expiry=60 * 60, token_name="112l3kj123123")
+
     def test_add_expire_del(self, conn):
         now = 10000
         addr = "tmp.123@testrun.org"
         addr2 = "tmp.456@testrun.org"
         addr3 = "tmp.789@testrun.org"
-        conn.add_user(addr=addr, date=now, expiry=60 * 60, token="123456789012345")
+        conn.add_user(addr=addr, date=now, expiry=60 * 60, token_name="onehour")
         with pytest.raises(ValueError):
-            conn.add_user(addr=addr, date=now, expiry=60 * 60, token="123456789012345")
-        conn.add_user(addr=addr2, date=now, expiry=30 * 60, token="123456789012345")
-        conn.add_user(addr=addr3, date=now, expiry=32 * 60, token="123456789012345")
+            conn.add_user(addr=addr, date=now, expiry=60 * 60, token_name="onehour")
+        conn.add_user(addr=addr2, date=now, expiry=30 * 60, token_name="onehour")
+        conn.add_user(addr=addr3, date=now, expiry=32 * 60, token_name="onehour")
         conn.commit()
         expired = conn.get_expired_users(sysdate=now + 31 * 60)
         assert len(expired) == 1
@@ -56,3 +62,4 @@ class TestTokenAccounts:
         assert conn.get_user_list() == [addr, addr3]
         with pytest.raises(ValueError):
             conn.delete_user(addr2)
+        assert conn.get_tokeninfo_by_name("onehour").usecount == 3

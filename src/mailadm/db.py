@@ -36,12 +36,15 @@ class Connection:
         res = self._sqlconn.execute(q, (token,)).fetchone()
         return TokenInfo(*res)
 
-    def add_user(self, addr, date, expiry, token):
+    def add_user(self, addr, date, expiry, token_name):
+        self._sqlconn.execute("PRAGMA foreign_keys=on;")
         q = "INSERT INTO mailusers (addr, date, expiry, token_name) VALUES (?, ?, ?, ?)"
         try:
-            self._sqlconn.execute(q, (addr, date, expiry, token))
+            self._sqlconn.execute(q, (addr, date, expiry, token_name))
         except sqlite3.IntegrityError as e:
             raise ValueError("failed to add addr {!r}: {}".format(addr, e))
+        self._sqlconn.execute("UPDATE tokens SET usecount = usecount + 1"
+                              "  WHERE name=?", (token_name,))
 
     def get_expired_users(self, sysdate):
         q = "SELECT addr FROM mailusers WHERE (date + expiry) < ?;"
@@ -57,13 +60,6 @@ class Connection:
         c.execute(q, (addr, ))
         if c.rowcount == 0:
             raise ValueError("user {!r} does not exist".format(addr))
-
-
-def dict_factory(cursor, row):
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
 
 
 class Storage:
