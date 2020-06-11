@@ -9,6 +9,17 @@ import random
 import sys
 
 
+sysconfig_names = (
+    "path_mailadm_db",         # path to mailadm database (source of truth)
+    "mail_domain",             # on which mail addresses are created
+    "web_endpoint",            # how the web endpoint is externally visible
+    "path_dovecot_users",      # path to dovecot users file
+    "path_virtual_mailboxes",  # postfix virtual mailbox alias file
+    "path_vmaildir",           # where dovecot virtual mail directory resides
+    "dovecot_uid",             # uid of the dovecot process
+    "dovecot_gid",             # gid of the dovecot process
+)
+
 # character set for creating random email accounts
 # we don't use "0o 1l b6" chars to minimize misunderstandings
 # when speaking/hearing/writing/reading the password
@@ -80,22 +91,17 @@ class Config:
             self._bailout("no 'sysconfig' section")
         try:
             return SysConfig(**dict(data))
-        except TypeError as err:
-            self._bailout("invalid sysconfig: {}".format(err))
+        except ValueError as e:
+            name = e.args[0]
+            self._bailout("invalid sysconfig key: {!r}".format(name))
 
 
 class SysConfig:
-    def __init__(self,
-            path_mailadm_db,         # path to mailadm database (source of truth)
-            mail_domain,             # on which mail addresses are created
-            web_endpoint,            # how the web endpoint is externally visible
-            path_dovecot_users,      # path to dovecot users file
-            path_virtual_mailboxes,  # postfix virtual mailbox alias file
-            path_vmaildir,           # where dovecot virtual mail directory resides
-            dovecot_uid=1000,        # uid of the dovecot process
-            dovecot_gid=1000,):      # gid of the dovecot process
-        self.__dict__.update(locals())
-        del self.self
+    def __init__(self, **kw):
+        for name, val in kw.items():
+            if name not in sysconfig_names:
+                raise ValueError(name)
+            setattr(self, name, str(val))
 
 
 class TokenConfig:
