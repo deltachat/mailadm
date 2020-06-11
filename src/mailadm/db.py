@@ -27,34 +27,36 @@ class Connection:
         self._sqlconn.execute(q, (name, token, prefix, expiry))
 
     def get_tokeninfo_by_name(self, name):
-        q = ("SELECT token, prefix, expiry, usecount from tokens"
-             "    WHERE name = ?")
+        q = TokenInfo._select_token_columns + "WHERE name = ?"
         res = self._sqlconn.execute(q, (name,)).fetchone()
-        return TokenInfo(name=name, **res)
+        return TokenInfo(*res)
 
     def get_tokeninfo_by_token(self, token):
-        q = ("SELECT name, token, prefix, expiry, usecount from tokens"
-             "    WHERE token = ?")
+        q = TokenInfo._select_token_columns + "WHERE token=?"
         res = self._sqlconn.execute(q, (token,)).fetchone()
-        return TokenInfo(**res)
+        return TokenInfo(*res)
 
     def add_user(self, addr, date, expiry, token):
         q = "INSERT INTO mailusers (addr, date, expiry, token_name) VALUES (?, ?, ?, ?)"
-        self._sqlconn.execute(q, (addr, date, expiry, token))
+        try:
+            self._sqlconn.execute(q, (addr, date, expiry, token))
+        except sqlite3.IntegrityError as e:
+            raise ValueError("failed to add addr {!r}: {}".format(addr, e))
 
     def get_expired_users(self, sysdate):
         q = "SELECT addr FROM mailusers WHERE (date + expiry) < ?;"
-        res = [x["addr"] for x in self._sqlconn.execute(q, (sysdate, )).fetchall()]
-        return res
+        return [x[0] for x in self._sqlconn.execute(q, (sysdate, )).fetchall()]
 
     def get_user_list(self):
         q = "SELECT addr FROM mailusers"
-        res = [x["addr"] for x in self._sqlconn.execute(q).fetchall()]
-        return res
+        return [x[0] for x in self._sqlconn.execute(q).fetchall()]
 
     def delete_user(self, addr):
         q = "DELETE FROM mailusers WHERE addr=?"
-        self._sqlconn.execute(q, (addr, ))
+        c = self._sqlconn.cursor()
+        c.execute(q, (addr, ))
+        if c.rowcount == 0:
+            raise ValueError("user {!r} does not exist".format(addr))
 
 
 def dict_factory(cursor, row):
@@ -98,7 +100,6 @@ class Storage:
                         # if it takes this long, something is wrong
                         raise
         conn = self.Connection(sqlconn, self.sqlpath)
-        sqlconn.row_factory = dict_factory
         if closing:
             conn = contextlib.closing(conn)
         return conn
@@ -124,13 +125,15 @@ class Storage:
                     date INTEGER,
                     expiry INTEGER,
                     token_name TEXT NOT NULL,
-                	FOREIGN KEY (token_name) REFERENCES tokens (name)
+                    FOREIGN KEY (token_name) REFERENCES tokens (name)
                 )
             """)
             conn.commit()
 
 
 class TokenInfo:
+    _select_token_columns = "SELECT name, token, expiry, prefix, usecount from tokens\n"
+
     def __init__(self, name, token, expiry, prefix, usecount):
         self.name = name
         self.token = token

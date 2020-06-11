@@ -39,13 +39,20 @@ class TestTokenAccounts:
         now = 10000
         addr = "tmp.123@testrun.org"
         addr2 = "tmp.456@testrun.org"
-        conn.add_user(addr=addr, date=now, expiry=60*60, token="123456789012345")
-        conn.add_user(addr=addr2, date=now, expiry=30*60, token="123456789012345")
+        addr3 = "tmp.789@testrun.org"
+        conn.add_user(addr=addr, date=now, expiry=60 * 60, token="123456789012345")
+        with pytest.raises(ValueError):
+            conn.add_user(addr=addr, date=now, expiry=60 * 60, token="123456789012345")
+        conn.add_user(addr=addr2, date=now, expiry=30 * 60, token="123456789012345")
+        conn.add_user(addr=addr3, date=now, expiry=32 * 60, token="123456789012345")
         conn.commit()
-        expired = conn.get_expired_users(sysdate=now+31*60)
+        expired = conn.get_expired_users(sysdate=now + 31 * 60)
         assert len(expired) == 1
         assert expired == [addr2]
 
-        assert conn.get_user_list() == [addr, addr2]
+        assert conn.get_user_list() == [addr, addr2, addr3]
         conn.delete_user(addr2)
-        assert conn.get_user_list() == [addr]
+        conn.commit()
+        assert conn.get_user_list() == [addr, addr3]
+        with pytest.raises(ValueError):
+            conn.delete_user(addr2)
