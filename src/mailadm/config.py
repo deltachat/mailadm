@@ -122,7 +122,7 @@ class TokenConfig:
 
     def make_controller(self):
         from .mailctl import MailController
-        return MailController(mail_config=self)
+        return MailController(token_config=self)
 
     def get_web_url(self):
         return ("{web}?t={token}&n={name}".format(

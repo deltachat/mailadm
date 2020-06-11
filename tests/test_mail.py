@@ -10,8 +10,8 @@ def mail_controller_maker(make_ini_from_values):
     def make_mail_controller(name="test", mail_domain="testrun.org", expiry="never", dryrun=False):
         inipath = make_ini_from_values(name=name, expiry=expiry, mail_domain=mail_domain)
         config = Config(inipath)
-        mail_config = config.get_token_config_from_name(name)
-        return mail_config.make_controller()
+        token_config = config.get_token_config_from_name(name)
+        return token_config.make_controller()
 
     return make_mail_controller
 
@@ -28,10 +28,10 @@ def test_add_user(mail_controller_maker, capfd):
     cap = capfd.readouterr()
     print(cap.out)
     assert cap.out.strip().endswith("123")
-    assert os.path.exists(mu.mail_config.sysconfig.path_virtual_mailboxes + ".db")
+    assert os.path.exists(mu.token_config.sysconfig.path_virtual_mailboxes + ".db")
 
     # the mail controller leaves creation of vmail directories to dovecot (the MDA)
-    # assert os.path.exists(os.path.join(mu.mail_config.path_vmaildir, email))
+    # assert os.path.exists(os.path.join(mu.token_config.path_vmaildir, email))
 
 
 def test_add_user_auto_remove(mail_controller_maker, monkeypatch):
@@ -39,7 +39,7 @@ def test_add_user_auto_remove(mail_controller_maker, monkeypatch):
     mu.add_email_account("tmp_123@xyz.com", password="123")
 
     # create a current account
-    outdated = time.time() - parse_expiry_code(mu.mail_config.expiry) - 1
+    outdated = time.time() - parse_expiry_code(mu.token_config.expiry) - 1
     monkeypatch.setattr(time, "time", lambda: outdated)
     mu.add_email_account("tmp_old@xyz.com", password="123")
     monkeypatch.undo()
@@ -68,7 +68,7 @@ def test_remove_user(mail_controller_maker, capfd):
     cap = capfd.readouterr()
     print(cap.out)
     assert cap.out.strip().endswith("123")
-    assert os.path.exists(mu.mail_config.sysconfig.path_virtual_mailboxes + ".db")
+    assert os.path.exists(mu.token_config.sysconfig.path_virtual_mailboxes + ".db")
 
     email2 = "tmp_{}@xyz.com".format(random.randint(0, 1023123123123))
     mu.add_email_account(email2, password="456")

@@ -23,8 +23,8 @@ class AccountExists(Exception):
 
 class MailController:
     """ Mail MTA read/write methods for adding/removing users. """
-    def __init__(self, mail_config, dryrun=False):
-        self.mail_config = mail_config
+    def __init__(self, token_config, dryrun=False):
+        self.token_config = token_config
         self.dryrun = dryrun
 
     def log(self, *args):
@@ -66,7 +66,7 @@ class MailController:
             os.rename(tmp_path, path)
 
     def find_email_accounts(self, prefix=None):
-        path = str(self.mail_config.sysconfig.path_mailadm_db)
+        path = str(self.token_config.sysconfig.path_mailadm_db)
         return [line for line in open(path)
                 if line.strip() and (
                     prefix is None or line.startswith(prefix))]
@@ -76,8 +76,11 @@ class MailController:
         """ remove accounts and return directories which were used by
         these accounts. Note that the returned directories do not neccessarily
         exist as they are only created from the MDA when it delivers mail """
+
+        sysconfig = self.token_config.sysconfig
+
         to_remove = set(map(str.strip, account_lines))
-        with self.modify_lines(self.mail_config.sysconfig.path_mailadm_db) as lines:
+        with self.modify_lines(sysconfig.path_mailadm_db) as lines:
             newlines = []
             for line in lines:
                 if line.strip() in to_remove:
@@ -89,7 +92,7 @@ class MailController:
         to_remove_emails = set(x.split()[0] for x in to_remove)
 
         to_remove_vmail = []
-        with self.modify_lines(self.mail_config.sysconfig.path_dovecot_users) as lines:
+        with self.modify_lines(sysconfig.path_dovecot_users) as lines:
             newlines = []
             for line in lines:
                 email = line.split(":", 1)[0]
@@ -102,7 +105,7 @@ class MailController:
             self.log(line)
             lines.append(line)
 
-        with self.modify_lines(self.mail_config.sysconfig.path_virtual_mailboxes, pm=True) as lines:
+        with self.modify_lines(sysconfig.path_virtual_mailboxes, pm=True) as lines:
             newlines = []
             for line in lines:
                 email = line.split(" ", 1)[0]
@@ -114,7 +117,7 @@ class MailController:
 
         to_remove_dirs = []
         for email in to_remove_vmail:
-            path = os.path.join(self.mail_config.sysconfig.path_vmaildir, email)
+            path = os.path.join(sysconfig.path_vmaildir, email)
             to_remove_dirs.append((email, path))
         return to_remove_dirs
 
@@ -122,7 +125,7 @@ class MailController:
     def prune_expired_accounts(self, dryrun=False):
         pruned = []
 
-        with self.modify_lines(self.mail_config.sysconfig.path_mailadm_db) as lines:
+        with self.modify_lines(self.token_config.sysconfig.path_mailadm_db) as lines:
             newlines = []
             for line in lines:
                 if not line.strip():
@@ -142,7 +145,7 @@ class MailController:
 
     @locked
     def add_email_account(self, email, password=None):
-        mc = self.mail_config
+        mc = self.token_config
         mail_domain = mc.sysconfig.mail_domain
 
         if not email.endswith(mc.sysconfig.mail_domain):
