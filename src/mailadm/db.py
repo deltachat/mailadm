@@ -17,16 +17,6 @@ class Connection:
     def rollback(self):
         self._sqlconn.rollback()
 
-    def get_sysconfig(self):
-        from mailadm.config import SysConfig
-
-        q = "SELECT * from sysconfig"
-        c = self._sqlconn.cursor()
-        d = {}
-        for row in c.execute(q).fetchall():
-            d[row["name"]] = row["value"]
-        return SysConfig(**d)
-
     def get_token_list(self):
         q = "SELECT name from tokens"
         c = self._sqlconn.cursor()
@@ -48,6 +38,24 @@ class Connection:
         res = self._sqlconn.execute(q, (token,)).fetchone()
         return TokenInfo(**res)
 
+    def add_user(self, addr, date, expiry, token):
+        q = "INSERT INTO mailusers (addr, date, expiry, token_name) VALUES (?, ?, ?, ?)"
+        self._sqlconn.execute(q, (addr, date, expiry, token))
+
+    def get_expired_users(self, sysdate):
+        q = "SELECT addr FROM mailusers WHERE (date + expiry) < ?;"
+        res = [x["addr"] for x in self._sqlconn.execute(q, (sysdate, )).fetchall()]
+        return res
+
+    def get_user_list(self):
+        q = "SELECT addr FROM mailusers"
+        res = [x["addr"] for x in self._sqlconn.execute(q).fetchall()]
+        return res
+
+    def delete_user(self, addr):
+        q = "DELETE FROM mailusers WHERE addr=?"
+        self._sqlconn.execute(q, (addr, ))
+
 
 def dict_factory(cursor, row):
     d = {}
@@ -67,7 +75,7 @@ class Storage:
         return sqlite3.connect(
             uri, timeout=60, isolation_level=None, uri=True)
 
-    def get_connection(self, closing=True, write=False):
+    def get_connection(self, write=False, closing=False):
         # we let the database serialize all writers at connection time
         # to play it very safe (we don't have massive amounts of writes).
         mode = "ro"
@@ -92,13 +100,13 @@ class Storage:
         conn = self.Connection(sqlconn, self.sqlpath)
         sqlconn.row_factory = dict_factory
         if closing:
-            return contextlib.closing(conn)
+            conn = contextlib.closing(conn)
         return conn
 
     def ensure_tables_exist(self):
         if self.sqlpath.exists():
             return
-        with self.get_connection(write=True) as conn:
+        with contextlib.closing(self.get_connection(write=True)) as conn:
             print("DB: Creating schema", self.sqlpath)
             c = conn._sqlconn.cursor()
             c.execute("""
@@ -111,9 +119,12 @@ class Storage:
                 )
             """)
             c.execute("""
-                CREATE TABLE sysconfig (
-                    name TEXT PRIMARY KEY,
-                    value TEXT NOT NULL
+                CREATE TABLE mailusers (
+                    addr TEXT PRIMARY KEY,
+                    date INTEGER,
+                    expiry INTEGER,
+                    token_name TEXT NOT NULL,
+                	FOREIGN KEY (token_name) REFERENCES tokens (name)
                 )
             """)
             conn.commit()
