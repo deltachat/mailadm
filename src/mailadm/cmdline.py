@@ -65,15 +65,15 @@ def gen_qr(ctx, token):
     from .gen_qr import gen_qr
 
     config = get_mailadm_config(ctx)
-    mc = config.get_token_config_from_name(token)
+    tc = config.get_token_config_from_name(token)
 
     text = ("Scan with Delta Chat app\n"
             "@{domain} {expiry} {name}").format(
-            domain=mc.mail_domain, expiry=mc.expiry, name=mc.name)
-    image = gen_qr(mc.get_qr_uri(), text)
-    fn = "dcaccount-{domain}-{name}.png".format(domain=mc.mail_domain, name=mc.name)
+            domain=config.sysconfig.mail_domain, expiry=tc.expiry, name=tc.name)
+    image = gen_qr(tc.get_qr_uri(), text)
+    fn = "dcaccount-{domain}-{name}.png".format(domain=config.sysconfig.mail_domain, name=tc.name)
     image.save(fn)
-    print("{} written for token '{}'".format(fn, mc.name))
+    print("{} written for token '{}'".format(fn, tc.name))
 
 
 @click.command()

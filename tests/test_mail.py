@@ -28,7 +28,7 @@ def test_add_user(mail_controller_maker, capfd):
     cap = capfd.readouterr()
     print(cap.out)
     assert cap.out.strip().endswith("123")
-    assert os.path.exists(mu.mail_config.path_virtual_mailboxes + ".db")
+    assert os.path.exists(mu.mail_config.sysconfig.path_virtual_mailboxes + ".db")
 
     # the mail controller leaves creation of vmail directories to dovecot (the MDA)
     # assert os.path.exists(os.path.join(mu.mail_config.path_vmaildir, email))
@@ -68,7 +68,7 @@ def test_remove_user(mail_controller_maker, capfd):
     cap = capfd.readouterr()
     print(cap.out)
     assert cap.out.strip().endswith("123")
-    assert os.path.exists(mu.mail_config.path_virtual_mailboxes + ".db")
+    assert os.path.exists(mu.mail_config.sysconfig.path_virtual_mailboxes + ".db")
 
     email2 = "tmp_{}@xyz.com".format(random.randint(0, 1023123123123))
     mu.add_email_account(email2, password="456")

@@ -7,46 +7,47 @@ from mailadm.config import Config, parse_expiry_code
 def test_simple(make_ini):
     inipath = make_ini("""
         [token:burner1]
-        mail_domain = testrun.org
-        web_endpoint = https://web.domain
         prefix = tmp_
         expiry = 1w
+        token = 1w_7wDioPeeXyZx96v3
+
+        [sysconfig]
+        mail_domain = testrun.org
+        web_endpoint = https://web.domain
+        path_mailadm_db= /etc/dovecot/mailadmdb
         path_dovecot_users= /etc/dovecot/users
         path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
         path_vmaildir = /home/vmail/testrun.org
-        token = 1w_7wDioPeeXyZx96v3
     """)
     config = Config(inipath)
     assert config.get_token_config_from_token("1qwljkewe") is None
     mc = config.get_token_config_from_token("1w_7wDioPeeXyZx96v3")
-    assert mc.mail_domain == "testrun.org"
     assert mc.prefix == "tmp_"
-    assert mc.path_dovecot_users == "/etc/dovecot/users"
-    assert mc.path_virtual_mailboxes == "/etc/postfix/virtual_mailboxes"
-    assert mc.path_vmaildir == "/home/vmail/testrun.org"
+    assert mc.sysconfig.mail_domain == "testrun.org"
+    assert mc.sysconfig.path_dovecot_users == "/etc/dovecot/users"
+    assert mc.sysconfig.path_virtual_mailboxes == "/etc/postfix/virtual_mailboxes"
+    assert mc.sysconfig.path_vmaildir == "/home/vmail/testrun.org"
 
 
 def test_email_check(make_ini):
     inipath = make_ini("""
         [token:burner1]
-        mail_domain = testrun.org
-        web_endpoint = https://web.domain
         prefix = tmp_
         expiry = 1w
-        path_dovecot_users= /etc/dovecot/users
-        path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
-        path_vmaildir = /home/vmail/testrun.org
         token = 1w_7wDioPeeXyZx96v3
 
         [token:burner2]
-        mail_domain = testrun.org
-        web_endpoint = https://web.domain
         prefix =
         expiry = never
+        token = 1w_7wDioPeeXyZx96v3
+
+        [sysconfig]
+        mail_domain = testrun.org
+        web_endpoint = https://web.domain
+        path_mailadm_db= /etc/dovecot/mailadmdb
         path_dovecot_users= /etc/dovecot/users
         path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
         path_vmaildir = /home/vmail/testrun.org
-        token = 1w_7wDioPeeXyZx96v3
     """)
     config = Config(inipath)
     assert config.get_token_config_from_email("xyz@testrun.o123") is None
@@ -64,14 +65,17 @@ def test_email_check(make_ini):
 def test_email_tmp_gen(make_ini):
     inipath = make_ini("""
         [token:burner1]
-        mail_domain = testrun.org
-        web_endpoint = https://testrun.org
+        token = 1w_7wDioPeeXyZx96v3
         prefix = tmp.
         expiry = 1w
+
+        [sysconfig]
+        mail_domain = testrun.org
+        web_endpoint = https://testrun.org
+        path_mailadm_db= /etc/dovecot/mailadmdb
         path_dovecot_users= /etc/dovecot/users
         path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
         path_vmaildir = /home/vmail/testrun.org
-        token = 1w_7wDioPeeXyZx96v3
     """)
     config = Config(inipath)
     mc = config.get_token_config_from_name("burner1")

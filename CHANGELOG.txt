@@ -1,6 +1,8 @@
 
-next
+NEXT
 -------------
+
+- changed ini-file format
 
 - improved README
 

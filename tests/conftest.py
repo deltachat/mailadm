@@ -106,17 +106,19 @@ def make_ini_from_values(make_ini, tmpdir):
             path_mailadm_db = path.ensure("path_mailadm_db")
 
         return make_ini("""
-            [token:{name}]
-            token = {token}
-            expiry = {expiry}
+            [sysconfig]
             path_virtual_mailboxes = {path_virtual_mailboxes}
             path_dovecot_users = {path_dovecot_users}
             path_mailadm_db = {path_mailadm_db}
             path_vmaildir = {path_vmaildir}
             web_endpoint = {web_endpoint}
             mail_domain = {mail_domain}
-            prefix = {prefix}
             dovecot_uid = {dovecot_uid}
             dovecot_gid = {dovecot_gid}
+
+            [token:{name}]
+            token = {token}
+            expiry = {expiry}
+            prefix = {prefix}
         """.format(**locals()))
     return make_ini_from_values
