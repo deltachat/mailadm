@@ -9,11 +9,6 @@ def inipath(tmpdir, make_ini_from_values):
         token="123123",
         prefix="tmp_",
         expiry="1w",
-        mail_domain="testdomain.org",
-        web_endpoint="https://testdomain.org/new_email",
-        path_virtual_mailboxes=tmpdir.ensure("virtualmailboxes").strpath,
-        path_dovecot_users=tmpdir.ensure("dovecot_users").strpath,
-        path_vmaildir=tmpdir.ensure("vmaildir", dir=1).strpath,
     )
 
 

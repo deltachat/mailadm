@@ -10,8 +10,6 @@ def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
         token="1w_Zeeg1RSOK4e3Nh0V",
         prefix="",
         expiry="1w",
-        mail_domain="xyz.abc",
-        web_endpoint="https://web.domain",
     )
     if request.param == "file":
         cmd._rootargs.extend(["--config", p])
@@ -32,7 +30,7 @@ def test_help(cmd):
 def test_tokens(mycmd, make_ini):
     mycmd.run_ok(["list-tokens"], """
         *oneweek*
-        *https://web.domain*
+        *https://testrun.org*
         *DCACCOUNT*
     """)
 
@@ -41,9 +39,9 @@ def test_gen_qr(mycmd, make_ini, tmpdir, monkeypatch):
     mycmd.run_ok(["list-tokens"])
     monkeypatch.chdir(tmpdir)
     mycmd.run_ok(["gen-qr", "oneweek"], """
-        *dcaccount-xyz.abc-oneweek.png*
+        *dcaccount-testrun.org-oneweek.png*
     """)
-    p = tmpdir.join("dcaccount-xyz.abc-oneweek.png")
+    p = tmpdir.join("dcaccount-testrun.org-oneweek.png")
     assert p.exists()
 
 
@@ -53,8 +51,6 @@ def test_tokens_usermod(cmd, make_ini_from_values):
         token="1w_Zeeg1RSOK4e3Nh0V",
         prefix="",
         expiry="10000d",
-        mail_domain="xyz.abc",
-        web_endpoint="https://web.domain",
     )
     cmd._rootargs.extend(["--config", p])
     cmd.run_ok(["list-tokens"], """
@@ -69,17 +65,17 @@ def test_adduser_help(mycmd):
 
 
 def test_adduser(mycmd):
-    mycmd.run_ok(["add-user", "x@xyz.abc"], """
-        *added*x@xyz.abc*
+    mycmd.run_ok(["add-user", "x@testrun.org"], """
+        *added*x@testrun.org*
     """)
-    mycmd.run_fail(["add-user", "x@xyz.abc"], """
-        *failed to add*x@xyz.abc*
+    mycmd.run_fail(["add-user", "x@testrun.org"], """
+        *failed to add*x@testrun.org*
     """)
 
 
 def test_adduser_and_expire(mycmd, monkeypatch):
-    mycmd.run_ok(["add-user", "x@xyz.abc"], """
-        *added*x@xyz.abc*
+    mycmd.run_ok(["add-user", "x@testrun.org"], """
+        *added*x@testrun.org*
     """)
 
     to_expire = time.time() - datetime.timedelta(weeks=1).total_seconds() - 1
@@ -87,8 +83,8 @@ def test_adduser_and_expire(mycmd, monkeypatch):
     # create an old account that should expire
     with monkeypatch.context() as m:
         m.setattr(time, "time", lambda: to_expire)
-        mycmd.run_ok(["add-user", "y@xyz.abc"], """
-            *added*y@xyz.abc*
+        mycmd.run_ok(["add-user", "y@testrun.org"], """
+            *added*y@testrun.org*
         """)
 
     mycmd.run_ok(["prune", "-n"])

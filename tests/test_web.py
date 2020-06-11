@@ -9,7 +9,6 @@ def test_new_user_random(make_ini_from_values, monkeypatch):
         token="12312301923091023",
         prefix="tmp.",
         expiry="1w",
-        mail_domain="example.org",
     )
     app = create_app_from_file(inipath)
     app.debug = True
@@ -25,15 +24,15 @@ def test_new_user_random(make_ini_from_values, monkeypatch):
 
     r = app.post('/?t=12312301923091023')
     assert r.status_code == 200
-    assert r.json["email"].endswith("@example.org")
+    assert r.json["email"].endswith("@testrun.org")
     assert r.json["password"]
     email = r.json["email"]
-    assert email in ["tmp.a@example.org", "tmp.b@example.org"]
+    assert email in ["tmp.a@testrun.org", "tmp.b@testrun.org"]
 
     r2 = app.post('/?t=12312301923091023')
     assert r2.status_code == 200
     assert r2.json["email"] != email
-    assert r2.json["email"] in ["tmp.a@example.org", "tmp.b@example.org"]
+    assert r2.json["email"] in ["tmp.a@testrun.org", "tmp.b@testrun.org"]
 
     r3 = app.post('/?t=12312301923091023')
     assert r3.status_code == 410
@@ -45,7 +44,6 @@ def test_new_user_usermod(make_ini_from_values):
         token="123123123123123",
         prefix="",
         expiry="5w",
-        mail_domain="example.org",
     )
     app = create_app_from_file(inipath)
     app.debug = True
@@ -57,12 +55,12 @@ def test_new_user_usermod(make_ini_from_values):
     r = app.post('/?t=123123123123123&username=hello')
     assert r.status_code == 200
 
-    assert r.json["email"] == "hello@example.org"
+    assert r.json["email"] == "hello@testrun.org"
     assert len(r.json["password"]) >= 12
 
     now = time.time()
     r = app.post('/?t=123123123123123&username=hello2&password=l123123123123')
     assert r.status_code == 200
-    assert r.json["email"] == "hello2@example.org"
+    assert r.json["email"] == "hello2@testrun.org"
     assert r.json["password"] == "l123123123123"
     assert int(r.json["expires"]) > (now + 4 * 24 * 60 * 60)

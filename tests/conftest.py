@@ -81,6 +81,8 @@ def make_ini(tmpdir):
                 path_dovecot_users= /etc/dovecot/users
                 path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
                 path_vmaildir = /home/vmail/testrun.org
+                dovecot_uid = 1000
+                dovecot_gid = 1000
             """)
         p.write(data)
         made.append(p)
@@ -95,37 +97,24 @@ def make_ini_from_values(make_ini, tmpdir):
         token="1w_Zeeg1RSOK4e3Nh0V",
         prefix="",
         expiry="1w",
-        mail_domain="xyz.abc",
-        web_endpoint=None,
-        path_dovecot_users=None,
-        path_virtual_mailboxes=None,
-        path_vmaildir=None,
-        path_mailadm_db=None,
-        dovecot_uid=1000,
-        dovecot_gid=2000,
     ):
         path = tmpdir.mkdir(name)
-        if web_endpoint is None:
-            web_endpoint = "https://{}/new_email".format(mail_domain)
-        if path_dovecot_users is None:
-            path_dovecot_users = path.ensure("path_dovecot_users")
-        if path_virtual_mailboxes is None:
-            path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
-        if path_vmaildir is None:
-            path_vmaildir = path.ensure("path_vmaildir", dir=1)
-        if path_mailadm_db is None:
-            path_mailadm_db = path.ensure("path_mailadm_db")
+        web_endpoint = "https://testrun.org/new_email"
+        path_dovecot_users = path.ensure("path_dovecot_users")
+        path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
+        path_vmaildir = path.ensure("path_vmaildir", dir=1)
+        path_mailadm_db = path.ensure("path_mailadm_db")
 
         return make_ini("""
             [sysconfig]
-            path_virtual_mailboxes = {path_virtual_mailboxes}
-            path_dovecot_users = {path_dovecot_users}
-            path_mailadm_db = {path_mailadm_db}
+            mail_domain = testrun.org
+            web_endpoint = https://testrun.org/new_email
+            path_mailadm_db= {path_mailadm_db}
+            path_dovecot_users= {path_dovecot_users}
+            path_virtual_mailboxes= {path_virtual_mailboxes}
             path_vmaildir = {path_vmaildir}
-            web_endpoint = {web_endpoint}
-            mail_domain = {mail_domain}
-            dovecot_uid = {dovecot_uid}
-            dovecot_gid = {dovecot_gid}
+            dovecot_uid = 1000
+            dovecot_gid = 1000
 
             [token:{name}]
             token = {token}
