@@ -64,7 +64,7 @@ class TokenConfig:
         return "{}@{}".format(username, self.mail_domain)
 
     def make_controller(self):
-        from .mail import MailController
+        from .mailctl import MailController
         return MailController(mail_config=self)
 
     def get_web_url(self):

@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from .config import Config
-from .mail import AccountExists
+from .mailctl import AccountExists
 
 
 def create_app_from_file(config_fn):

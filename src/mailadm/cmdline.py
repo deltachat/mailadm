@@ -12,7 +12,7 @@ import click
 from click import style
 
 from .config import Config
-from .mail import AccountExists
+from .mailctl import AccountExists
 from . import MAILADM_SYSCONFIG_PATH
 
 
