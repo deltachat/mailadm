@@ -114,7 +114,7 @@ You can configure your nginx site config by including this endpoint::
     # add these lines to your nginx-site config
     # (/etc/nginx/sites-enabled/XXX)
     location /new_email {
-        proxy_pass http://localhost:3961/new_email;
+        proxy_pass http://localhost:3961/;
     }
 
 We assume here that the site is exposed as `testrun.org` (see `webdomain` in the `mailadm.config` file)
@@ -125,10 +125,7 @@ creating a temporary account
 
 A typical `DCACCOUNT` code specifies the token-configuration in URL format::
 
-   DCACCOUNT:https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3&usermod&maxdays=<NUMDAYS>
-
-   &usermod is present if the server will allow setting a username and password
-   &maxdays indicates the number of days after which the account is removed
+   DCACCOUNT:https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3&name=<NAME_OF_TOKEN>>
 
 To get a random e-mail address with a random password you may issue::
 
