@@ -69,9 +69,20 @@ def cmd():
 def make_ini(tmpdir):
     made = []
 
-    def make(source):
+    def make(source, autosysconfig=True):
         p = tmpdir.join("mailadm-{}.ini".format(len(made)))
-        p.write(dedent(source))
+        data = dedent(source)
+        if autosysconfig:
+            data += "\n" + dedent("""
+                [sysconfig]
+                mail_domain = testrun.org
+                web_endpoint = https://testrun.org
+                path_mailadm_db= /etc/dovecot/mailadmdb
+                path_dovecot_users= /etc/dovecot/users
+                path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
+                path_vmaildir = /home/vmail/testrun.org
+            """)
+        p.write(data)
         made.append(p)
         return p.strpath
     return make
@@ -120,5 +131,5 @@ def make_ini_from_values(make_ini, tmpdir):
             token = {token}
             expiry = {expiry}
             prefix = {prefix}
-        """.format(**locals()))
+        """.format(**locals()), autosysconfig=False)
     return make_ini_from_values
