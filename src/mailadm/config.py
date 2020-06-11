@@ -11,7 +11,7 @@ import random
 import sys
 
 
-from .db import Storage
+from .db import DB
 
 
 sysconfig_names = (
@@ -43,54 +43,26 @@ class Config:
         self.cfg = iniconfig.IniConfig(path)
         self.sysconfig = self._parse_sysconfig()
         dbpath = pathlib.Path(self.sysconfig.path_mailadm_db)
-        self.conn = Storage(dbpath).get_connection()
+        self.db = DB(dbpath)
 
-    def get_token_config_from_name(self, name):
-        for mc in self.get_token_configs():
-            if mc.name == name:
-                return mc
+    def add_token(self, name, token, expiry, prefix):
+        with self.db.write_connection() as conn:
+            conn.add_token(name=name, token=token, expiry=expiry, prefix=prefix)
 
-    def get_token_config_from_token(self, token):
-        for mc in self.get_token_configs():
-            if mc.token == token:
-                return mc
+    def get_tokenconfig_by_token(self, token):
+        with self.db.read_connection() as conn:
+            token_info = conn.get_tokeninfo_by_token(token)
+            if token_info is not None:
+                return TokenConfig(token_info, self)
 
-    def get_token_config_from_email(self, email):
-        for mc in self.get_token_configs():
-            if email.endswith("@" + self.sysconfig.mail_domain) and email.startswith(mc.prefix):
-                return mc
-
-    def get_token_configs(self):
-        for section in self.cfg.sections:
-            if section.startswith("token:"):
-                kwargs = self._parse_token_section(section)
-                yield TokenConfig(self.sysconfig, **kwargs)
+    def get_tokenconfig_by_name(self, name):
+        with self.db.read_connection() as conn:
+            token_info = conn.get_tokeninfo_by_name(name)
+            if token_info is not None:
+                return TokenConfig(token_info, self)
 
     def _bailout(self, message):
         raise InvalidConfig("{} in file {!r}".format(message, self.path))
-
-    def _parse_token_section(self, section):
-        assert section.startswith("token:"), section
-        kwargs = {'name': section[6:].strip()}
-
-        def error(message):
-            self._bailout("{} in section {!r}".format(message, kwargs['name']))
-
-        for name, val in self.cfg.sections[section].items():
-            if name == "expiry":
-                try:
-                    parse_expiry_code(val)
-                except ValueError:
-                    error("invalid expiry code {!r}".format(val))
-            elif name == "prefix":
-                pass
-            elif name == "token":
-                if len(val) < 15:
-                    error("token too short {!r}".format(val))
-            else:
-                error("invalid name {!r}".format(val))
-            kwargs[name] = val
-        return kwargs
 
     def _parse_sysconfig(self):
         data = self.cfg.sections.get("sysconfig")
@@ -112,24 +84,19 @@ class SysConfig:
 
 
 class TokenConfig:
-    def __init__(self, sysconfig, name, token, expiry, prefix):
-        self.sysconfig = sysconfig
-        self.name = name
-        self.token = token
-        self.expiry = expiry
-        self.prefix = prefix
+    def __init__(self, token_info, config):
+        self.config = config
+        self.info = token_info
+        self.sysconfig = config.sysconfig
 
     def get_maxdays(self):
         return parse_expiry_code(self.expiry) / (24 * 60 * 60)
 
-    def make_email_address(self, username=None):
-        if username is None:
-            username = "{}{}".format(
-                self.prefix,
-                "".join(random.choice(TMP_EMAIL_CHARS) for i in range(TMP_EMAIL_LEN))
-            )
-        elif self.prefix:
-            raise ValueError("can not set username")
+    def make_email_address(self):
+        username = "{}{}".format(
+            self.info.prefix,
+            "".join(random.choice(TMP_EMAIL_CHARS) for i in range(TMP_EMAIL_LEN))
+        )
         assert "@" not in username
         return "{}@{}".format(username, self.sysconfig.mail_domain)
 
@@ -139,7 +106,7 @@ class TokenConfig:
 
     def get_web_url(self):
         return ("{web}?t={token}&n={name}".format(
-                web=self.sysconfig.web_endpoint, token=self.token, name=self.name))
+                web=self.sysconfig.web_endpoint, token=self.info.token, name=self.info.name))
 
     def get_qr_uri(self):
         return ("DCACCOUNT:" + self.get_web_url())

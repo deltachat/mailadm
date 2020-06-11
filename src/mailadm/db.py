@@ -24,7 +24,8 @@ class Connection:
 
     def add_token(self, name, token, expiry, prefix):
         q = "INSERT INTO tokens (name, token, prefix, expiry) VALUES (?, ?, ?, ?)"
-        self._sqlconn.execute(q, (name, token, prefix, expiry))
+        with self._sqlconn:
+            self._sqlconn.execute(q, (name, token, prefix, expiry))
 
     def get_tokeninfo_by_name(self, name):
         q = TokenInfo._select_token_columns + "WHERE name = ?"
@@ -34,7 +35,8 @@ class Connection:
     def get_tokeninfo_by_token(self, token):
         q = TokenInfo._select_token_columns + "WHERE token=?"
         res = self._sqlconn.execute(q, (token,)).fetchone()
-        return TokenInfo(*res)
+        if res is not None:
+            return TokenInfo(*res)
 
     def add_user(self, addr, date, expiry, token_name):
         self._sqlconn.execute("PRAGMA foreign_keys=on;")
@@ -62,7 +64,7 @@ class Connection:
             raise ValueError("user {!r} does not exist".format(addr))
 
 
-class Storage:
+class DB:
     Connection = Connection
 
     def __init__(self, sqlpath):
@@ -72,6 +74,12 @@ class Storage:
     def _get_sqlconn(self, uri):
         return sqlite3.connect(
             uri, timeout=60, isolation_level=None, uri=True)
+
+    def write_connection(self, closing=True):
+        return self.get_connection(closing=closing, write=True)
+
+    def read_connection(self, closing=True):
+        return self.get_connection(closing=closing, write=False)
 
     def get_connection(self, write=False, closing=False):
         # we let the database serialize all writers at connection time

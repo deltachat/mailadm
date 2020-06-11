@@ -25,44 +25,30 @@ def test_sysconfigsimple(make_ini, tmp_path):
     assert sysconfig.path_mailadm_db == str(dbpath)
 
 
-def test_email_check(make_ini):
-    inipath = make_ini("""
-        [token:burner1]
-        prefix = tmp_
-        expiry = 1w
-        token = 1w_7wDioPeeXyZx96v3
-
-        [token:burner2]
-        prefix =
-        expiry = never
-        token = 1w_7wDioPeeXyZx96v3
-    """)
+def test_token_info(make_ini):
+    inipath = make_ini("")
     config = Config(inipath)
-    assert config.get_token_config_from_email("xyz@testrun.o123") is None
-    mc = config.get_token_config_from_email("xyz@testrun.org")
-    assert mc.name == "burner2"
-    assert mc.expiry == "never"
-    assert mc.make_email_address(username="hello") == "hello@testrun.org"
+    config.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
+    config.add_token("burner2", expiry="10w", token="10w_7wDioPeeXyZx96v3", prefix="xp")
 
-    mc = config.get_token_config_from_email("tmp_xyz@testrun.org")
-    assert mc.name == "burner1"
-    assert mc.expiry == "1w"
-    assert mc.get_maxdays() == 7
+    assert config.get_tokenconfig_by_token("1w_7wDio111111") is None
+    tc = config.get_tokenconfig_by_token("1w_7wDioPeeXyZx96v3")
+    assert tc.info.expiry == "1w"
+    assert tc.info.prefix == "pp"
+    assert tc.info.name == "burner1"
 
 
 def test_email_tmp_gen(make_ini):
-    inipath = make_ini("""
-        [token:burner1]
-        token = 1w_7wDioPeeXyZx96v3
-        prefix = tmp.
-        expiry = 1w
-    """)
+    inipath = make_ini("")
     config = Config(inipath)
-    mc = config.get_token_config_from_name("burner1")
-    assert mc.name == "burner1"
-    username = mc.make_email_address().split("@")[0]
-    assert username.startswith("tmp.")
-    username = username[4:]
+    config.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
+    tc = config.get_tokenconfig_by_name("burner1")
+    email = tc.make_email_address()
+    localpart, domain = email.split("@")
+    assert localpart.startswith("tmp.")
+    assert domain == config.sysconfig.mail_domain
+
+    username = localpart[4:]
     assert len(username) == 5
     for c in username:
         assert c in "2345789acdefghjkmnpqrstuvwxyz"
