@@ -12,7 +12,7 @@ import sys
 import click
 from click import style
 
-from .config import Config
+from .config import Config, gen_password, InvalidConfig
 from . import MAILADM_SYSCONFIG_PATH
 
 
@@ -38,7 +38,11 @@ def get_mailadm_config(ctx, show=True):
     if not os.path.exists(config_path):
         ctx.exit("MAILADM_CONFIG not set, "
                  "--config option missing and no config file found: {}".format(config_path))
-    cfg = Config(config_path)
+    try:
+        cfg = Config(config_path)
+    except InvalidConfig as e:
+        ctx.exit(str(e))
+
     if show:
         click.secho("using config file: {}".format(cfg.cfg.path), file=sys.stderr)
     return cfg
@@ -51,11 +55,54 @@ def list_tokens(ctx):
     config = get_mailadm_config(ctx)
     for name in config.get_token_list():
         tc = config.get_tokenconfig_by_name(name)
-        click.echo(style("token:{}".format(tc.info.name), fg="green"))
-        click.echo("  prefix = {}".format(tc.info.prefix))
-        click.echo("  expiry = {}".format(tc.info.expiry))
-        click.echo("  " + tc.get_web_url())
-        click.echo("  " + tc.get_qr_uri())
+        dump_token_info(tc)
+
+
+@click.command()
+@click.pass_context
+def list_users(ctx):
+    """list users """
+    config = get_mailadm_config(ctx)
+    for user_info in config.get_user_list():
+        click.secho("{} [token={}]".format(user_info.addr, user_info.token_name))
+
+
+def dump_token_info(tc):
+    click.echo(style("token:{}".format(tc.info.name), fg="green"))
+    click.echo("  prefix = {}".format(tc.info.prefix))
+    click.echo("  expiry = {}".format(tc.info.expiry))
+    click.echo("  token  = {}".format(tc.info.token))
+    click.echo("  " + tc.get_web_url())
+    click.echo("  " + tc.get_qr_uri())
+
+
+@click.command()
+@click.argument("name", type=str, required=True)
+@click.option("--expiry", type=str, default="1d",
+              help="expiry eg 1w 3d -- default is 1d")
+@click.option("--prefix", type=str, default="tmp.",
+              help="prefix for all e-mail addresses for this token")
+@click.option("--token", type=str, default=None, help="the token to be used")
+@click.pass_context
+def add_token(ctx, name, expiry, prefix, token):
+    """add new token for generating new e-mail addresses
+    """
+    config = get_mailadm_config(ctx)
+    if token is None:
+        token = expiry + "_" + gen_password()
+    info = config.add_token(name=name, token=token, expiry=expiry, prefix=prefix)
+    tc = config.get_tokenconfig_by_name(info.name)
+    dump_token_info(tc)
+
+
+@click.command()
+@click.argument("name", type=str, required=True)
+@click.pass_context
+def del_token(ctx, name):
+    """remove named token"""
+    config = get_mailadm_config(ctx)
+    config.del_token(name=name)
+    click.secho("token {!r} deleted".format(name))
 
 
 @click.command()
@@ -75,7 +122,7 @@ def gen_qr(ctx, tokenname):
     fn = "dcaccount-{domain}-{name}.png".format(
         domain=config.sysconfig.mail_domain, name=tc.info.name)
     image.save(fn)
-    print("{} written for token '{}'".format(fn, tc.info.name))
+    click.secho("{} written for token '{}'".format(fn, tc.info.name))
 
 
 @click.command()
@@ -104,6 +151,15 @@ def add_user(ctx, addr, password, token):
         token_config.add_email_account(addr=addr, password=password, gen_sysfiles=True)
     except ValueError as e:
         ctx.exit("failed to add e-mail account: {}".format(e))
+
+
+@click.command()
+@click.argument("addr", type=str, required=True)
+@click.pass_context
+def del_user(ctx, addr):
+    """remove e-mail address"""
+    config = get_mailadm_config(ctx)
+    config.del_user(addr=addr)
 
 
 @click.command()
@@ -141,8 +197,12 @@ def serve(ctx, debug):
 
 
 mailadm_main.add_command(list_tokens)
+mailadm_main.add_command(add_token)
+mailadm_main.add_command(del_token)
 mailadm_main.add_command(gen_qr)
 mailadm_main.add_command(add_user)
+mailadm_main.add_command(del_user)
+mailadm_main.add_command(list_users)
 mailadm_main.add_command(prune)
 mailadm_main.add_command(serve)
 

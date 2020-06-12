@@ -45,7 +45,7 @@ def test_gen_qr(mycmd, make_ini, tmpdir, monkeypatch):
     assert p.exists()
 
 
-def test_tokens_usermod(cmd, make_ini_from_values):
+def test_tokens_add(cmd, make_ini_from_values):
     p = make_ini_from_values(
         name="forever",
         token="1w_Zeeg1RSOK4e3Nh0V",
@@ -55,6 +55,12 @@ def test_tokens_usermod(cmd, make_ini_from_values):
     cmd._rootargs.extend(["--config", p])
     cmd.run_ok(["list-tokens"], """
         *DCACCOUNT*&n=forever
+    """)
+    cmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."], """
+        *DCACCOUNT*&n=test1
+    """)
+    cmd.run_ok(["del-token", "test1"], """
+        *deleted*test1*
     """)
 
 
@@ -68,8 +74,14 @@ def test_adduser(mycmd):
     mycmd.run_ok(["add-user", "x@testrun.org"], """
         *added*x@testrun.org*
     """)
+    mycmd.run_ok(["list-users"], """
+        *x@testrun.org*oneweek*
+    """)
     mycmd.run_fail(["add-user", "x@testrun.org"], """
         *failed to add*x@testrun.org*
+    """)
+    mycmd.run_ok(["del-user", "x@testrun.org"], """
+        *deleted*x@testrun.org*
     """)
 
 

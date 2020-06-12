@@ -15,6 +15,8 @@ def test_sysconfigsimple(make_ini, tmp_path):
         path_dovecot_users= /etc/dovecot/users
         path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
         path_vmaildir = /home/vmail/testrun.org
+        dovecot_uid = 1000
+        dovecot_gid = 1000
     """.format(dbpath))
     config = Config(inipath)
     sysconfig = config.sysconfig
@@ -23,6 +25,14 @@ def test_sysconfigsimple(make_ini, tmp_path):
     assert sysconfig.path_virtual_mailboxes == "/etc/postfix/virtual_mailboxes"
     assert sysconfig.path_vmaildir == "/home/vmail/testrun.org"
     assert sysconfig.path_mailadm_db == str(dbpath)
+
+
+def test_token_twice(make_ini):
+    inipath = make_ini("")
+    config = Config(inipath)
+    config.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
+    with pytest.raises(ValueError):
+        config.add_token("burner2", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="xp")
 
 
 def test_token_info(make_ini):
@@ -36,6 +46,9 @@ def test_token_info(make_ini):
     assert tc.info.expiry == "1w"
     assert tc.info.prefix == "pp"
     assert tc.info.name == "burner1"
+    config.del_token("burner2")
+    assert not config.get_tokenconfig_by_token("10w_7wDioPeeXyZx96v3")
+    assert not config.get_tokenconfig_by_name("burner2")
 
 
 def test_email_tmp_gen(make_ini):

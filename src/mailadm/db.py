@@ -26,11 +26,20 @@ class Connection:
         q = "INSERT INTO tokens (name, token, prefix, expiry) VALUES (?, ?, ?, ?)"
         with self._sqlconn:
             self._sqlconn.execute(q, (name, token, prefix, expiry))
+        return TokenInfo(name=name, token=token, prefix=prefix, expiry=expiry, usecount=0)
+
+    def del_token(self, name):
+        q = "DELETE FROM tokens WHERE name=?"
+        c = self._sqlconn.cursor()
+        c.execute(q, (name, ))
+        if c.rowcount == 0:
+            raise ValueError("token {!r} does not exist".format(name))
 
     def get_tokeninfo_by_name(self, name):
         q = TokenInfo._select_token_columns + "WHERE name = ?"
         res = self._sqlconn.execute(q, (name,)).fetchone()
-        return TokenInfo(*res)
+        if res is not None:
+            return TokenInfo(*res)
 
     def get_tokeninfo_by_token(self, token):
         q = TokenInfo._select_token_columns + "WHERE token=?"
@@ -54,6 +63,13 @@ class Connection:
             raise ValueError("failed to add addr {!r}: {}".format(addr, e))
         self._sqlconn.execute("UPDATE tokens SET usecount = usecount + 1"
                               "  WHERE name=?", (token_name,))
+
+    def del_user(self, addr):
+        q = "DELETE FROM mailusers WHERE addr=?"
+        c = self._sqlconn.cursor()
+        c.execute(q, (addr, ))
+        if c.rowcount == 0:
+            raise ValueError("addr {!r} does not exist".format(addr))
 
     def get_user_by_addr(self, addr):
         q = UserInfo._select_user_columns + "WHERE addr = ?"
@@ -132,7 +148,7 @@ class DB:
             c.execute("""
                 CREATE TABLE tokens (
                     name TEXT PRIMARY KEY,
-                    token TEXT NOT NULL,
+                    token TEXT NOT NULL UNIQUE,
                     expiry TEXT NOT NULL,
                     prefix TEXT,
                     usecount INTEGER default 0

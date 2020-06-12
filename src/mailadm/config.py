@@ -8,6 +8,7 @@ import time
 import pathlib
 import crypt
 import base64
+import sqlite3
 
 import iniconfig
 import random
@@ -16,17 +17,6 @@ import sys
 
 from .db import DB
 
-
-sysconfig_names = (
-    "path_mailadm_db",         # path to mailadm database (source of truth)
-    "mail_domain",             # on which mail addresses are created
-    "web_endpoint",            # how the web endpoint is externally visible
-    "path_dovecot_users",      # path to dovecot users file
-    "path_virtual_mailboxes",  # postfix virtual mailbox alias file
-    "path_vmaildir",           # where dovecot virtual mail directory resides
-    "dovecot_uid",             # uid of the dovecot process
-    "dovecot_gid",             # gid of the dovecot process
-)
 
 # character set for creating random email accounts
 # we don't use "0o 1l b6" chars to minimize misunderstandings
@@ -48,13 +38,39 @@ class Config:
         dbpath = pathlib.Path(self.sysconfig.path_mailadm_db)
         self.db = DB(dbpath)
 
+    def log(self, msg):
+        print(msg)
+
     def add_token(self, name, token, expiry, prefix):
         with self.db.write_connection() as conn:
-            conn.add_token(name=name, token=token, expiry=expiry, prefix=prefix)
+            try:
+                ti = conn.add_token(name=name, token=token, expiry=expiry, prefix=prefix)
+            except sqlite3.IntegrityError as e:
+                raise ValueError(e)
+            self.log("added token {!r}".format(name))
+            return ti
+
+    def del_token(self, name):
+        with self.db.write_connection() as conn:
+            conn.del_token(name=name)
+            conn.commit()
+            self.log("deleted token {!r}".format(name))
+            return
+
+    def del_user(self, addr):
+        with self.db.write_connection() as conn:
+            conn.del_user(addr=addr)
+            conn.commit()
+            self.log("deleted addr {!r}".format(addr))
+            return
 
     def get_token_list(self):
         with self.db.read_connection() as conn:
             return conn.get_token_list()
+
+    def get_user_list(self):
+        with self.db.read_connection() as conn:
+            return conn.get_user_list()
 
     def get_tokenconfig_by_token(self, token):
         with self.db.read_connection() as conn:
@@ -94,17 +110,28 @@ class Config:
             self._bailout("no 'sysconfig' section")
         try:
             return SysConfig(**dict(data))
-        except ValueError as e:
+        except KeyError as e:
             name = e.args[0]
-            self._bailout("invalid sysconfig key: {!r}".format(name))
+            self._bailout("missing sysconfig key: {!r}".format(name))
 
 
 class SysConfig:
-    def __init__(self, **kw):
-        for name, val in kw.items():
-            if name not in sysconfig_names:
-                raise ValueError(name)
-            setattr(self, name, str(val))
+    _names = (
+        "path_mailadm_db",         # path to mailadm database (source of truth)
+        "mail_domain",             # on which mail addresses are created
+        "web_endpoint",            # how the web endpoint is externally visible
+        "path_dovecot_users",      # path to dovecot users file
+        "path_virtual_mailboxes",  # postfix virtual mailbox alias file
+        "path_vmaildir",           # where dovecot virtual mail directory resides
+        "dovecot_uid",             # uid of the dovecot process
+        "dovecot_gid",             # gid of the dovecot process
+    )
+
+    def __init__(self, **kwargs):
+        for name in self._names:
+            if name not in kwargs:
+                raise KeyError(name)
+            setattr(self, name, kwargs[name])
 
 
 class TokenConfig:

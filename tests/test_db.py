@@ -24,6 +24,11 @@ def test_token(tmp_path):
         assert entry.expiry == "1w"
         assert entry.prefix == "xyz"
 
+    with db.write_connection() as conn:
+        assert conn.get_token_list()
+        conn.del_token(name="oneweek")
+        assert not conn.get_token_list()
+
 
 class TestTokenAccounts:
     @pytest.fixture
