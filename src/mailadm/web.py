@@ -21,18 +21,10 @@ def create_app_from_config(config):
         if token_config is None:
             return "token {} is invalid".format(token), 403
 
-        error = None
-        for _tries in range(10):
-            try:
-                user_info = token_config.add_email_account(gen_sysfiles=True)
-            except ValueError as e:
-                error = e
-                continue
-            break
-        if error:
-            return str(error), 409
-
+        try:
+            user_info = token_config.add_email_account(gen_sysfiles=True, tries=10)
+        except ValueError as e:
+            return str(e), 409
         return jsonify(email=user_info.addr, password=user_info.clear_pw,
                        expiry=token_config.info.expiry, ttl=user_info.ttl)
-
     return app

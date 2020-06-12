@@ -87,4 +87,4 @@ def test_adduser_and_expire(mycmd, monkeypatch):
             *added*y@testrun.org*
         """)
 
-    mycmd.run_ok(["prune", "-n"])
+    mycmd.run_ok(["prune"])

@@ -122,7 +122,15 @@ class TokenConfig:
     def get_expiry_seconds(self):
         return parse_expiry_code(self.info.expiry)
 
-    def add_email_account(self, addr=None, password=None, gen_sysfiles=False):
+    def add_email_account(self, addr=None, password=None, gen_sysfiles=False, tries=1):
+        for i in range(tries):
+            try:
+                return self._add_addr(addr=addr, password=password, gen_sysfiles=gen_sysfiles)
+            except ValueError:
+                if i + 1 >= tries:
+                    raise
+
+    def _add_addr(self, addr, password, gen_sysfiles):
         if addr is None:
             username = "{}{}".format(
                 self.info.prefix,
