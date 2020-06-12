@@ -2,11 +2,12 @@
 from pathlib import Path
 
 import pytest
-from mailadm.db import Storage
+from mailadm.db import DB
+from mailadm.config import get_doveadm_pw
 
 
 def test_token(tmp_path):
-    db = Storage(tmp_path.joinpath("mailadm.db"))
+    db = DB(tmp_path.joinpath("mailadm.db"))
     with db.get_connection(closing=True, write=True) as conn:
         assert not conn.get_token_list()
         conn.add_token(name="oneweek", prefix="xyz", expiry="1w", token="123456789012345")
@@ -29,7 +30,7 @@ class TestTokenAccounts:
     def conn(self, tmpdir):
         pathdir = tmpdir.mkdir("paths")
         path = pathdir.join("tokenusers.db")
-        db = Storage(Path(path.strpath))
+        db = DB(Path(path.strpath))
         conn = db.get_connection(write=True)
         conn.add_token(name="onehour", prefix="xyz", expiry="1h", token="123456789012345")
         conn.commit()
@@ -38,28 +39,34 @@ class TestTokenAccounts:
     def test_add_with_wrong_token(self, conn):
         now = 10000
         addr = "tmp.123@testrun.org"
+        clear_pw, hash_pw = get_doveadm_pw()
         with pytest.raises(ValueError):
-            conn.add_user(addr=addr, date=now, expiry=60 * 60, token_name="112l3kj123123")
+            conn.add_user(addr=addr, hash_pw=hash_pw,
+                          date=now, ttl=60 * 60, token_name="112l3kj123123")
 
     def test_add_expire_del(self, conn):
         now = 10000
         addr = "tmp.123@testrun.org"
         addr2 = "tmp.456@testrun.org"
         addr3 = "tmp.789@testrun.org"
-        conn.add_user(addr=addr, date=now, expiry=60 * 60, token_name="onehour")
+        clear_pw, hash_pw = get_doveadm_pw()
+        conn.add_user(addr=addr, hash_pw=hash_pw, date=now, ttl=60 * 60, token_name="onehour")
         with pytest.raises(ValueError):
-            conn.add_user(addr=addr, date=now, expiry=60 * 60, token_name="onehour")
-        conn.add_user(addr=addr2, date=now, expiry=30 * 60, token_name="onehour")
-        conn.add_user(addr=addr3, date=now, expiry=32 * 60, token_name="onehour")
+            conn.add_user(addr=addr, hash_pw=hash_pw, date=now, ttl=60 * 60, token_name="onehour")
+        conn.add_user(addr=addr2, hash_pw=hash_pw, date=now, ttl=30 * 60, token_name="onehour")
+        conn.add_user(addr=addr3, hash_pw=hash_pw, date=now, ttl=32 * 60, token_name="onehour")
         conn.commit()
         expired = conn.get_expired_users(sysdate=now + 31 * 60)
         assert len(expired) == 1
-        assert expired == [addr2]
+        assert expired[0].addr == addr2
 
-        assert conn.get_user_list() == [addr, addr2, addr3]
+        users = conn.get_user_list()
+        assert len(users) == 3
         conn.delete_user(addr2)
         conn.commit()
-        assert conn.get_user_list() == [addr, addr3]
+        assert len(conn.get_user_list()) == 2
+        addrs = [u.addr for u in conn.get_user_list()]
+        assert addrs == [addr, addr3]
         with pytest.raises(ValueError):
             conn.delete_user(addr2)
         assert conn.get_tokeninfo_by_name("onehour").usecount == 3

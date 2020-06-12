@@ -20,7 +20,7 @@ class Connection:
     def get_token_list(self):
         q = "SELECT name from tokens"
         c = self._sqlconn.cursor()
-        return c.execute(q).fetchall()
+        return [x[0] for x in c.execute(q).fetchall()]
 
     def add_token(self, name, token, expiry, prefix):
         q = "INSERT INTO tokens (name, token, prefix, expiry) VALUES (?, ?, ?, ?)"
@@ -38,23 +38,38 @@ class Connection:
         if res is not None:
             return TokenInfo(*res)
 
-    def add_user(self, addr, date, expiry, token_name):
+    def get_tokeninfo_by_addr(self, addr):
+        q = TokenInfo._select_token_columns
+        for res in self._sqlconn.execute(q).fetchall():
+            token_info = TokenInfo(*res)
+            if addr.startswith(token_info.prefix):
+                return token_info
+
+    def add_user(self, addr, hash_pw, date, ttl, token_name):
         self._sqlconn.execute("PRAGMA foreign_keys=on;")
-        q = "INSERT INTO mailusers (addr, date, expiry, token_name) VALUES (?, ?, ?, ?)"
+        q = "INSERT INTO mailusers (addr, hash_pw, date, ttl, token_name) VALUES (?, ?, ?, ?, ?)"
         try:
-            self._sqlconn.execute(q, (addr, date, expiry, token_name))
+            self._sqlconn.execute(q, (addr, hash_pw, date, ttl, token_name))
         except sqlite3.IntegrityError as e:
             raise ValueError("failed to add addr {!r}: {}".format(addr, e))
         self._sqlconn.execute("UPDATE tokens SET usecount = usecount + 1"
                               "  WHERE name=?", (token_name,))
 
+    def get_user_by_addr(self, addr):
+        q = UserInfo._select_user_columns + "WHERE addr = ?"
+        args = self._sqlconn.execute(q, (addr, )).fetchone()
+        return UserInfo(*args)
+
     def get_expired_users(self, sysdate):
-        q = "SELECT addr FROM mailusers WHERE (date + expiry) < ?;"
-        return [x[0] for x in self._sqlconn.execute(q, (sysdate, )).fetchall()]
+        q = UserInfo._select_user_columns + "WHERE (date + ttl) < ?"
+        users = []
+        for args in self._sqlconn.execute(q, (sysdate, )).fetchall():
+            users.append(UserInfo(*args))
+        return users
 
     def get_user_list(self):
-        q = "SELECT addr FROM mailusers"
-        return [x[0] for x in self._sqlconn.execute(q).fetchall()]
+        q = UserInfo._select_user_columns
+        return [UserInfo(*args) for args in self._sqlconn.execute(q).fetchall()]
 
     def delete_user(self, addr):
         q = "DELETE FROM mailusers WHERE addr=?"
@@ -126,8 +141,9 @@ class DB:
             c.execute("""
                 CREATE TABLE mailusers (
                     addr TEXT PRIMARY KEY,
+                    hash_pw TEXT NOT NULL,
                     date INTEGER,
-                    expiry INTEGER,
+                    ttl INTEGER,
                     token_name TEXT NOT NULL,
                     FOREIGN KEY (token_name) REFERENCES tokens (name)
                 )
@@ -144,3 +160,14 @@ class TokenInfo:
         self.expiry = expiry
         self.prefix = prefix
         self.usecount = usecount
+
+
+class UserInfo:
+    _select_user_columns = "SELECT addr, hash_pw, date, ttl, token_name from mailusers\n"
+
+    def __init__(self, addr, hash_pw, date, ttl, token_name):
+        self.addr = addr
+        self.hash_pw = hash_pw
+        self.date = date
+        self.ttl = ttl
+        self.token_name = token_name

@@ -7,12 +7,12 @@ https://github.com/codespeaknet/sysadmin/blob/master/docs/postfix-virtual-domain
 from __future__ import print_function
 
 import os
+import time
 import sys
 import click
 from click import style
 
 from .config import Config
-from .mailctl import AccountExists
 from . import MAILADM_SYSCONFIG_PATH
 
 
@@ -49,50 +49,60 @@ def get_mailadm_config(ctx, show=True):
 def list_tokens(ctx):
     """list available tokens """
     config = get_mailadm_config(ctx)
-    for mc in config.get_token_configs():
-        click.echo(style("token:{}".format(mc.name), fg="green"))
-        click.echo("  prefix = {}".format(mc.prefix))
-        click.echo("  expiry = {}".format(mc.expiry))
-        click.echo("  " + mc.get_web_url())
-        click.echo("  " + mc.get_qr_uri())
+    for name in config.get_token_list():
+        tc = config.get_tokenconfig_by_name(name)
+        click.echo(style("token:{}".format(tc.info.name), fg="green"))
+        click.echo("  prefix = {}".format(tc.info.prefix))
+        click.echo("  expiry = {}".format(tc.info.expiry))
+        click.echo("  " + tc.get_web_url())
+        click.echo("  " + tc.get_qr_uri())
 
 
 @click.command()
-@click.argument("token", type=str, required=True)
+@click.argument("tokenname", type=str, required=True)
 @click.pass_context
-def gen_qr(ctx, token):
+def gen_qr(ctx, tokenname):
     """generate qr code image for a token. """
     from .gen_qr import gen_qr
 
     config = get_mailadm_config(ctx)
-    tc = config.get_token_config_from_name(token)
+    tc = config.get_tokenconfig_by_name(tokenname)
 
     text = ("Scan with Delta Chat app\n"
             "@{domain} {expiry} {name}").format(
-            domain=config.sysconfig.mail_domain, expiry=tc.expiry, name=tc.name)
+            domain=config.sysconfig.mail_domain, expiry=tc.info.expiry, name=tc.info.name)
     image = gen_qr(tc.get_qr_uri(), text)
-    fn = "dcaccount-{domain}-{name}.png".format(domain=config.sysconfig.mail_domain, name=tc.name)
+    fn = "dcaccount-{domain}-{name}.png".format(
+        domain=config.sysconfig.mail_domain, name=tc.info.name)
     image.save(fn)
-    print("{} written for token '{}'".format(fn, tc.name))
+    print("{} written for token '{}'".format(fn, tc.info.name))
 
 
 @click.command()
-@click.argument("emailadr", type=str, required=True)
+@click.argument("addr", type=str, required=True)
 @click.option("--password", type=str, default=None,
               help="if not specified, generate a random password")
-@option_dryrun
+@click.option("--token", type=str, default=None,
+              help="if not specified, automatically use first matching token")
 @click.pass_context
-def add_user(ctx, emailadr, password, dryrun):
-    """add user to postfix and dovecot configurations
+def add_user(ctx, addr, password, token):
+    """add user as a mailadm managed account.
     """
-    if "@" not in emailadr:
-        ctx.exit("invalid email address: {}".format(emailadr))
-
     config = get_mailadm_config(ctx)
-    mu = config.get_token_config_from_email(emailadr).make_controller()
+    if token is None:
+        if "@" not in addr:
+            ctx.exit("invalid email address: {}".format(addr))
+
+        token_config = config.get_tokenconfig_by_addr(addr)
+        if token_config is None:
+            ctx.exit("could not determine token for addr: {!r}".format(addr))
+    else:
+        token_config = config.get_tokenconfig_by_name(token)
+        if token_config is None:
+            ctx.exit("token does not exist: {!r}".format(token))
     try:
-        mu.add_email_account(email=emailadr, password=password)
-    except AccountExists as e:
+        token_config.add_email_account(addr=addr, password=password, gen_sysfiles=True)
+    except ValueError as e:
         ctx.exit("failed to add e-mail account: {}".format(e))
 
 
@@ -102,9 +112,18 @@ def add_user(ctx, emailadr, password, dryrun):
 def prune(ctx, dryrun):
     """prune expired users from postfix and dovecot configurations """
     config = get_mailadm_config(ctx)
-    for mc in config.get_token_configs():
-        mu = mc.make_controller()
-        for email in mu.prune_expired_accounts(dryrun=dryrun):
+    sysdate = int(time.time())
+    expired_users = config.get_expired_users(sysdate)
+    if not expired_users:
+        click.secho("nothing to prune")
+        return
+
+    if dryrun:
+        for user_info in expired_users:
+            click.secho("{} [{}]".format(user_info.addr, user_info.token_name), fg="red")
+    else:
+        for email in expired_users:
+            assert 0
             click.secho(email, fg="red")
 
 

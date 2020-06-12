@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 from .config import Config
-from .mailctl import AccountExists
 
 
 def create_app_from_file(config_fn):
@@ -18,32 +17,22 @@ def create_app_from_config(config):
         if token is None:
             return "?t (token) parameter not specified", 403
 
-        mailconfig = config.get_token_config_from_token(token)
-        if mailconfig is None:
+        token_config = config.get_tokenconfig_by_token(token)
+        if token_config is None:
             return "token {} is invalid".format(token), 403
 
-        username = request.args.get("username")
-        password = request.args.get("password")
-
-        mc = mailconfig.make_controller()
-
-        # we trying multiple times to generate a password
-        # because an account might already be taken
-        repeat = 1 if username else 10
-
-        for i in range(repeat):
+        error = None
+        for _tries in range(10):
             try:
-                email = mailconfig.make_email_address(username)
-            except ValueError:
-                return "username can not be set", 403
-
-            try:
-                d = mc.add_email_account(email, password=password)
+                user_info = token_config.add_email_account(gen_sysfiles=True)
             except ValueError as e:
-                return str(e), 409
-            except AccountExists:
+                error = e
                 continue
-            return jsonify(d)
-        return "all accounts taken", 410
+            break
+        if error:
+            return str(error), 409
+
+        return jsonify(email=user_info.addr, password=user_info.clear_pw,
+                       expiry=token_config.info.expiry, ttl=user_info.ttl)
 
     return app

@@ -35,10 +35,12 @@ def test_new_user_random(make_ini_from_values, monkeypatch):
     assert r2.json["email"] in ["tmp.a@testrun.org", "tmp.b@testrun.org"]
 
     r3 = app.post('/?t=12312301923091023')
-    assert r3.status_code == 410
+    assert r3.status_code == 409
 
 
-def test_new_user_usermod(make_ini_from_values):
+# we used to allow setting the username/password through the web
+# but the code has been removed, let's keep the test around
+def xxxtest_new_user_usermod(make_ini_from_values):
     inipath = make_ini_from_values(
         name="test123",
         token="123123123123123",

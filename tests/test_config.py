@@ -43,8 +43,9 @@ def test_email_tmp_gen(make_ini):
     config = Config(inipath)
     config.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
     tc = config.get_tokenconfig_by_name("burner1")
-    email = tc.make_email_address()
-    localpart, domain = email.split("@")
+    user_info = tc.add_email_account()
+    assert user_info.token_name == "burner1"
+    localpart, domain = user_info.addr.split("@")
     assert localpart.startswith("tmp.")
     assert domain == config.sysconfig.mail_domain
 

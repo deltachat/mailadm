@@ -104,9 +104,9 @@ def make_ini_from_values(make_ini, tmpdir):
         path_dovecot_users = path.ensure("path_dovecot_users")
         path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
         path_vmaildir = path.ensure("path_vmaildir", dir=1)
-        path_mailadm_db = path.ensure("path_mailadm_db")
+        path_mailadm_db = path.join("path_mailadm_db")
 
-        return make_ini("""
+        inipath = make_ini("""
             [sysconfig]
             mail_domain = testrun.org
             web_endpoint = https://testrun.org/new_email
@@ -116,10 +116,9 @@ def make_ini_from_values(make_ini, tmpdir):
             path_vmaildir = {path_vmaildir}
             dovecot_uid = 1000
             dovecot_gid = 1000
-
-            [token:{name}]
-            token = {token}
-            expiry = {expiry}
-            prefix = {prefix}
         """.format(**locals()))
+        config = mailadm.config.Config(inipath)
+        print(config.db.sqlpath)
+        config.add_token(name=name, token=token, prefix=prefix, expiry=expiry)
+        return inipath
     return make_ini_from_values

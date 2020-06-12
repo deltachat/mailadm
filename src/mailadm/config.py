@@ -4,7 +4,10 @@ Parsing the mailadm config file, and making sections available.
 for a example mailadm.config file, see test_config.py
 """
 
+import time
 import pathlib
+import crypt
+import base64
 
 import iniconfig
 import random
@@ -49,6 +52,10 @@ class Config:
         with self.db.write_connection() as conn:
             conn.add_token(name=name, token=token, expiry=expiry, prefix=prefix)
 
+    def get_token_list(self):
+        with self.db.read_connection() as conn:
+            return conn.get_token_list()
+
     def get_tokenconfig_by_token(self, token):
         with self.db.read_connection() as conn:
             token_info = conn.get_tokeninfo_by_token(token)
@@ -61,8 +68,25 @@ class Config:
             if token_info is not None:
                 return TokenConfig(token_info, self)
 
+    def get_tokenconfig_by_addr(self, addr):
+        if not addr.endswith(self.sysconfig.mail_domain):
+            raise ValueError("addr {!r} does not use mail domain {!r}".format(
+                             addr, self.sysconfig.mail_domain))
+        with self.db.read_connection() as conn:
+            token_info = conn.get_tokeninfo_by_addr(addr)
+            if token_info is not None:
+                return TokenConfig(token_info, self)
+
+    def get_expired_users(self, sysdate):
+        with self.db.read_connection() as conn:
+            return conn.get_expired_users(sysdate)
+
     def _bailout(self, message):
         raise InvalidConfig("{} in file {!r}".format(message, self.path))
+
+    def make_controller(self):
+        from .mailctl import MailController
+        return MailController(config=self)
 
     def _parse_sysconfig(self):
         data = self.cfg.sections.get("sysconfig")
@@ -89,20 +113,39 @@ class TokenConfig:
         self.info = token_info
         self.sysconfig = config.sysconfig
 
+    def log(self, msg):
+        print(msg)
+
     def get_maxdays(self):
         return parse_expiry_code(self.expiry) / (24 * 60 * 60)
 
-    def make_email_address(self):
-        username = "{}{}".format(
-            self.info.prefix,
-            "".join(random.choice(TMP_EMAIL_CHARS) for i in range(TMP_EMAIL_LEN))
-        )
-        assert "@" not in username
-        return "{}@{}".format(username, self.sysconfig.mail_domain)
+    def get_expiry_seconds(self):
+        return parse_expiry_code(self.info.expiry)
 
-    def make_controller(self):
-        from .mailctl import MailController
-        return MailController(token_config=self)
+    def add_email_account(self, addr=None, password=None, gen_sysfiles=False):
+        if addr is None:
+            username = "{}{}".format(
+                self.info.prefix,
+                "".join(random.choice(TMP_EMAIL_CHARS) for i in range(TMP_EMAIL_LEN))
+            )
+            assert "@" not in username
+            addr = "{}@{}".format(username, self.sysconfig.mail_domain)
+        else:
+            if not addr.endswith(self.sysconfig.mail_domain):
+                raise ValueError("email {!r} is not on domain {!r}".format(
+                                 addr, self.sysconfig.mail_domain))
+
+        clear_pw, hash_pw = get_doveadm_pw(password=password)
+        with self.config.db.write_connection() as conn:
+            conn.add_user(addr=addr, hash_pw=hash_pw, date=int(time.time()),
+                          ttl=self.get_expiry_seconds(), token_name=self.info.name)
+            user_info = conn.get_user_by_addr(addr)
+            if gen_sysfiles:
+                self.config.make_controller().gen_sysfiles(conn)
+            conn.commit()
+        self.log("added addr {!r} with token {!r}".format(addr, self.info.name))
+        user_info.clear_pw = clear_pw
+        return user_info
 
     def get_web_url(self):
         return ("{web}?t={token}&n={name}".format(
@@ -110,6 +153,19 @@ class TokenConfig:
 
     def get_qr_uri(self):
         return ("DCACCOUNT:" + self.get_web_url())
+
+
+def get_doveadm_pw(password=None):
+    if password is None:
+        password = gen_password()
+    hash_pw = crypt.crypt(password)
+    return password, hash_pw
+
+
+def gen_password():
+    with open("/dev/urandom", "rb") as f:
+        s = f.read(21)
+    return base64.b64encode(s).decode("ascii")[:12]
 
 
 def parse_expiry_code(code):
