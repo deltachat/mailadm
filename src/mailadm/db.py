@@ -24,8 +24,7 @@ class Connection:
 
     def add_token(self, name, token, expiry, prefix):
         q = "INSERT INTO tokens (name, token, prefix, expiry) VALUES (?, ?, ?, ?)"
-        with self._sqlconn:
-            self._sqlconn.execute(q, (name, token, prefix, expiry))
+        self._sqlconn.execute(q, (name, token, prefix, expiry))
         return TokenInfo(name=name, token=token, prefix=prefix, expiry=expiry, usecount=0)
 
     def del_token(self, name):
@@ -106,8 +105,18 @@ class DB:
         return sqlite3.connect(
             uri, timeout=60, isolation_level=None, uri=True)
 
-    def write_connection(self, closing=True):
-        return self.get_connection(closing=closing, write=True)
+    @contextlib.contextmanager
+    def write_transaction(self):
+        conn = self.get_connection(closing=False, write=True)
+        try:
+            yield conn
+        except Exception:
+            conn.rollback()
+            conn.close()
+            raise
+        else:
+            conn.commit()
+            conn.close()
 
     def read_connection(self, closing=True):
         return self.get_connection(closing=closing, write=False)

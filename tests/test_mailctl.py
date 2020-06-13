@@ -15,7 +15,7 @@ def test_gen_sysfiles(make_ini_from_values):
         users.append(tc.add_email_account())
 
     mc = MailController(config)
-    with config.db.write_connection() as conn:
+    with config.db.write_transaction() as conn:
         mc.gen_sysfiles(conn)
 
     # check dovecot user db was generated

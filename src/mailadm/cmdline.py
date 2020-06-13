@@ -178,7 +178,7 @@ def prune(ctx, dryrun):
         for user_info in expired_users:
             click.secho("{} [{}]".format(user_info.addr, user_info.token_name), fg="red")
     else:
-        with config.db.write_connection() as conn:
+        with config.db.write_transaction() as conn:
             for user_info in expired_users:
                 conn.delete_user(user_info.addr)
                 click.secho("{} (token {!r})".format(user_info.addr, user_info.token_name))

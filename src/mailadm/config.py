@@ -42,27 +42,25 @@ class Config:
         print(msg)
 
     def add_token(self, name, token, expiry, prefix):
-        with self.db.write_connection() as conn:
+        with self.db.write_transaction() as conn:
             try:
                 ti = conn.add_token(name=name, token=token, expiry=expiry, prefix=prefix)
             except sqlite3.IntegrityError as e:
                 raise ValueError(e)
-            self.log("added token {!r}".format(name))
-            return ti
+        self.log("added token {!r}".format(name))
+        return ti
 
     def del_token(self, name):
-        with self.db.write_connection() as conn:
+        with self.db.write_transaction() as conn:
             conn.del_token(name=name)
-            conn.commit()
-            self.log("deleted token {!r}".format(name))
-            return
+        self.log("deleted token {!r}".format(name))
+        return
 
     def del_user(self, addr):
-        with self.db.write_connection() as conn:
+        with self.db.write_transaction() as conn:
             conn.del_user(addr=addr)
-            conn.commit()
-            self.log("deleted addr {!r}".format(addr))
-            return
+        self.log("deleted addr {!r}".format(addr))
+        return
 
     def get_token_list(self):
         with self.db.read_connection() as conn:
@@ -171,13 +169,12 @@ class TokenConfig:
                                  addr, self.sysconfig.mail_domain))
 
         clear_pw, hash_pw = get_doveadm_pw(password=password)
-        with self.config.db.write_connection() as conn:
+        with self.config.db.write_transaction() as conn:
             conn.add_user(addr=addr, hash_pw=hash_pw, date=int(time.time()),
                           ttl=self.get_expiry_seconds(), token_name=self.info.name)
             user_info = conn.get_user_by_addr(addr)
             if gen_sysfiles:
                 self.config.make_controller().gen_sysfiles(conn)
-            conn.commit()
         self.log("added addr {!r} with token {!r}".format(addr, self.info.name))
         user_info.clear_pw = clear_pw
         return user_info
