@@ -23,7 +23,7 @@ def create_app_from_config(config):
                 return "token {} is invalid".format(token), 403
 
             try:
-                user_info = conn.add_email_account(token_info, gen_sysfiles=True, tries=10)
+                user_info = conn.add_email_account(token_info, tries=10)
             except ValueError as e:
                 return str(e), 409
             return jsonify(email=user_info.addr, password=user_info.clear_pw,

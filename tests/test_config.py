@@ -1,8 +1,18 @@
 import pytest
 import sys
 
+from pathlib import Path
+
 from mailadm.config import Config
 from mailadm.db import parse_expiry_code
+
+
+@pytest.fixture
+def conn(make_ini):
+    inipath = make_ini("")
+    config = Config(inipath)
+    with config.write_transaction() as conn:
+        yield conn
 
 
 def test_sysconfigsimple(make_ini, tmp_path):
@@ -27,12 +37,6 @@ def test_sysconfigsimple(make_ini, tmp_path):
     assert sysconfig.path_vmaildir == "/home/vmail/testrun.org"
     assert sysconfig.path_mailadm_db == str(dbpath)
 
-@pytest.fixture
-def conn(make_ini):
-    inipath = make_ini("")
-    config = Config(inipath)
-    with config.write_transaction() as conn:
-        yield conn
 
 def test_token_twice(conn):
     conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
@@ -68,6 +72,34 @@ def test_email_tmp_gen(conn):
     assert len(username) == 5
     for c in username:
         assert c in "2345789acdefghjkmnpqrstuvwxyz"
+
+
+def test_gen_sysfiles(make_ini_from_values):
+    inipath = make_ini_from_values(
+        name="burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
+    config = Config(inipath)
+    with config.write_transaction() as conn:
+        token_info = conn.get_tokeninfo_by_name("burner1")
+
+        NUM_USERS = 50
+        users = []
+        for i in range(NUM_USERS):
+            users.append(conn.add_email_account(token_info))
+
+        user_list = conn.get_user_list()
+        config.sysconfig.gen_sysfiles(user_list)
+
+    # check dovecot user db was generated
+    p = Path(config.sysconfig.path_dovecot_users)
+    data = p.read_text()
+    for user in users:
+        assert user.addr in data and user.hash_pw in data
+
+    # check postfix virtual mailboxes was generated
+    p = Path(config.sysconfig.path_virtual_mailboxes)
+    data = p.read_text()
+    for user in users:
+        assert user.addr in data
 
 
 @pytest.mark.parametrize("code,duration", [

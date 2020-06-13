@@ -41,7 +41,8 @@ class Connection:
         except sqlite3.IntegrityError as e:
             raise ValueError(e)
         self.log("added token {!r}".format(name))
-        return TokenInfo(self.config, name=name, token=token, prefix=prefix, expiry=expiry, usecount=0)
+        return TokenInfo(self.config, name=name, token=token,
+                         prefix=prefix, expiry=expiry, usecount=0)
 
     def del_token(self, name):
         q = "DELETE FROM tokens WHERE name=?"
@@ -107,15 +108,15 @@ class Connection:
         q = UserInfo._select_user_columns
         return [UserInfo(*args) for args in self._sqlconn.execute(q).fetchall()]
 
-    def add_email_account(self, token_info, addr=None, password=None, gen_sysfiles=False, tries=1):
+    def add_email_account(self, token_info, addr=None, password=None, tries=1):
         for i in range(tries):
             try:
-                return self._add_addr(token_info, addr=addr, password=password, gen_sysfiles=gen_sysfiles)
+                return self._add_addr(token_info, addr=addr, password=password)
             except ValueError:
                 if i + 1 >= tries:
                     raise
 
-    def _add_addr(self, token_info, addr, password, gen_sysfiles):
+    def _add_addr(self, token_info, addr, password):
         sysconfig = self.config.sysconfig
         if addr is None:
             username = "{}{}".format(
@@ -133,9 +134,6 @@ class Connection:
         self.add_user(addr=addr, hash_pw=hash_pw, date=int(time.time()),
                       ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
         user_info = self.get_user_by_addr(addr)
-        if gen_sysfiles:
-            from .mailctl import MailController
-            MailController(config=self.config).gen_sysfiles(self)
         self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
         user_info.clear_pw = clear_pw
         return user_info
@@ -247,7 +245,6 @@ class TokenInfo:
 
     def get_qr_uri(self):
         return ("DCACCOUNT:" + self.get_web_url())
-
 
 
 class UserInfo:

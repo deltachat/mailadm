@@ -155,7 +155,7 @@ def add_user(ctx, addr, password, token):
             if token_info is None:
                 ctx.exit("token does not exist: {!r}".format(token))
         try:
-            conn.add_email_account(token_info, addr=addr, password=password, gen_sysfiles=True)
+            conn.add_email_account(token_info, addr=addr, password=password)
         except ValueError as e:
             ctx.exit("failed to add e-mail account: {}".format(e))
 

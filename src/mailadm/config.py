@@ -4,13 +4,11 @@ Parsing the mailadm config file, and making sections available.
 for a example mailadm.config file, see test_config.py
 """
 
-import time
+import os
 import pathlib
-import sqlite3
+import subprocess
 
 import iniconfig
-import random
-import sys
 
 
 from .db import DB
@@ -28,13 +26,13 @@ class InvalidConfig(ValueError):
 class Config:
     def __init__(self, path):
         self.path = path
-        self.cfg = iniconfig.IniConfig(path)
+        self.cfg = iniconfig.IniConfig(self.path)
         self.sysconfig = self._parse_sysconfig()
         dbpath = pathlib.Path(self.sysconfig.path_mailadm_db)
         self.db = DB(dbpath, config=self)
 
-    def log(self, msg):
-        print(msg)
+    def log(self, *args):
+        print(*args)
 
     def write_transaction(self):
         return self.db.write_transaction()
@@ -50,7 +48,7 @@ class Config:
         if data is None:
             self._bailout("no 'sysconfig' section")
         try:
-            return SysConfig(**dict(data))
+            return SysConfig(log=self.log, **dict(data))
         except KeyError as e:
             name = e.args[0]
             self._bailout("missing sysconfig key: {!r}".format(name))
@@ -68,10 +66,47 @@ class SysConfig:
         "dovecot_gid",             # gid of the dovecot process
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, log, **kwargs):
+        self.log = log
         for name in self._names:
             if name not in kwargs:
                 raise KeyError(name)
             setattr(self, name, kwargs[name])
 
+    def gen_sysfiles(self, userlist, dryrun=False):
+        postfix_lines = []
+        dovecot_lines = []
+        for user_info in userlist:
+            postfix_lines.append(user_info.addr + "   " + user_info.token_name)
+            # {addr}:{hash_pw}:{dovecot_uid}:{dovecot_gid}::{path_vmaildir}::
+            dovecot_lines.append(
+                ":".join([
+                    user_info.addr,
+                    user_info.hash_pw,
+                    self.dovecot_uid,
+                    self.dovecot_gid,
+                    "",
+                    self.path_vmaildir,
+                    "", ""]))
 
+        postfix_data = "\n".join(postfix_lines)
+        dovecot_data = "\n".join(dovecot_lines)
+
+        if dryrun:
+            self.log("would write", self.path_dovecot_users)
+            self.log("would write", self.path_virtual_mailboxes)
+            return
+
+        # write postfix virtual_mailboxes style file
+        with open(self.path_virtual_mailboxes, "w") as f:
+            f.write(postfix_data)
+        if not dryrun:
+            subprocess.check_call(["postmap", self.path_virtual_mailboxes])
+        self.log("wrote", self.path_virtual_mailboxes)
+
+        # write dovecot users file
+        tmp_path = self.path_dovecot_users + "_tmp"
+        with open(tmp_path, "w") as f:
+            f.write(dovecot_data)
+        os.rename(tmp_path, self.path_dovecot_users)
+        self.log("wrote", self.path_dovecot_users)
