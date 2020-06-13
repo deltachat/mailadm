@@ -45,10 +45,6 @@ class Config:
     def _bailout(self, message):
         raise InvalidConfig("{} in file {!r}".format(message, self.path))
 
-    def make_controller(self):
-        from .mailctl import MailController
-        return MailController(config=self)
-
     def _parse_sysconfig(self):
         data = self.cfg.sections.get("sysconfig")
         if data is None:

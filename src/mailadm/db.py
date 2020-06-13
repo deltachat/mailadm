@@ -134,7 +134,8 @@ class Connection:
                       ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
         user_info = self.get_user_by_addr(addr)
         if gen_sysfiles:
-            self.config.make_controller().gen_sysfiles(self)
+            from .mailctl import MailController
+            MailController(config=self.config).gen_sysfiles(self)
         self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
         user_info.clear_pw = clear_pw
         return user_info
