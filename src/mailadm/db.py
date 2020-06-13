@@ -41,7 +41,7 @@ class Connection:
         except sqlite3.IntegrityError as e:
             raise ValueError(e)
         self.log("added token {!r}".format(name))
-        return TokenInfo(name=name, token=token, prefix=prefix, expiry=expiry, usecount=0)
+        return TokenInfo(self.config, name=name, token=token, prefix=prefix, expiry=expiry, usecount=0)
 
     def del_token(self, name):
         q = "DELETE FROM tokens WHERE name=?"
@@ -55,38 +55,23 @@ class Connection:
         q = TokenInfo._select_token_columns + "WHERE name = ?"
         res = self._sqlconn.execute(q, (name,)).fetchone()
         if res is not None:
-            return TokenInfo(*res)
+            return TokenInfo(self.config, *res)
 
     def get_tokeninfo_by_token(self, token):
         q = TokenInfo._select_token_columns + "WHERE token=?"
         res = self._sqlconn.execute(q, (token,)).fetchone()
         if res is not None:
-            return TokenInfo(*res)
+            return TokenInfo(self.config, *res)
 
     def get_tokeninfo_by_addr(self, addr):
+        if not addr.endswith(self.config.sysconfig.mail_domain):
+            raise ValueError("addr {!r} does not use mail domain {!r}".format(
+                             addr, self.config.sysconfig.mail_domain))
         q = TokenInfo._select_token_columns
         for res in self._sqlconn.execute(q).fetchall():
-            token_info = TokenInfo(*res)
+            token_info = TokenInfo(self.config, *res)
             if addr.startswith(token_info.prefix):
                 return token_info
-
-    def get_tokenconfig_by_token(self, token):
-        token_info = self.get_tokeninfo_by_token(token)
-        if token_info is not None:
-            return TokenConfig(token_info, self.config)
-
-    def get_tokenconfig_by_name(self, name):
-        token_info = self.get_tokeninfo_by_name(name)
-        if token_info is not None:
-            return TokenConfig(token_info, self.config)
-
-    def get_tokenconfig_by_addr(self, addr):
-        #if not addr.endswith(self.sysconfig.mail_domain):
-        #    raise ValueError("addr {!r} does not use mail domain {!r}".format(
-        #                     addr, self.sysconfig.mail_domain))
-        token_info = self.get_tokeninfo_by_addr(addr)
-        if token_info is not None:
-            return TokenConfig(token_info, self.config)
 
     def add_user(self, addr, hash_pw, date, ttl, token_name):
         self._sqlconn.execute("PRAGMA foreign_keys=on;")
@@ -122,19 +107,19 @@ class Connection:
         q = UserInfo._select_user_columns
         return [UserInfo(*args) for args in self._sqlconn.execute(q).fetchall()]
 
-    def add_email_account(self, token_config, addr=None, password=None, gen_sysfiles=False, tries=1):
+    def add_email_account(self, token_info, addr=None, password=None, gen_sysfiles=False, tries=1):
         for i in range(tries):
             try:
-                return self._add_addr(token_config, addr=addr, password=password, gen_sysfiles=gen_sysfiles)
+                return self._add_addr(token_info, addr=addr, password=password, gen_sysfiles=gen_sysfiles)
             except ValueError:
                 if i + 1 >= tries:
                     raise
 
-    def _add_addr(self, token_config, addr, password, gen_sysfiles):
+    def _add_addr(self, token_info, addr, password, gen_sysfiles):
         sysconfig = self.config.sysconfig
         if addr is None:
             username = "{}{}".format(
-                token_config.info.prefix,
+                token_info.prefix,
                 "".join(random.choice(TMP_EMAIL_CHARS) for i in range(TMP_EMAIL_LEN))
             )
             assert "@" not in username
@@ -146,11 +131,11 @@ class Connection:
 
         clear_pw, hash_pw = get_doveadm_pw(password=password)
         self.add_user(addr=addr, hash_pw=hash_pw, date=int(time.time()),
-                      ttl=token_config.get_expiry_seconds(), token_name=token_config.info.name)
+                      ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
         user_info = self.get_user_by_addr(addr)
         if gen_sysfiles:
             self.config.make_controller().gen_sysfiles(self)
-        self.log("added addr {!r} with token {!r}".format(addr, token_config.info.name))
+        self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
         user_info.clear_pw = clear_pw
         return user_info
 
@@ -241,12 +226,27 @@ class DB:
 class TokenInfo:
     _select_token_columns = "SELECT name, token, expiry, prefix, usecount from tokens\n"
 
-    def __init__(self, name, token, expiry, prefix, usecount):
+    def __init__(self, config, name, token, expiry, prefix, usecount):
+        self.config = config
         self.name = name
         self.token = token
         self.expiry = expiry
         self.prefix = prefix
         self.usecount = usecount
+
+    def get_maxdays(self):
+        return parse_expiry_code(self.expiry) / (24 * 60 * 60)
+
+    def get_expiry_seconds(self):
+        return parse_expiry_code(self.expiry)
+
+    def get_web_url(self):
+        return ("{web}?t={token}&n={name}".format(
+                web=self.config.sysconfig.web_endpoint, token=self.token, name=self.name))
+
+    def get_qr_uri(self):
+        return ("DCACCOUNT:" + self.get_web_url())
+
 
 
 class UserInfo:
@@ -258,29 +258,6 @@ class UserInfo:
         self.date = date
         self.ttl = ttl
         self.token_name = token_name
-
-
-class TokenConfig:
-    def __init__(self, token_info, config):
-        self.config = config
-        self.info = token_info
-        self.sysconfig = config.sysconfig
-
-    def log(self, msg):
-        print(msg)
-
-    def get_maxdays(self):
-        return parse_expiry_code(self.expiry) / (24 * 60 * 60)
-
-    def get_expiry_seconds(self):
-        return parse_expiry_code(self.info.expiry)
-
-    def get_web_url(self):
-        return ("{web}?t={token}&n={name}".format(
-                web=self.sysconfig.web_endpoint, token=self.info.token, name=self.info.name))
-
-    def get_qr_uri(self):
-        return ("DCACCOUNT:" + self.get_web_url())
 
 
 def get_doveadm_pw(password=None):

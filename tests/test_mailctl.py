@@ -8,12 +8,12 @@ def test_gen_sysfiles(make_ini_from_values):
         name="burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
     config = Config(inipath)
     with config.write_transaction() as conn:
-        tc = conn.get_tokenconfig_by_name("burner1")
+        token_info = conn.get_tokeninfo_by_name("burner1")
 
         NUM_USERS = 50
         users = []
         for i in range(NUM_USERS):
-            users.append(conn.add_email_account(tc))
+            users.append(conn.add_email_account(token_info))
 
         mc = MailController(config)
         mc.gen_sysfiles(conn)

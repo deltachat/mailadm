@@ -55,8 +55,8 @@ def list_tokens(ctx):
     config = get_mailadm_config(ctx)
     with config.read_connection() as conn:
         for name in conn.get_token_list():
-            tc = conn.get_tokenconfig_by_name(name)
-            dump_token_info(tc)
+            token_info = conn.get_tokeninfo_by_name(name)
+            dump_token_info(token_info)
 
 
 @click.command()
@@ -69,13 +69,13 @@ def list_users(ctx):
             click.secho("{} [token={}]".format(user_info.addr, user_info.token_name))
 
 
-def dump_token_info(tc):
-    click.echo(style("token:{}".format(tc.info.name), fg="green"))
-    click.echo("  prefix = {}".format(tc.info.prefix))
-    click.echo("  expiry = {}".format(tc.info.expiry))
-    click.echo("  token  = {}".format(tc.info.token))
-    click.echo("  " + tc.get_web_url())
-    click.echo("  " + tc.get_qr_uri())
+def dump_token_info(token_info):
+    click.echo(style("token:{}".format(token_info.name), fg="green"))
+    click.echo("  prefix = {}".format(token_info.prefix))
+    click.echo("  expiry = {}".format(token_info.expiry))
+    click.echo("  token  = {}".format(token_info.token))
+    click.echo("  " + token_info.get_web_url())
+    click.echo("  " + token_info.get_qr_uri())
 
 
 @click.command()
@@ -96,7 +96,7 @@ def add_token(ctx, name, expiry, prefix, token):
         token = expiry + "_" + gen_password()
     with config.write_transaction() as conn:
         info = conn.add_token(name=name, token=token, expiry=expiry, prefix=prefix)
-        tc = conn.get_tokenconfig_by_name(info.name)
+        tc = conn.get_tokeninfo_by_name(info.name)
         dump_token_info(tc)
 
 
@@ -119,16 +119,16 @@ def gen_qr(ctx, tokenname):
 
     config = get_mailadm_config(ctx)
     with config.read_connection() as conn:
-        tc = conn.get_tokenconfig_by_name(tokenname)
+        token_info = conn.get_tokeninfo_by_name(tokenname)
 
     text = ("Scan with Delta Chat app\n"
             "@{domain} {expiry} {name}").format(
-            domain=config.sysconfig.mail_domain, expiry=tc.info.expiry, name=tc.info.name)
-    image = gen_qr(tc.get_qr_uri(), text)
+            domain=config.sysconfig.mail_domain, expiry=token_info.expiry, name=token_info.name)
+    image = gen_qr(token_info.get_qr_uri(), text)
     fn = "dcaccount-{domain}-{name}.png".format(
-        domain=config.sysconfig.mail_domain, name=tc.info.name)
+        domain=config.sysconfig.mail_domain, name=token_info.name)
     image.save(fn)
-    click.secho("{} written for token '{}'".format(fn, tc.info.name))
+    click.secho("{} written for token '{}'".format(fn, token_info.name))
 
 
 @click.command()
@@ -147,15 +147,15 @@ def add_user(ctx, addr, password, token):
             if "@" not in addr:
                 ctx.exit("invalid email address: {}".format(addr))
 
-            token_config = conn.get_tokenconfig_by_addr(addr)
-            if token_config is None:
+            token_info = conn.get_tokeninfo_by_addr(addr)
+            if token_info is None:
                 ctx.exit("could not determine token for addr: {!r}".format(addr))
         else:
-            token_config = conn.get_tokenconfig_by_name(token)
-            if token_config is None:
+            token_info = conn.get_tokeninfo_by_name(token)
+            if token_info is None:
                 ctx.exit("token does not exist: {!r}".format(token))
         try:
-            conn.add_email_account(token_config, addr=addr, password=password, gen_sysfiles=True)
+            conn.add_email_account(token_info, addr=addr, password=password, gen_sysfiles=True)
         except ValueError as e:
             ctx.exit("failed to add e-mail account: {}".format(e))
 

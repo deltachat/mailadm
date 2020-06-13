@@ -44,20 +44,20 @@ def test_token_info(conn):
     conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
     conn.add_token("burner2", expiry="10w", token="10w_7wDioPeeXyZx96v3", prefix="xp")
 
-    assert conn.get_tokenconfig_by_token("1w_7wDio111111") is None
-    tc = conn.get_tokenconfig_by_token("1w_7wDioPeeXyZx96v3")
-    assert tc.info.expiry == "1w"
-    assert tc.info.prefix == "pp"
-    assert tc.info.name == "burner1"
+    assert conn.get_tokeninfo_by_token("1w_7wDio111111") is None
+    ti = conn.get_tokeninfo_by_token("1w_7wDioPeeXyZx96v3")
+    assert ti.expiry == "1w"
+    assert ti.prefix == "pp"
+    assert ti.name == "burner1"
     conn.del_token("burner2")
-    assert not conn.get_tokenconfig_by_token("10w_7wDioPeeXyZx96v3")
-    assert not conn.get_tokenconfig_by_name("burner2")
+    assert not conn.get_tokeninfo_by_token("10w_7wDioPeeXyZx96v3")
+    assert not conn.get_tokeninfo_by_name("burner2")
 
 
 def test_email_tmp_gen(conn):
     conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
-    tc = conn.get_tokenconfig_by_name("burner1")
-    user_info = conn.add_email_account(token_config=tc)
+    token_info = conn.get_tokeninfo_by_name("burner1")
+    user_info = conn.add_email_account(token_info=token_info)
 
     assert user_info.token_name == "burner1"
     localpart, domain = user_info.addr.split("@")
