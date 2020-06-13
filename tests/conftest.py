@@ -119,6 +119,7 @@ def make_ini_from_values(make_ini, tmpdir):
         """.format(**locals()))
         config = mailadm.config.Config(inipath)
         print(config.db.sqlpath)
-        config.add_token(name=name, token=token, prefix=prefix, expiry=expiry)
+        with config.write_transaction() as conn:
+            conn.add_token(name=name, token=token, prefix=prefix, expiry=expiry)
         return inipath
     return make_ini_from_values

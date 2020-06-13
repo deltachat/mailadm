@@ -1,7 +1,8 @@
 import pytest
 import sys
 
-from mailadm.config import Config, parse_expiry_code
+from mailadm.config import Config
+from mailadm.db import parse_expiry_code
 
 
 def test_sysconfigsimple(make_ini, tmp_path):
@@ -26,41 +27,42 @@ def test_sysconfigsimple(make_ini, tmp_path):
     assert sysconfig.path_vmaildir == "/home/vmail/testrun.org"
     assert sysconfig.path_mailadm_db == str(dbpath)
 
-
-def test_token_twice(make_ini):
+@pytest.fixture
+def conn(make_ini):
     inipath = make_ini("")
     config = Config(inipath)
-    config.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
+    with config.write_transaction() as conn:
+        yield conn
+
+def test_token_twice(conn):
+    conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
     with pytest.raises(ValueError):
-        config.add_token("burner2", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="xp")
+        conn.add_token("burner2", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="xp")
 
 
-def test_token_info(make_ini):
-    inipath = make_ini("")
-    config = Config(inipath)
-    config.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
-    config.add_token("burner2", expiry="10w", token="10w_7wDioPeeXyZx96v3", prefix="xp")
+def test_token_info(conn):
+    conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
+    conn.add_token("burner2", expiry="10w", token="10w_7wDioPeeXyZx96v3", prefix="xp")
 
-    assert config.get_tokenconfig_by_token("1w_7wDio111111") is None
-    tc = config.get_tokenconfig_by_token("1w_7wDioPeeXyZx96v3")
+    assert conn.get_tokenconfig_by_token("1w_7wDio111111") is None
+    tc = conn.get_tokenconfig_by_token("1w_7wDioPeeXyZx96v3")
     assert tc.info.expiry == "1w"
     assert tc.info.prefix == "pp"
     assert tc.info.name == "burner1"
-    config.del_token("burner2")
-    assert not config.get_tokenconfig_by_token("10w_7wDioPeeXyZx96v3")
-    assert not config.get_tokenconfig_by_name("burner2")
+    conn.del_token("burner2")
+    assert not conn.get_tokenconfig_by_token("10w_7wDioPeeXyZx96v3")
+    assert not conn.get_tokenconfig_by_name("burner2")
 
 
-def test_email_tmp_gen(make_ini):
-    inipath = make_ini("")
-    config = Config(inipath)
-    config.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
-    tc = config.get_tokenconfig_by_name("burner1")
-    user_info = tc.add_email_account()
+def test_email_tmp_gen(conn):
+    conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
+    tc = conn.get_tokenconfig_by_name("burner1")
+    user_info = conn.add_email_account(token_config=tc)
+
     assert user_info.token_name == "burner1"
     localpart, domain = user_info.addr.split("@")
     assert localpart.startswith("tmp.")
-    assert domain == config.sysconfig.mail_domain
+    assert domain == conn.config.sysconfig.mail_domain
 
     username = localpart[4:]
     assert len(username) == 5

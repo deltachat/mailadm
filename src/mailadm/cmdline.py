@@ -12,7 +12,7 @@ import sys
 import click
 from click import style
 
-from .config import Config, gen_password, InvalidConfig
+from .config import Config, InvalidConfig
 from . import MAILADM_SYSCONFIG_PATH
 
 
@@ -53,9 +53,10 @@ def get_mailadm_config(ctx, show=True):
 def list_tokens(ctx):
     """list available tokens """
     config = get_mailadm_config(ctx)
-    for name in config.get_token_list():
-        tc = config.get_tokenconfig_by_name(name)
-        dump_token_info(tc)
+    with config.read_connection() as conn:
+        for name in conn.get_token_list():
+            tc = conn.get_tokenconfig_by_name(name)
+            dump_token_info(tc)
 
 
 @click.command()
@@ -63,8 +64,9 @@ def list_tokens(ctx):
 def list_users(ctx):
     """list users """
     config = get_mailadm_config(ctx)
-    for user_info in config.get_user_list():
-        click.secho("{} [token={}]".format(user_info.addr, user_info.token_name))
+    with config.read_connection() as conn:
+        for user_info in conn.get_user_list():
+            click.secho("{} [token={}]".format(user_info.addr, user_info.token_name))
 
 
 def dump_token_info(tc):
@@ -87,12 +89,15 @@ def dump_token_info(tc):
 def add_token(ctx, name, expiry, prefix, token):
     """add new token for generating new e-mail addresses
     """
+    from mailadm.db import gen_password
+
     config = get_mailadm_config(ctx)
     if token is None:
         token = expiry + "_" + gen_password()
-    info = config.add_token(name=name, token=token, expiry=expiry, prefix=prefix)
-    tc = config.get_tokenconfig_by_name(info.name)
-    dump_token_info(tc)
+    with config.write_transaction() as conn:
+        info = conn.add_token(name=name, token=token, expiry=expiry, prefix=prefix)
+        tc = conn.get_tokenconfig_by_name(info.name)
+        dump_token_info(tc)
 
 
 @click.command()
@@ -101,8 +106,8 @@ def add_token(ctx, name, expiry, prefix, token):
 def del_token(ctx, name):
     """remove named token"""
     config = get_mailadm_config(ctx)
-    config.del_token(name=name)
-    click.secho("token {!r} deleted".format(name))
+    with config.write_transaction() as conn:
+        conn.del_token(name=name)
 
 
 @click.command()
@@ -113,7 +118,8 @@ def gen_qr(ctx, tokenname):
     from .gen_qr import gen_qr
 
     config = get_mailadm_config(ctx)
-    tc = config.get_tokenconfig_by_name(tokenname)
+    with config.read_connection() as conn:
+        tc = conn.get_tokenconfig_by_name(tokenname)
 
     text = ("Scan with Delta Chat app\n"
             "@{domain} {expiry} {name}").format(
@@ -136,21 +142,22 @@ def add_user(ctx, addr, password, token):
     """add user as a mailadm managed account.
     """
     config = get_mailadm_config(ctx)
-    if token is None:
-        if "@" not in addr:
-            ctx.exit("invalid email address: {}".format(addr))
+    with config.write_transaction() as conn:
+        if token is None:
+            if "@" not in addr:
+                ctx.exit("invalid email address: {}".format(addr))
 
-        token_config = config.get_tokenconfig_by_addr(addr)
-        if token_config is None:
-            ctx.exit("could not determine token for addr: {!r}".format(addr))
-    else:
-        token_config = config.get_tokenconfig_by_name(token)
-        if token_config is None:
-            ctx.exit("token does not exist: {!r}".format(token))
-    try:
-        token_config.add_email_account(addr=addr, password=password, gen_sysfiles=True)
-    except ValueError as e:
-        ctx.exit("failed to add e-mail account: {}".format(e))
+            token_config = conn.get_tokenconfig_by_addr(addr)
+            if token_config is None:
+                ctx.exit("could not determine token for addr: {!r}".format(addr))
+        else:
+            token_config = conn.get_tokenconfig_by_name(token)
+            if token_config is None:
+                ctx.exit("token does not exist: {!r}".format(token))
+        try:
+            conn.add_email_account(token_config, addr=addr, password=password, gen_sysfiles=True)
+        except ValueError as e:
+            ctx.exit("failed to add e-mail account: {}".format(e))
 
 
 @click.command()
@@ -159,7 +166,8 @@ def add_user(ctx, addr, password, token):
 def del_user(ctx, addr):
     """remove e-mail address"""
     config = get_mailadm_config(ctx)
-    config.del_user(addr=addr)
+    with config.write_transaction() as conn:
+        conn.del_user(addr=addr)
 
 
 @click.command()
@@ -169,18 +177,18 @@ def prune(ctx, dryrun):
     """prune expired users from postfix and dovecot configurations """
     config = get_mailadm_config(ctx)
     sysdate = int(time.time())
-    expired_users = config.get_expired_users(sysdate)
-    if not expired_users:
-        click.secho("nothing to prune")
-        return
+    with config.write_transaction() as conn:
+        expired_users = conn.get_expired_users(sysdate)
+        if not expired_users:
+            click.secho("nothing to prune")
+            return
 
-    if dryrun:
-        for user_info in expired_users:
-            click.secho("{} [{}]".format(user_info.addr, user_info.token_name), fg="red")
-    else:
-        with config.db.write_transaction() as conn:
+        if dryrun:
             for user_info in expired_users:
-                conn.delete_user(user_info.addr)
+                click.secho("{} [{}]".format(user_info.addr, user_info.token_name), fg="red")
+        else:
+            for user_info in expired_users:
+                conn.del_user(user_info.addr)
                 click.secho("{} (token {!r})".format(user_info.addr, user_info.token_name))
 
 

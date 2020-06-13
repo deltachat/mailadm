@@ -2,12 +2,11 @@
 from pathlib import Path
 
 import pytest
-from mailadm.db import DB
-from mailadm.config import get_doveadm_pw
+from mailadm.db import DB, get_doveadm_pw
 
 
 def test_token(tmp_path):
-    db = DB(tmp_path.joinpath("mailadm.db"))
+    db = DB(tmp_path.joinpath("mailadm.db"), config=None)
     with db.get_connection(closing=True, write=True) as conn:
         assert not conn.get_token_list()
         conn.add_token(name="oneweek", prefix="xyz", expiry="1w", token="123456789012345")
@@ -35,7 +34,7 @@ class TestTokenAccounts:
     def conn(self, tmpdir):
         pathdir = tmpdir.mkdir("paths")
         path = pathdir.join("tokenusers.db")
-        db = DB(Path(path.strpath))
+        db = DB(Path(path.strpath), config=None)
         conn = db.get_connection(write=True)
         conn.add_token(name="onehour", prefix="xyz", expiry="1h", token="123456789012345")
         conn.commit()
@@ -67,11 +66,11 @@ class TestTokenAccounts:
 
         users = conn.get_user_list()
         assert len(users) == 3
-        conn.delete_user(addr2)
+        conn.del_user(addr2)
         conn.commit()
         assert len(conn.get_user_list()) == 2
         addrs = [u.addr for u in conn.get_user_list()]
         assert addrs == [addr, addr3]
         with pytest.raises(ValueError):
-            conn.delete_user(addr2)
+            conn.del_user(addr2)
         assert conn.get_tokeninfo_by_name("onehour").usecount == 3

@@ -19,8 +19,8 @@ def test_new_user_random(make_ini_from_values, monkeypatch):
     r = app.post('/?t=123123&username=hello')
     assert r.status_code == 403
 
-    monkeypatch.setattr(mailadm.config, "TMP_EMAIL_LEN", 1)
-    monkeypatch.setattr(mailadm.config, "TMP_EMAIL_CHARS", "ab")
+    monkeypatch.setattr(mailadm.db, "TMP_EMAIL_LEN", 1)
+    monkeypatch.setattr(mailadm.db, "TMP_EMAIL_CHARS", "ab")
 
     r = app.post('/?t=12312301923091023')
     assert r.status_code == 200

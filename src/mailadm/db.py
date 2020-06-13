@@ -1,12 +1,24 @@
 import contextlib
+import crypt
+import base64
+import random
 import sqlite3
 import time
+import sys
+
+
+TMP_EMAIL_CHARS = "2345789acdefghjkmnpqrstuvwxyz"
+TMP_EMAIL_LEN = 5
 
 
 class Connection:
-    def __init__(self, sqlconn, sqlpath):
+    def __init__(self, sqlconn, sqlpath, config):
         self._sqlconn = sqlconn
         self._sqlpath = sqlpath
+        self.config = config
+
+    def log(self, msg):
+        print(msg)
 
     def close(self):
         self._sqlconn.close()
@@ -24,7 +36,11 @@ class Connection:
 
     def add_token(self, name, token, expiry, prefix):
         q = "INSERT INTO tokens (name, token, prefix, expiry) VALUES (?, ?, ?, ?)"
-        self._sqlconn.execute(q, (name, token, prefix, expiry))
+        try:
+            self._sqlconn.execute(q, (name, token, prefix, expiry))
+        except sqlite3.IntegrityError as e:
+            raise ValueError(e)
+        self.log("added token {!r}".format(name))
         return TokenInfo(name=name, token=token, prefix=prefix, expiry=expiry, usecount=0)
 
     def del_token(self, name):
@@ -33,6 +49,7 @@ class Connection:
         c.execute(q, (name, ))
         if c.rowcount == 0:
             raise ValueError("token {!r} does not exist".format(name))
+        self.log("deleted token {!r}".format(name))
 
     def get_tokeninfo_by_name(self, name):
         q = TokenInfo._select_token_columns + "WHERE name = ?"
@@ -53,6 +70,24 @@ class Connection:
             if addr.startswith(token_info.prefix):
                 return token_info
 
+    def get_tokenconfig_by_token(self, token):
+        token_info = self.get_tokeninfo_by_token(token)
+        if token_info is not None:
+            return TokenConfig(token_info, self.config)
+
+    def get_tokenconfig_by_name(self, name):
+        token_info = self.get_tokeninfo_by_name(name)
+        if token_info is not None:
+            return TokenConfig(token_info, self.config)
+
+    def get_tokenconfig_by_addr(self, addr):
+        #if not addr.endswith(self.sysconfig.mail_domain):
+        #    raise ValueError("addr {!r} does not use mail domain {!r}".format(
+        #                     addr, self.sysconfig.mail_domain))
+        token_info = self.get_tokeninfo_by_addr(addr)
+        if token_info is not None:
+            return TokenConfig(token_info, self.config)
+
     def add_user(self, addr, hash_pw, date, ttl, token_name):
         self._sqlconn.execute("PRAGMA foreign_keys=on;")
         q = "INSERT INTO mailusers (addr, hash_pw, date, ttl, token_name) VALUES (?, ?, ?, ?, ?)"
@@ -69,6 +104,7 @@ class Connection:
         c.execute(q, (addr, ))
         if c.rowcount == 0:
             raise ValueError("addr {!r} does not exist".format(addr))
+        self.log("deleted user {!r}".format(addr))
 
     def get_user_by_addr(self, addr):
         q = UserInfo._select_user_columns + "WHERE addr = ?"
@@ -86,19 +122,45 @@ class Connection:
         q = UserInfo._select_user_columns
         return [UserInfo(*args) for args in self._sqlconn.execute(q).fetchall()]
 
-    def delete_user(self, addr):
-        q = "DELETE FROM mailusers WHERE addr=?"
-        c = self._sqlconn.cursor()
-        c.execute(q, (addr, ))
-        if c.rowcount == 0:
-            raise ValueError("user {!r} does not exist".format(addr))
+    def add_email_account(self, token_config, addr=None, password=None, gen_sysfiles=False, tries=1):
+        for i in range(tries):
+            try:
+                return self._add_addr(token_config, addr=addr, password=password, gen_sysfiles=gen_sysfiles)
+            except ValueError:
+                if i + 1 >= tries:
+                    raise
+
+    def _add_addr(self, token_config, addr, password, gen_sysfiles):
+        sysconfig = self.config.sysconfig
+        if addr is None:
+            username = "{}{}".format(
+                token_config.info.prefix,
+                "".join(random.choice(TMP_EMAIL_CHARS) for i in range(TMP_EMAIL_LEN))
+            )
+            assert "@" not in username
+            addr = "{}@{}".format(username, sysconfig.mail_domain)
+        else:
+            if not addr.endswith(sysconfig.mail_domain):
+                raise ValueError("email {!r} is not on domain {!r}".format(
+                                 addr, sysconfig.mail_domain))
+
+        clear_pw, hash_pw = get_doveadm_pw(password=password)
+        self.add_user(addr=addr, hash_pw=hash_pw, date=int(time.time()),
+                      ttl=token_config.get_expiry_seconds(), token_name=token_config.info.name)
+        user_info = self.get_user_by_addr(addr)
+        if gen_sysfiles:
+            self.config.make_controller().gen_sysfiles(self)
+        self.log("added addr {!r} with token {!r}".format(addr, token_config.info.name))
+        user_info.clear_pw = clear_pw
+        return user_info
 
 
 class DB:
     Connection = Connection
 
-    def __init__(self, sqlpath):
+    def __init__(self, sqlpath, config):
         self.sqlpath = sqlpath
+        self.config = config
         self.ensure_tables_exist()
 
     def _get_sqlconn(self, uri):
@@ -143,7 +205,7 @@ class DB:
                     if time.time() - start_time > 5:
                         # if it takes this long, something is wrong
                         raise
-        conn = self.Connection(sqlconn, self.sqlpath)
+        conn = self.Connection(sqlconn, self.sqlpath, config=self.config)
         if closing:
             conn = contextlib.closing(conn)
         return conn
@@ -196,3 +258,55 @@ class UserInfo:
         self.date = date
         self.ttl = ttl
         self.token_name = token_name
+
+
+class TokenConfig:
+    def __init__(self, token_info, config):
+        self.config = config
+        self.info = token_info
+        self.sysconfig = config.sysconfig
+
+    def log(self, msg):
+        print(msg)
+
+    def get_maxdays(self):
+        return parse_expiry_code(self.expiry) / (24 * 60 * 60)
+
+    def get_expiry_seconds(self):
+        return parse_expiry_code(self.info.expiry)
+
+    def get_web_url(self):
+        return ("{web}?t={token}&n={name}".format(
+                web=self.sysconfig.web_endpoint, token=self.info.token, name=self.info.name))
+
+    def get_qr_uri(self):
+        return ("DCACCOUNT:" + self.get_web_url())
+
+
+def get_doveadm_pw(password=None):
+    if password is None:
+        password = gen_password()
+    hash_pw = crypt.crypt(password)
+    return password, hash_pw
+
+
+def gen_password():
+    with open("/dev/urandom", "rb") as f:
+        s = f.read(21)
+    return base64.b64encode(s).decode("ascii")[:12]
+
+
+def parse_expiry_code(code):
+    if code == "never":
+        return sys.maxsize
+
+    if len(code) < 2:
+        raise ValueError("expiry codes are at least 2 characters")
+    val = int(code[:-1])
+    c = code[-1]
+    if c == "w":
+        return val * 7 * 24 * 60 * 60
+    elif c == "d":
+        return val * 24 * 60 * 60
+    elif c == "h":
+        return val * 60 * 60

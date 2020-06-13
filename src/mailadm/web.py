@@ -17,14 +17,15 @@ def create_app_from_config(config):
         if token is None:
             return "?t (token) parameter not specified", 403
 
-        token_config = config.get_tokenconfig_by_token(token)
-        if token_config is None:
-            return "token {} is invalid".format(token), 403
+        with config.write_transaction() as conn:
+            token_config = conn.get_tokenconfig_by_token(token)
+            if token_config is None:
+                return "token {} is invalid".format(token), 403
 
-        try:
-            user_info = token_config.add_email_account(gen_sysfiles=True, tries=10)
-        except ValueError as e:
-            return str(e), 409
-        return jsonify(email=user_info.addr, password=user_info.clear_pw,
-                       expiry=token_config.info.expiry, ttl=user_info.ttl)
+            try:
+                user_info = conn.add_email_account(token_config, gen_sysfiles=True, tries=10)
+            except ValueError as e:
+                return str(e), 409
+            return jsonify(email=user_info.addr, password=user_info.clear_pw,
+                           expiry=token_config.info.expiry, ttl=user_info.ttl)
     return app
