@@ -84,7 +84,7 @@ def dump_token_info(token_info):
 @click.command()
 @click.argument("name", type=str, required=True)
 @click.option("--expiry", type=str, default="1d",
-              help="expiry eg 1w 3d -- default is 1d")
+              help="account expiry eg 1w 3d -- default is 1d")
 @click.option("--maxuse", type=int, default=50,
               help="maximum number of accounts this token can create")
 @click.option("--prefix", type=str, default="tmp.",
