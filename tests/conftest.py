@@ -66,61 +66,28 @@ def cmd():
 
 
 @pytest.fixture
-def make_ini(tmp_path):
-    made = []
+def config(tmpdir):
+    path = tmpdir.mkdir("paths")
+    mail_domain = "testrun.org"
+    web_endpoint = "https://testrun.org/new_email"
+    path_dovecot_users = path.ensure("path_dovecot_users")
+    path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
+    path_vmaildir = path.ensure("path_vmaildir", dir=1)
+    path_mailadm_db = path.join("mailadm.db")
+    dovecot_uid = 1000
+    dovecot_gid = 1000
+    source = dedent("""
+        [sysconfig]
+        mail_domain = {mail_domain}
+        web_endpoint = {web_endpoint}
+        path_mailadm_db= {path_mailadm_db}
+        path_dovecot_users= {path_dovecot_users}
+        path_virtual_mailboxes= {path_virtual_mailboxes}
+        path_vmaildir = {path_vmaildir}
+        dovecot_uid = {dovecot_uid}
+        dovecot_gid = {dovecot_gid}
+    """.format(**locals()))
 
-    def make(source):
-        p = tmp_path.joinpath("mailadm-{}.ini".format(len(made)))
-        data = dedent(source)
-        if "[sysconfig]" not in data:
-            dbpath = tmp_path.joinpath("mailadm.db")
-            data += "\n" + dedent("""
-                [sysconfig]
-                mail_domain = testrun.org
-                web_endpoint = https://testrun.org
-                path_mailadm_db= {dbpath}
-                path_dovecot_users= /etc/dovecot/users
-                path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
-                path_vmaildir = /home/vmail/testrun.org
-                dovecot_uid = 1000
-                dovecot_gid = 1000
-            """.format(dbpath=dbpath))
-        p.write_text(data)
-        made.append(p)
-        return p
-    return make
-
-
-@pytest.fixture
-def make_ini_from_values(make_ini, tmpdir):
-    def make_ini_from_values(
-        name="oneweek",
-        token="1w_Zeeg1RSOK4e3Nh0V",
-        prefix="",
-        expiry="1w",
-    ):
-        path = tmpdir.mkdir("mailadm.config")
-        web_endpoint = "https://testrun.org/new_email"
-        path_dovecot_users = path.ensure("path_dovecot_users")
-        path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
-        path_vmaildir = path.ensure("path_vmaildir", dir=1)
-        path_mailadm_db = path.join("path_mailadm_db")
-
-        inipath = make_ini("""
-            [sysconfig]
-            mail_domain = testrun.org
-            web_endpoint = https://testrun.org/new_email
-            path_mailadm_db= {path_mailadm_db}
-            path_dovecot_users= {path_dovecot_users}
-            path_virtual_mailboxes= {path_virtual_mailboxes}
-            path_vmaildir = {path_vmaildir}
-            dovecot_uid = 1000
-            dovecot_gid = 1000
-        """.format(**locals()))
-        config = mailadm.config.Config(inipath)
-        print(config.db.sqlpath)
-        if name is not None:
-            with config.write_transaction() as conn:
-                conn.add_token(name=name, token=token, prefix=prefix, expiry=expiry)
-        return inipath
-    return make_ini_from_values
+    p = tmpdir.join("mailadm.cfg")
+    p.write(source)
+    return mailadm.config.Config(str(p))

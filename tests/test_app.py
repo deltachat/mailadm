@@ -2,26 +2,16 @@
 import pytest
 
 
-@pytest.fixture
-def inipath(tmpdir, make_ini_from_values):
-    return str(make_ini_from_values(
-        name="test123",
-        token="123123",
-        prefix="tmp_",
-        expiry="1w",
-    ))
-
-
 def test_no_config(monkeypatch):
     monkeypatch.delenv("MAILADM_CONFIG", raising=False)
     with pytest.raises(RuntimeError):
         import mailadm.app  # noqa
 
 
-def test_env(inipath, monkeypatch):
-    monkeypatch.setenv("MAILADM_CONFIG", inipath)
+def test_env(config, monkeypatch):
+    monkeypatch.setenv("MAILADM_CONFIG", config.path)
     from mailadm.app import app
-    assert app.mailadm_config.cfg.path == inipath
+    assert app.mailadm_config.cfg.path == config.path
 
 
 def test_sysconfig_path():

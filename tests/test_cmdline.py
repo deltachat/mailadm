@@ -2,20 +2,17 @@ import time
 import datetime
 import pytest
 
-import mailadm
-
 
 @pytest.fixture(params=["file", "env"])
-def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
-    p = make_ini_from_values(name=None)
+def mycmd(request, cmd, config, tmpdir, monkeypatch):
     if request.param == "file":
-        cmd._rootargs.extend(["--config", str(p)])
+        cmd._rootargs.extend(["--config", str(config.path)])
     elif request.param == "env":
-        monkeypatch.setenv("MAILADM_CONFIG", str(p))
+        monkeypatch.setenv("MAILADM_CONFIG", str(config.path))
     else:
         assert 0
 
-    cmd._config_path = p
+    cmd._config = config
     return cmd
 
 
@@ -26,7 +23,7 @@ def test_help(cmd):
 
 
 class TestTokens:
-    def test_tokens(self, mycmd, make_ini):
+    def test_tokens(self, mycmd):
         mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
                       "--prefix", "", "--expiry=1w"])
         mycmd.run_ok(["list-tokens"], """
@@ -83,10 +80,9 @@ class TestUsers:
         mycmd.run_ok(["add-user", "x@testrun.org"], """
             *added*x@testrun.org*
         """)
-        config = mailadm.config.Config(mycmd._config_path)
-        path = config.sysconfig.path_virtual_mailboxes
+        path = mycmd._config.sysconfig.path_virtual_mailboxes
         assert "x@testrun.org" in open(path).read()
-        path = config.sysconfig.path_dovecot_users
+        path = mycmd._config.sysconfig.path_dovecot_users
         assert "x@testrun.org:" in open(path).read()
 
     def test_add_del_user(self, mycmd):

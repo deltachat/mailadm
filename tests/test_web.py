@@ -3,14 +3,12 @@ from mailadm.web import create_app_from_file
 import mailadm
 
 
-def test_new_user_random(make_ini_from_values, monkeypatch):
-    inipath = make_ini_from_values(
-        name="test123",
-        token="12312301923091023",
-        prefix="tmp.",
-        expiry="1w",
-    )
-    app = create_app_from_file(inipath)
+def test_new_user_random(config, monkeypatch):
+    token = "12319831923123"
+    with config.write_transaction() as conn:
+        conn.add_token(name="test123", token=token, prefix="tmp.", expiry="1w")
+
+    app = create_app_from_file(config.path)
     app.debug = True
     app = app.test_client()
 
@@ -22,35 +20,33 @@ def test_new_user_random(make_ini_from_values, monkeypatch):
     monkeypatch.setattr(mailadm.db, "TMP_EMAIL_LEN", 1)
     monkeypatch.setattr(mailadm.db, "TMP_EMAIL_CHARS", "ab")
 
-    r = app.post('/?t=12312301923091023')
+    r = app.post('/?t=' + token)
     assert r.status_code == 200
     assert r.json["email"].endswith("@testrun.org")
     assert r.json["password"]
     email = r.json["email"]
     assert email in ["tmp.a@testrun.org", "tmp.b@testrun.org"]
 
-    r2 = app.post('/?t=12312301923091023')
+    r2 = app.post('/?t=' + token)
     assert r2.status_code == 200
     assert r2.json["email"] != email
     assert r2.json["email"] in ["tmp.a@testrun.org", "tmp.b@testrun.org"]
 
-    r3 = app.post('/?t=12312301923091023')
+    r3 = app.post('/?t=' + token)
     assert r3.status_code == 409
 
 
-def test_gensysfiles(make_ini_from_values):
-    inipath = make_ini_from_values(
-        name="test123",
-        token="12312301923091023",
-        prefix="tmp.",
-        expiry="1w",
-    )
-    app = create_app_from_file(inipath)
+def test_gensysfiles(config):
+    token = "12319831923123"
+    with config.write_transaction() as conn:
+        conn.add_token(name="test123", token=token, prefix="tmp.", expiry="1w")
+    app = create_app_from_file(config.path)
     app.debug = True
+
     config = app.mailadm_config
     app = app.test_client()
 
-    r = app.post('/?t=12312301923091023')
+    r = app.post('/?t=' + token)
     assert r.status_code == 200
 
     email = r.json["email"]

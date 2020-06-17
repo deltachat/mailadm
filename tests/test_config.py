@@ -3,39 +3,22 @@ import sys
 
 from pathlib import Path
 
-from mailadm.config import Config
 from mailadm.db import parse_expiry_code
 
 
 @pytest.fixture
-def conn(make_ini):
-    inipath = make_ini("")
-    config = Config(inipath)
+def conn(config):
     with config.write_transaction() as conn:
         yield conn
 
 
-def test_sysconfigsimple(make_ini, tmp_path):
-    dbpath = tmp_path.joinpath("db")
-
-    inipath = make_ini("""
-        [sysconfig]
-        mail_domain = testrun.org
-        web_endpoint = https://web.domain
-        path_mailadm_db= {}
-        path_dovecot_users= /etc/dovecot/users
-        path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
-        path_vmaildir = /home/vmail/testrun.org
-        dovecot_uid = 1000
-        dovecot_gid = 1000
-    """.format(dbpath))
-    config = Config(inipath)
+def test_sysconfigsimple(config, tmp_path):
     sysconfig = config.sysconfig
     assert sysconfig.mail_domain == "testrun.org"
-    assert sysconfig.path_dovecot_users == "/etc/dovecot/users"
-    assert sysconfig.path_virtual_mailboxes == "/etc/postfix/virtual_mailboxes"
-    assert sysconfig.path_vmaildir == "/home/vmail/testrun.org"
-    assert sysconfig.path_mailadm_db == str(dbpath)
+    assert sysconfig.path_dovecot_users
+    assert sysconfig.path_virtual_mailboxes
+    assert sysconfig.path_vmaildir
+    assert sysconfig.path_mailadm_db
 
 
 def test_token_twice(conn):
@@ -74,10 +57,10 @@ def test_email_tmp_gen(conn):
         assert c in "2345789acdefghjkmnpqrstuvwxyz"
 
 
-def test_gen_sysfiles(make_ini_from_values):
-    inipath = make_ini_from_values(
-        name="burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
-    config = Config(inipath)
+def test_gen_sysfiles(config):
+    with config.write_transaction() as conn:
+        conn.add_token(name="burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
+
     with config.write_transaction() as conn:
         token_info = conn.get_tokeninfo_by_name("burner1")
 
