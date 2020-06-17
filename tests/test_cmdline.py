@@ -2,6 +2,8 @@ import time
 import datetime
 import pytest
 
+import mailadm
+
 
 @pytest.fixture(params=["file", "env"])
 def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
@@ -18,6 +20,7 @@ def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
     else:
         assert 0
 
+    cmd._config_path = p
     return cmd
 
 
@@ -70,7 +73,18 @@ def test_adduser_help(mycmd):
     """)
 
 
-def test_adduser(mycmd):
+def test_add_user_sysfiles(mycmd):
+    mycmd.run_ok(["add-user", "x@testrun.org"], """
+        *added*x@testrun.org*
+    """)
+    config = mailadm.config.Config(mycmd._config_path)
+    path = config.sysconfig.path_virtual_mailboxes
+    assert "x@testrun.org" in open(path).read()
+    path = config.sysconfig.path_dovecot_users
+    assert "x@testrun.org:" in open(path).read()
+
+
+def test_add_del_user(mycmd):
     mycmd.run_ok(["add-user", "x@testrun.org"], """
         *added*x@testrun.org*
     """)

@@ -38,6 +38,32 @@ def test_new_user_random(make_ini_from_values, monkeypatch):
     assert r3.status_code == 409
 
 
+def test_gensysfiles(make_ini_from_values):
+    inipath = make_ini_from_values(
+        name="test123",
+        token="12312301923091023",
+        prefix="tmp.",
+        expiry="1w",
+    )
+    app = create_app_from_file(inipath)
+    app.debug = True
+    config = app.mailadm_config
+    app = app.test_client()
+
+    r = app.post('/?t=12312301923091023')
+    assert r.status_code == 200
+
+    email = r.json["email"]
+    assert email.endswith("@testrun.org")
+    password = r.json["password"]
+    assert password
+
+    dovecot_users = open(config.sysconfig.path_dovecot_users).read()
+    postfix_map = open(config.sysconfig.path_virtual_mailboxes).read()
+    assert email in dovecot_users
+    assert email in postfix_map
+
+
 # we used to allow setting the username/password through the web
 # but the code has been removed, let's keep the test around
 def xxxtest_new_user_usermod(make_ini_from_values):

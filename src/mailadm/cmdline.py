@@ -159,6 +159,8 @@ def add_user(ctx, addr, password, token):
         except ValueError as e:
             ctx.exit("failed to add e-mail account: {}".format(e))
 
+        conn.gen_sysfiles()
+
 
 @click.command()
 @click.argument("addr", type=str, required=True)

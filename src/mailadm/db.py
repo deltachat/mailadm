@@ -12,10 +12,11 @@ TMP_EMAIL_LEN = 5
 
 
 class Connection:
-    def __init__(self, sqlconn, sqlpath, config):
+    def __init__(self, sqlconn, sqlpath, write, config):
         self._sqlconn = sqlconn
         self._sqlpath = sqlpath
         self.config = config
+        self._write = write
 
     def log(self, msg):
         print(msg)
@@ -108,6 +109,14 @@ class Connection:
         q = UserInfo._select_user_columns
         return [UserInfo(*args) for args in self._sqlconn.execute(q).fetchall()]
 
+    def gen_sysfiles(self):
+        """ generate system files needed by postfix/dovecot for
+        recognizing the current users."""
+        if not self._write or self._sqlconn.total_changes == 0:
+            raise ValueError("need to be part of write-transaction for proper locking")
+        user_list = self.get_user_list()
+        self.config.sysconfig.gen_sysfiles(user_list)
+
     def add_email_account(self, token_info, addr=None, password=None, tries=1):
         for i in range(tries):
             try:
@@ -189,7 +198,7 @@ class DB:
                     if time.time() - start_time > 5:
                         # if it takes this long, something is wrong
                         raise
-        conn = self.Connection(sqlconn, self.sqlpath, config=self.config)
+        conn = self.Connection(sqlconn, self.sqlpath, write=write, config=self.config)
         if closing:
             conn = contextlib.closing(conn)
         return conn
