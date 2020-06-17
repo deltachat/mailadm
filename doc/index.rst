@@ -12,7 +12,7 @@ The development repository is at
     https://github.com/deltachat/mailadm
 
 
-Installing and Configuring the server part
+Installing and Configuring the command line
 -------------------------------------------
 
 Assumptions used in this doc:
@@ -27,7 +27,7 @@ Assumptions used in this doc:
   by the `vmail` user and dirs/files are created by the dovecot service.
 
 - `/home/mailadm` ("$HOME") is the home directory of the "mailadm" user
-  where mailadm configuration is managed and where mailadm
+  where mailadm configuration and account state is managed and where mailadm
   is installed in the virtualenv `/home/mailadm/venv` environment.
 
 
@@ -49,41 +49,100 @@ Create and activate a Python virtualenv and install mailadm::
 Now do `source $HOME/.bashrc` so you have the new settings.
 
 
-mailadm core configuration file
+mailadm configuration file
 +++++++++++++++++++++++++++++++++
 
-Example `$HOME/mailadm.config` file which configures one token
-that allows creating e-mail accounts, of the form `tmp.*@testrun.org`::
+The mailadm configuration specifies where system file
+locations and the mailadm database are to be found.
+Token configuration are kept in the database.
+We assume that `$HOME` points to the "mailadm" user home directory.
+
+Example `$HOME/mailadm.config` file::
 
     # content of $HOME/mailadm.config
-    [token:oneweek]
-    domain = testrun.org
-    webdomain = testrun.org
-    expiry = 1w
-    prefix = tmp.
-    path_dovecot_users= /home/mailadm/dovecot-users
-    path_virtual_mailboxes= /home/mailadm/postfix-users
-    path_vmaildir = /home/mailadm/vmail
-    token = 1w_7wDioPeeXyZx96v3
+    [sysconfig]
+    path_mailadm_db = $HOME/mailadm.db
+    path_dovecot_users= $HOME/dovecot-users
+    path_virtual_mailboxes = $HOME/virtual_mailboxes
+    path_vmaildir = /home/vmail/testrun.org
 
-You should now be able to run a first mailadm subcommand::
+    web_endpoint = http://localhost:3960
+    mail_domain = testrun.org
+    dovecot_uid = 1000
+    dovecot_gid = 1000
 
-    mailadm list-tokens
 
-which should show you::
+Adding a first token and user
+++++++++++++++++++++++++++++++
 
-    token:oneweek
+With the `MAILADM_CONFIG` environment variable
+pointing to your `mailadm.config` file above,
+you can now add a first "token"::
+
+    $ mailadm add-token oneday --expiry 1d --prefix="tmp."
+    added token 'oneday'
+    token:oneday
       prefix = tmp.
-      expiry = 1w
-      DCACCOUNT:https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3
+      expiry = 1d
+      maxuse = 50
+      usecount = 0
+      token  = 1d_cRqmTnHdQmku
+      http://localhost:3960?t=1d_cRqmTnHdQmku&n=oneday
+      DCACCOUNT:http://localhost:3960?t=1d_cRqmTnHdQmku&n=oneday
+
+and then we can add a user (which will automatically use the token
+because the email addresses matches the prefix)::
+
+    $ mailadm add-user tmp.12345@testrun.org
+
+
+
+Integration with dovecot
+++++++++++++++++++++++++
+
+mailadm integrates with dovecot by producing passwd files::
+
+    # put this into /etc/dovecot/conf.d/auth-tmp-passwdfile.conf.ext
+    passdb {
+        driver = passwd-file
+        args = scheme=CRYPT username_format=%u /home/mailadm/dovecot-users
+    }
+
+    userdb {
+      driver = passwd-file
+      args = username_format=%u /home/mailadm/dovecot-users
+
+      default_fields = uid=vmail gid=vmail home=/home/vmail/%d/%n mail_location=maildir:/home/vmail/%d/%u/mail:INDEX=/home/vmail/%d/%u/index:LAYOUT=fs
+    }
+
+We need to include this file from the `/etc/dovecot/conf.d/10-auth.conf` file::
+
+    !include auth-tmp-passwdfile.conf.ext
+
+With these two files added/modified we can reload dovecot::
+
+    systemctl reload mailadm
+
+
+Integration with postfix
+++++++++++++++++++++++++
+
+You need to already have configured "virtual mailboxes" with postfix.
+To make sure that postfix knows about about users added by
+mailadm, add the mailadm related path `virtual_mailbox_maps`, for example::
+
+    # somewhere in /etc/postfix/main.cfg
+    virtual_mailbox_maps =
+        hash:/etc/postfix/virtual_mailboxes
+        hash:/home/mailadm/postfix-users
 
 
 mailadm systemd unit file
 ++++++++++++++++++++++++++
 
-You may copy this file to a systemd service directory::
+To active the mailadm web app with systemd::
 
-    # content of /etc/systemd/system/mailadm.service
+    # put this into /etc/systemd/system/mailadm.service
     [Unit]
     Description=Account management administration web API
     After=network.target
