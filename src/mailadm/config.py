@@ -26,7 +26,7 @@ class InvalidConfig(ValueError):
 class Config:
     def __init__(self, path):
         self.path = path
-        self.cfg = iniconfig.IniConfig(self.path)
+        self.cfg = iniconfig.IniConfig(str(self.path))
         self.sysconfig = self._parse_sysconfig()
         dbpath = pathlib.Path(self.sysconfig.path_mailadm_db)
         self.db = DB(dbpath, config=self)

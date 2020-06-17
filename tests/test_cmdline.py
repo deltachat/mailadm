@@ -14,7 +14,7 @@ def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
         expiry="1w",
     )
     if request.param == "file":
-        cmd._rootargs.extend(["--config", p])
+        cmd._rootargs.extend(["--config", str(p)])
     elif request.param == "env":
         monkeypatch.setenv("MAILADM_CONFIG", str(p))
     else:
@@ -55,7 +55,7 @@ def test_tokens_add(cmd, make_ini_from_values):
         prefix="",
         expiry="10000d",
     )
-    cmd._rootargs.extend(["--config", p])
+    cmd._rootargs.extend(["--config", str(p)])
     cmd.run_ok(["list-tokens"], """
         *DCACCOUNT*&n=forever
     """)
