@@ -30,6 +30,20 @@ class Connection:
     def rollback(self):
         self._sqlconn.rollback()
 
+    def get_dbversion(self):
+        q = "SELECT value from config WHERE name='dbversion'"
+        c = self._sqlconn.cursor()
+        try:
+            return c.execute(q).fetchone()
+        except sqlite3.OperationalError:
+            return None
+
+    def set_dbversion(self, dbversion):
+        q = "INSERT OR REPLACE INTO config (name, value) VALUES (?, ?)"
+        c = self._sqlconn.cursor()
+        c.execute(q, ("dbversion", dbversion)).fetchone()
+        return dbversion
+
     def get_token_list(self):
         q = "SELECT name from tokens"
         c = self._sqlconn.cursor()
@@ -162,7 +176,7 @@ class DB:
     def __init__(self, sqlpath, config):
         self.sqlpath = sqlpath
         self.config = config
-        self.ensure_tables_exist()
+        self.ensure_dbversion()
 
     def _get_sqlconn(self, uri):
         return sqlite3.connect(
@@ -211,32 +225,39 @@ class DB:
             conn = contextlib.closing(conn)
         return conn
 
-    def ensure_tables_exist(self):
-        if self.sqlpath.exists():
-            return
+    def ensure_dbversion(self):
         with contextlib.closing(self.get_connection(write=True)) as conn:
-            print("DB: Creating schema", self.sqlpath)
-            c = conn._sqlconn.cursor()
-            c.execute("""
-                CREATE TABLE tokens (
-                    name TEXT PRIMARY KEY,
-                    token TEXT NOT NULL UNIQUE,
-                    expiry TEXT NOT NULL,
-                    prefix TEXT,
-                    maxuse INTEGER default 50,
-                    usecount INTEGER default 0
-                )
-            """)
-            c.execute("""
-                CREATE TABLE mailusers (
-                    addr TEXT PRIMARY KEY,
-                    hash_pw TEXT NOT NULL,
-                    date INTEGER,
-                    ttl INTEGER,
-                    token_name TEXT NOT NULL,
-                    FOREIGN KEY (token_name) REFERENCES tokens (name)
-                )
-            """)
+            dbversion = conn.get_dbversion()
+            if dbversion is None:
+                print("DB: Creating schema", self.sqlpath)
+                c = conn._sqlconn.cursor()
+                c.execute("""
+                    CREATE TABLE tokens (
+                        name TEXT PRIMARY KEY,
+                        token TEXT NOT NULL UNIQUE,
+                        expiry TEXT NOT NULL,
+                        prefix TEXT,
+                        maxuse INTEGER default 50,
+                        usecount INTEGER default 0
+                    )
+                """)
+                c.execute("""
+                    CREATE TABLE mailusers (
+                        addr TEXT PRIMARY KEY,
+                        hash_pw TEXT NOT NULL,
+                        date INTEGER,
+                        ttl INTEGER,
+                        token_name TEXT NOT NULL,
+                        FOREIGN KEY (token_name) REFERENCES tokens (name)
+                    )
+                """)
+                c.execute("""
+                    CREATE TABLE config (
+                        name TEXT PRIMARY KEY,
+                        value TEXT
+                    )
+                """)
+                dbversion = conn.set_dbversion(1)
             conn.commit()
 
 

@@ -33,7 +33,7 @@ def mailadm_main(context, config):
     context.config_path = config
 
 
-def get_mailadm_config(ctx, show=True):
+def get_mailadm_config(ctx, show=False):
     config_path = ctx.parent.config_path
     if not os.path.exists(config_path):
         ctx.exit("MAILADM_CONFIG not set, "
