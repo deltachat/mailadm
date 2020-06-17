@@ -38,7 +38,7 @@ def test_tokens(mycmd, make_ini):
     """)
 
 
-def test_gen_qr(mycmd, make_ini, tmpdir, monkeypatch):
+def test_gen_qr(mycmd, tmpdir, monkeypatch):
     mycmd.run_ok(["list-tokens"])
     monkeypatch.chdir(tmpdir)
     mycmd.run_ok(["gen-qr", "oneweek"], """
@@ -48,22 +48,30 @@ def test_gen_qr(mycmd, make_ini, tmpdir, monkeypatch):
     assert p.exists()
 
 
-def test_tokens_add(cmd, make_ini_from_values):
-    p = make_ini_from_values(
-        name="forever",
-        token="1w_Zeeg1RSOK4e3Nh0V",
-        prefix="",
-        expiry="10000d",
-    )
-    cmd._rootargs.extend(["--config", str(p)])
-    cmd.run_ok(["list-tokens"], """
-        *DCACCOUNT*&n=forever
-    """)
-    cmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."], """
+def test_tokens_add(mycmd):
+    mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."], """
         *DCACCOUNT*&n=test1
     """)
-    cmd.run_ok(["del-token", "test1"], """
+    mycmd.run_ok(["list-tokens"], """
+        *maxuse*50*
+        *usecount*
+        *DCACCOUNT*&n=test1
+    """)
+    mycmd.run_ok(["del-token", "test1"], """
         *deleted*test1*
+    """)
+    out = mycmd.run_ok(["list-tokens"])
+    assert "test1" not in out
+
+
+def test_tokens_add_maxuse(mycmd):
+    mycmd.run_ok(["add-token", "test1", "--maxuse=10"], """
+        *maxuse*10
+        *DCACCOUNT*&n=test1
+    """)
+    mycmd.run_ok(["list-tokens"], """
+        *maxuse*10*
+        *DCACCOUNT*&n=test1
     """)
 
 

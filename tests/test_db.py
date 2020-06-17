@@ -9,7 +9,7 @@ def test_token(tmp_path):
     db = DB(tmp_path.joinpath("mailadm.db"), config=None)
     with db.get_connection(closing=True, write=True) as conn:
         assert not conn.get_token_list()
-        conn.add_token(name="oneweek", prefix="xyz", expiry="1w", token="123456789012345")
+        conn.add_token(name="oneweek", prefix="xyz", expiry="1w", maxuse=5, token="123456789012345")
         conn.commit()
     with db.get_connection(closing=True) as conn:
         assert len(conn.get_token_list()) == 1
@@ -22,6 +22,7 @@ def test_token(tmp_path):
         assert entry.name == "oneweek"
         assert entry.expiry == "1w"
         assert entry.prefix == "xyz"
+        assert entry.maxuse == 5
 
     with db.write_transaction() as conn:
         assert conn.get_token_list()
@@ -30,13 +31,16 @@ def test_token(tmp_path):
 
 
 class TestTokenAccounts:
+    MAXUSE = 10
+
     @pytest.fixture
     def conn(self, tmpdir):
         pathdir = tmpdir.mkdir("paths")
         path = pathdir.join("tokenusers.db")
         db = DB(Path(path.strpath), config=None)
         conn = db.get_connection(write=True)
-        conn.add_token(name="onehour", prefix="xyz", expiry="1h", token="123456789012345")
+        conn.add_token(name="onehour", prefix="xyz", expiry="1h",
+                       maxuse=self.MAXUSE, token="123456789012345")
         conn.commit()
         return conn
 
@@ -47,6 +51,17 @@ class TestTokenAccounts:
         with pytest.raises(ValueError):
             conn.add_user(addr=addr, hash_pw=hash_pw,
                           date=now, ttl=60 * 60, token_name="112l3kj123123")
+
+    def test_add_maxuse(self, conn):
+        now = 10000
+        clear_pw, hash_pw = get_doveadm_pw()
+        for i in range(self.MAXUSE):
+            addr = "tmp.{}@testrun.org".format(i)
+            conn.add_user(addr=addr, hash_pw=hash_pw, date=now, ttl=60 * 60, token_name="onehour")
+
+        with pytest.raises(ValueError):
+            conn.add_user(addr="tmp.xx@testrun.org", hash_pw=hash_pw,
+                          date=now, ttl=60 * 60, token_name="onehour")
 
     def test_add_expire_del(self, conn):
         now = 10000

@@ -35,15 +35,14 @@ class Connection:
         c = self._sqlconn.cursor()
         return [x[0] for x in c.execute(q).fetchall()]
 
-    def add_token(self, name, token, expiry, prefix):
-        q = "INSERT INTO tokens (name, token, prefix, expiry) VALUES (?, ?, ?, ?)"
+    def add_token(self, name, token, expiry, prefix, maxuse=50):
+        q = "INSERT INTO tokens (name, token, prefix, expiry, maxuse) VALUES (?, ?, ?, ?, ?)"
         try:
-            self._sqlconn.execute(q, (name, token, prefix, expiry))
+            self._sqlconn.execute(q, (name, token, prefix, expiry, maxuse))
         except sqlite3.IntegrityError as e:
             raise ValueError(e)
         self.log("added token {!r}".format(name))
-        return TokenInfo(self.config, name=name, token=token,
-                         prefix=prefix, expiry=expiry, usecount=0)
+        return self.get_tokeninfo_by_name(name)
 
     def del_token(self, name):
         q = "DELETE FROM tokens WHERE name=?"
@@ -77,6 +76,11 @@ class Connection:
 
     def add_user(self, addr, hash_pw, date, ttl, token_name):
         self._sqlconn.execute("PRAGMA foreign_keys=on;")
+
+        token = self.get_tokeninfo_by_name(token_name)
+        if token and token.usecount >= token.maxuse:
+            raise ValueError("token {} is exhausted".format(token_name))
+
         q = "INSERT INTO mailusers (addr, hash_pw, date, ttl, token_name) VALUES (?, ?, ?, ?, ?)"
         try:
             self._sqlconn.execute(q, (addr, hash_pw, date, ttl, token_name))
@@ -215,6 +219,7 @@ class DB:
                     token TEXT NOT NULL UNIQUE,
                     expiry TEXT NOT NULL,
                     prefix TEXT,
+                    maxuse INTEGER default 50,
                     usecount INTEGER default 0
                 )
             """)
@@ -232,14 +237,15 @@ class DB:
 
 
 class TokenInfo:
-    _select_token_columns = "SELECT name, token, expiry, prefix, usecount from tokens\n"
+    _select_token_columns = "SELECT name, token, expiry, prefix, maxuse, usecount from tokens\n"
 
-    def __init__(self, config, name, token, expiry, prefix, usecount):
+    def __init__(self, config, name, token, expiry, prefix, maxuse, usecount):
         self.config = config
         self.name = name
         self.token = token
         self.expiry = expiry
         self.prefix = prefix
+        self.maxuse = maxuse
         self.usecount = usecount
 
     def get_maxdays(self):

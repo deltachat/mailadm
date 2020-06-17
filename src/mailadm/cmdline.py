@@ -73,6 +73,8 @@ def dump_token_info(token_info):
     click.echo(style("token:{}".format(token_info.name), fg="green"))
     click.echo("  prefix = {}".format(token_info.prefix))
     click.echo("  expiry = {}".format(token_info.expiry))
+    click.echo("  maxuse = {}".format(token_info.maxuse))
+    click.echo("  usecount = {}".format(token_info.usecount))
     click.echo("  token  = {}".format(token_info.token))
     click.echo("  " + token_info.get_web_url())
     click.echo("  " + token_info.get_qr_uri())
@@ -82,11 +84,13 @@ def dump_token_info(token_info):
 @click.argument("name", type=str, required=True)
 @click.option("--expiry", type=str, default="1d",
               help="expiry eg 1w 3d -- default is 1d")
+@click.option("--maxuse", type=int, default=50,
+              help="maximum number of accounts this token can create")
 @click.option("--prefix", type=str, default="tmp.",
               help="prefix for all e-mail addresses for this token")
 @click.option("--token", type=str, default=None, help="the token to be used")
 @click.pass_context
-def add_token(ctx, name, expiry, prefix, token):
+def add_token(ctx, name, expiry, prefix, token, maxuse):
     """add new token for generating new e-mail addresses
     """
     from mailadm.db import gen_password
@@ -95,7 +99,8 @@ def add_token(ctx, name, expiry, prefix, token):
     if token is None:
         token = expiry + "_" + gen_password()
     with config.write_transaction() as conn:
-        info = conn.add_token(name=name, token=token, expiry=expiry, prefix=prefix)
+        info = conn.add_token(name=name, token=token, expiry=expiry,
+                              maxuse=maxuse, prefix=prefix)
         tc = conn.get_tokeninfo_by_name(info.name)
         dump_token_info(tc)
 
