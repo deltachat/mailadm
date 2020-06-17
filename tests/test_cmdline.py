@@ -7,12 +7,7 @@ import mailadm
 
 @pytest.fixture(params=["file", "env"])
 def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
-    p = make_ini_from_values(
-        name="oneweek",
-        token="1w_Zeeg1RSOK4e3Nh0V",
-        prefix="",
-        expiry="1w",
-    )
+    p = make_ini_from_values(name=None)
     if request.param == "file":
         cmd._rootargs.extend(["--config", str(p)])
     elif request.param == "env":
@@ -32,6 +27,8 @@ def test_help(cmd):
 
 class TestTokens:
     def test_tokens(self, mycmd, make_ini):
+        mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
+                      "--prefix", "", "--expiry=1w"])
         mycmd.run_ok(["list-tokens"], """
             *oneweek*
             *https://testrun.org*
@@ -39,6 +36,8 @@ class TestTokens:
         """)
 
     def test_gen_qr(self, mycmd, tmpdir, monkeypatch):
+        mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
+                      "--prefix", "", "--expiry=1w"])
         mycmd.run_ok(["list-tokens"])
         monkeypatch.chdir(tmpdir)
         mycmd.run_ok(["gen-qr", "oneweek"], """
@@ -80,6 +79,7 @@ class TestUsers:
         """)
 
     def test_add_user_sysfiles(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
         mycmd.run_ok(["add-user", "x@testrun.org"], """
             *added*x@testrun.org*
         """)
@@ -90,11 +90,12 @@ class TestUsers:
         assert "x@testrun.org:" in open(path).read()
 
     def test_add_del_user(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
         mycmd.run_ok(["add-user", "x@testrun.org"], """
             *added*x@testrun.org*
         """)
         mycmd.run_ok(["list-users"], """
-            *x@testrun.org*oneweek*
+            *x@testrun.org*test1*
         """)
         mycmd.run_fail(["add-user", "x@testrun.org"], """
             *failed to add*x@testrun.org*
@@ -104,6 +105,7 @@ class TestUsers:
         """)
 
     def test_adduser_and_expire(self, mycmd, monkeypatch):
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
         mycmd.run_ok(["add-user", "x@testrun.org"], """
             *added*x@testrun.org*
         """)
@@ -117,4 +119,27 @@ class TestUsers:
                 *added*y@testrun.org*
             """)
 
+        out = mycmd.run_ok(["list-users"])
+        assert "y@testrun.org" in out
+
         mycmd.run_ok(["prune"])
+        out = mycmd.run_ok(["list-users"])
+        assert "x@testrun.org" in out
+        assert "y@testrun.org" not in out
+
+    def test_two_tokens_users(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."])
+        mycmd.run_ok(["add-token", "test2", "--expiry=1d", "--prefix=tmpx."])
+        mycmd.run_fail(["add-user", "x@testrun.org"])
+        mycmd.run_ok(["add-user", "tmpy.123@testrun.org"])
+        mycmd.run_ok(["add-user", "tmpx.456@testrun.org"])
+        mycmd.run_ok(["list-users"], """
+            tmpy.123*test1*
+            tmpx.456*test2*
+        """)
+        out = mycmd.run_ok(["list-users", "--token", "test1"])
+        assert "tmpy.123" in out
+        assert "tmpx.456" not in out
+        out = mycmd.run_ok(["list-users", "--token", "test2"])
+        assert "tmpy.123" not in out
+        assert "tmpx.456" in out

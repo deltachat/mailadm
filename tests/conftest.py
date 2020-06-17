@@ -99,7 +99,7 @@ def make_ini_from_values(make_ini, tmpdir):
         prefix="",
         expiry="1w",
     ):
-        path = tmpdir.mkdir(name)
+        path = tmpdir.mkdir("mailadm.config")
         web_endpoint = "https://testrun.org/new_email"
         path_dovecot_users = path.ensure("path_dovecot_users")
         path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
@@ -119,7 +119,8 @@ def make_ini_from_values(make_ini, tmpdir):
         """.format(**locals()))
         config = mailadm.config.Config(inipath)
         print(config.db.sqlpath)
-        with config.write_transaction() as conn:
-            conn.add_token(name=name, token=token, prefix=prefix, expiry=expiry)
+        if name is not None:
+            with config.write_transaction() as conn:
+                conn.add_token(name=name, token=token, prefix=prefix, expiry=expiry)
         return inipath
     return make_ini_from_values

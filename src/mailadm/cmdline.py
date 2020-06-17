@@ -60,12 +60,13 @@ def list_tokens(ctx):
 
 
 @click.command()
+@click.option("--token", type=str, default=None, help="name of token")
 @click.pass_context
-def list_users(ctx):
+def list_users(ctx, token):
     """list users """
     config = get_mailadm_config(ctx)
     with config.read_connection() as conn:
-        for user_info in conn.get_user_list():
+        for user_info in conn.get_user_list(token=token):
             click.secho("{} [token={}]".format(user_info.addr, user_info.token_name))
 
 
@@ -88,7 +89,7 @@ def dump_token_info(token_info):
               help="maximum number of accounts this token can create")
 @click.option("--prefix", type=str, default="tmp.",
               help="prefix for all e-mail addresses for this token")
-@click.option("--token", type=str, default=None, help="the token to be used")
+@click.option("--token", type=str, default=None, help="name of token to be used")
 @click.pass_context
 def add_token(ctx, name, expiry, prefix, token, maxuse):
     """add new token for generating new e-mail addresses
@@ -141,7 +142,7 @@ def gen_qr(ctx, tokenname):
 @click.option("--password", type=str, default=None,
               help="if not specified, generate a random password")
 @click.option("--token", type=str, default=None,
-              help="if not specified, automatically use first matching token")
+              help="name of token. if not specified, automatically use first token matching addr")
 @click.pass_context
 def add_user(ctx, addr, password, token):
     """add user as a mailadm managed account.

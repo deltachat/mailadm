@@ -109,9 +109,13 @@ class Connection:
             users.append(UserInfo(*args))
         return users
 
-    def get_user_list(self):
+    def get_user_list(self, token=None):
         q = UserInfo._select_user_columns
-        return [UserInfo(*args) for args in self._sqlconn.execute(q).fetchall()]
+        args = []
+        if token is not None:
+            q += "WHERE token_name=?"
+            args.append(token)
+        return [UserInfo(*args) for args in self._sqlconn.execute(q, args).fetchall()]
 
     def gen_sysfiles(self):
         """ generate system files needed by postfix/dovecot for
