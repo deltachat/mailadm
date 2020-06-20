@@ -33,7 +33,6 @@ def main():
         ''',
         install_requires=[
             "click>=6.0",
-            "fasteners",
             "flask",
             "iniconfig>=1.0",
             "pillow",

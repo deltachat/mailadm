@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from mailadm.db import parse_expiry_code
+from mailadm.config import SysConfig
 
 
 @pytest.fixture
@@ -19,6 +20,15 @@ def test_sysconfigsimple(config, tmp_path):
     assert sysconfig.path_virtual_mailboxes
     assert sysconfig.path_vmaildir
     assert sysconfig.path_mailadm_db
+
+
+def test_sysconfigs_with_vars(config, monkeypatch):
+    monkeypatch.setenv("SOMEVAR", "/hello")
+    d = config.sysconfig.__dict__.copy()
+    del d["log"]
+    d["path_mailadm_db"] = "$SOMEVAR/world"
+    sysconfig = SysConfig(None, **d)
+    assert sysconfig.path_mailadm_db == "/hello/world"
 
 
 def test_token_twice(conn):

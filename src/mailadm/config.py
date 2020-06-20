@@ -14,11 +14,6 @@ import iniconfig
 from .db import DB
 
 
-# character set for creating random email accounts
-# we don't use "0o 1l b6" chars to minimize misunderstandings
-# when speaking/hearing/writing/reading the password
-
-
 class InvalidConfig(ValueError):
     """ raised when something is invalid about the init config file. """
 
@@ -71,22 +66,27 @@ class SysConfig:
         for name in self._names:
             if name not in kwargs:
                 raise KeyError(name)
-            setattr(self, name, kwargs[name])
+            val = kwargs[name]
+            if "$" in val:
+                val = os.path.expandvars(val)
+            setattr(self, name, val)
 
     def gen_sysfiles(self, userlist, dryrun=False):
         postfix_lines = []
         dovecot_lines = []
         for user_info in userlist:
             postfix_lines.append(user_info.addr + "   " + user_info.token_name)
-            # {addr}:{hash_pw}:{dovecot_uid}:{dovecot_gid}::{path_vmaildir}::
+            # this is the format of dovecot-users
+            # {addr}:{hash_pw}:{dovecot_uid}:{dovecot_gid}::{user_vmaildir}::
+            # but we keep all except addr/hash_pw
             dovecot_lines.append(
                 ":".join([
                     user_info.addr,
                     user_info.hash_pw,
-                    self.dovecot_uid,
-                    self.dovecot_gid,
                     "",
-                    self.path_vmaildir,
+                    "",
+                    "",
+                    "",
                     "", ""]))
 
         postfix_data = "\n".join(postfix_lines)

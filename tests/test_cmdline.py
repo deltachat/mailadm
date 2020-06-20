@@ -119,6 +119,7 @@ class TestUsers:
         assert "y@testrun.org" in out
 
         mycmd.run_ok(["prune"])
+
         out = mycmd.run_ok(["list-users"])
         assert "x@testrun.org" in out
         assert "y@testrun.org" not in out

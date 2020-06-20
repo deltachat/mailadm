@@ -1,5 +1,4 @@
 
-from pathlib import Path
 
 import pytest
 from mailadm.db import DB, get_doveadm_pw
@@ -34,10 +33,10 @@ class TestTokenAccounts:
     MAXUSE = 10
 
     @pytest.fixture
-    def conn(self, tmpdir):
-        pathdir = tmpdir.mkdir("paths")
-        path = pathdir.join("tokenusers.db")
-        db = DB(Path(path.strpath), config=None)
+    def conn(self, tmpdir, make_config):
+        config = make_config(tmpdir.join("conn"))
+
+        db = DB(config.db.sqlpath, config=config)
         conn = db.get_connection(write=True)
         conn.add_token(name="onehour", prefix="xyz", expiry="1h",
                        maxuse=self.MAXUSE, token="123456789012345")
@@ -62,6 +61,25 @@ class TestTokenAccounts:
         with pytest.raises(ValueError):
             conn.add_user(addr="tmp.xx@testrun.org", hash_pw=hash_pw,
                           date=now, ttl=60 * 60, token_name="onehour")
+
+    def test_different_vmaildirs(self, conn):
+        clear_pw, hash_pw = get_doveadm_pw()
+        conn.add_user(
+            addr="tmp.1@testrun.org", hash_pw=hash_pw,
+            date=10, ttl=60 * 60, token_name="onehour")
+        conn.add_user(
+            addr="tmp.2@testrun.org", hash_pw=hash_pw,
+            date=11, ttl=60 * 60, token_name="onehour")
+        conn.gen_sysfiles()
+        with open(conn.config.sysconfig.path_dovecot_users) as f:
+            vmaildirs = set()
+            for line in f:
+                # {addr}:{hash_pw}:{dovecot_uid}:{dovecot_gid}::{user_vmaildir}::
+                parts = line.strip().split(":")
+                vmaildir = parts[5]
+                if vmaildir and vmaildir in vmaildirs:
+                    pytest.fail("duplicate vmaildir: {}".format(vmaildir))
+                vmaildirs.add(vmaildir)
 
     def test_add_expire_del(self, conn):
         now = 10000

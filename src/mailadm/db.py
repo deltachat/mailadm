@@ -7,6 +7,10 @@ import time
 import sys
 
 
+# character set for creating random email accounts
+# we don't use "0o 1l b6" chars to minimize misunderstandings
+# when speaking/hearing/writing/reading a string
+
 TMP_EMAIL_CHARS = "2345789acdefghjkmnpqrstuvwxyz"
 TMP_EMAIL_LEN = 5
 

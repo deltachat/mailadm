@@ -66,28 +66,37 @@ def cmd():
 
 
 @pytest.fixture
-def config(tmpdir):
-    path = tmpdir.mkdir("paths")
-    mail_domain = "testrun.org"
-    web_endpoint = "https://testrun.org/new_email"
-    path_dovecot_users = path.ensure("path_dovecot_users")
-    path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
-    path_vmaildir = path.ensure("path_vmaildir", dir=1)
-    path_mailadm_db = path.join("mailadm.db")
-    dovecot_uid = 1000
-    dovecot_gid = 1000
-    source = dedent("""
-        [sysconfig]
-        mail_domain = {mail_domain}
-        web_endpoint = {web_endpoint}
-        path_mailadm_db= {path_mailadm_db}
-        path_dovecot_users= {path_dovecot_users}
-        path_virtual_mailboxes= {path_virtual_mailboxes}
-        path_vmaildir = {path_vmaildir}
-        dovecot_uid = {dovecot_uid}
-        dovecot_gid = {dovecot_gid}
-    """.format(**locals()))
+def config(tmpdir, make_config):
+    path = tmpdir.ensure("base", dir=1)
+    return make_config(path)
 
-    p = tmpdir.join("mailadm.cfg")
-    p.write(source)
-    return mailadm.config.Config(str(p))
+
+@pytest.fixture
+def make_config():
+    def make_config(basedir):
+        path = basedir.ensure("paths", dir=1)
+        mail_domain = "testrun.org"
+        web_endpoint = "https://testrun.org/new_email"
+        path_dovecot_users = path.ensure("path_dovecot_users")
+        path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
+        path_vmaildir = path.ensure("path_vmaildir", dir=1)
+        path_mailadm_db = path.join("mailadm.db")
+        dovecot_uid = 1000
+        dovecot_gid = 1000
+        source = dedent("""
+            [sysconfig]
+            mail_domain = {mail_domain}
+            web_endpoint = {web_endpoint}
+            path_mailadm_db= {path_mailadm_db}
+            path_dovecot_users= {path_dovecot_users}
+            path_virtual_mailboxes= {path_virtual_mailboxes}
+            path_vmaildir = {path_vmaildir}
+            dovecot_uid = {dovecot_uid}
+            dovecot_gid = {dovecot_gid}
+        """.format(**locals()))
+
+        p = basedir.join("mailadm.cfg")
+        p.write(source)
+        return mailadm.config.Config(str(p))
+
+    return make_config
