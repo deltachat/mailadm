@@ -105,7 +105,7 @@ class Connection:
         if homedir.exists():
             raise ValueError("homedirectory already exists for addr {!r}: {!r}".format(
                              addr, homedir))
-        q = """INSERT INTO mailusers (addr, hash_pw, homedir, date, ttl, token_name)
+        q = """INSERT INTO users (addr, hash_pw, homedir, date, ttl, token_name)
                VALUES (?, ?, ?, ?, ?, ?)"""
         try:
             self._sqlconn.execute(q, (addr, hash_pw, str(homedir), date, ttl, token_name))
@@ -115,7 +115,7 @@ class Connection:
                               "  WHERE name=?", (token_name,))
 
     def del_user(self, addr):
-        q = "DELETE FROM mailusers WHERE addr=?"
+        q = "DELETE FROM users WHERE addr=?"
         c = self._sqlconn.cursor()
         c.execute(q, (addr, ))
         if c.rowcount == 0:
@@ -253,7 +253,7 @@ class DB:
                     )
                 """)
                 c.execute("""
-                    CREATE TABLE mailusers (
+                    CREATE TABLE users (
                         addr TEXT PRIMARY KEY,
                         hash_pw TEXT NOT NULL,
                         homedir TEXT NOT NULL,
@@ -300,7 +300,7 @@ class TokenInfo:
 
 
 class UserInfo:
-    _select_user_columns = "SELECT addr, hash_pw, homedir, date, ttl, token_name from mailusers\n"
+    _select_user_columns = "SELECT addr, hash_pw, homedir, date, ttl, token_name from users\n"
 
     def __init__(self, addr, hash_pw, homedir, date, ttl, token_name):
         self.addr = addr
