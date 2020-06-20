@@ -1,3 +1,4 @@
+
 import contextlib
 import crypt
 import base64
@@ -5,6 +6,7 @@ import random
 import sqlite3
 import time
 import sys
+from pathlib import Path
 
 
 # character set for creating random email accounts
@@ -99,9 +101,14 @@ class Connection:
         if token and token.usecount >= token.maxuse:
             raise ValueError("token {} is exhausted".format(token_name))
 
-        q = "INSERT INTO mailusers (addr, hash_pw, date, ttl, token_name) VALUES (?, ?, ?, ?, ?)"
+        homedir = Path(self.config.sysconfig.path_vmaildir).joinpath(addr)
+        if homedir.exists():
+            raise ValueError("homedirectory already exists for addr {!r}: {!r}".format(
+                             addr, homedir))
+        q = """INSERT INTO mailusers (addr, hash_pw, homedir, date, ttl, token_name)
+               VALUES (?, ?, ?, ?, ?, ?)"""
         try:
-            self._sqlconn.execute(q, (addr, hash_pw, date, ttl, token_name))
+            self._sqlconn.execute(q, (addr, hash_pw, str(homedir), date, ttl, token_name))
         except sqlite3.IntegrityError as e:
             raise ValueError("failed to add addr {!r}: {}".format(addr, e))
         self._sqlconn.execute("UPDATE tokens SET usecount = usecount + 1"
@@ -249,6 +256,7 @@ class DB:
                     CREATE TABLE mailusers (
                         addr TEXT PRIMARY KEY,
                         hash_pw TEXT NOT NULL,
+                        homedir TEXT NOT NULL,
                         date INTEGER,
                         ttl INTEGER,
                         token_name TEXT NOT NULL,
@@ -292,11 +300,12 @@ class TokenInfo:
 
 
 class UserInfo:
-    _select_user_columns = "SELECT addr, hash_pw, date, ttl, token_name from mailusers\n"
+    _select_user_columns = "SELECT addr, hash_pw, homedir, date, ttl, token_name from mailusers\n"
 
-    def __init__(self, addr, hash_pw, date, ttl, token_name):
+    def __init__(self, addr, hash_pw, homedir, date, ttl, token_name):
         self.addr = addr
         self.hash_pw = hash_pw
+        self.homedir = homedir
         self.date = date
         self.ttl = ttl
         self.token_name = token_name

@@ -68,24 +68,21 @@ class TestTokenAccounts:
             conn.add_user(addr="tmp.xx@testrun.org", hash_pw=hash_pw,
                           date=now, ttl=60 * 60, token_name="onehour")
 
-    def test_different_vmaildirs(self, conn):
+    def test_homedirs(self, conn):
         clear_pw, hash_pw = get_doveadm_pw()
+
         conn.add_user(
             addr="tmp.1@testrun.org", hash_pw=hash_pw,
             date=10, ttl=60 * 60, token_name="onehour")
         conn.add_user(
             addr="tmp.2@testrun.org", hash_pw=hash_pw,
             date=11, ttl=60 * 60, token_name="onehour")
-        conn.gen_sysfiles()
-        with open(conn.config.sysconfig.path_dovecot_users) as f:
-            vmaildirs = set()
-            for line in f:
-                # {addr}:{hash_pw}:{dovecot_uid}:{dovecot_gid}::{user_vmaildir}::
-                parts = line.strip().split(":")
-                vmaildir = parts[5]
-                if vmaildir and vmaildir in vmaildirs:
-                    pytest.fail("duplicate vmaildir: {}".format(vmaildir))
-                vmaildirs.add(vmaildir)
+        known = set()
+        for user_info in conn.get_user_list():
+            if user_info.homedir in known:
+                pytest.fail("duplicate homedir" + str(user_info.homedir))
+            assert user_info.homedir.startswith(conn.config.sysconfig.path_vmaildir)
+            known.add(user_info.homedir)
 
     def test_add_expire_del(self, conn):
         now = 10000
