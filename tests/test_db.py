@@ -29,6 +29,12 @@ def test_token(tmp_path):
         assert not conn.get_token_list()
 
 
+def test_get_doveadm_pw():
+    clear, hash_pw = get_doveadm_pw("hello")
+    assert clear == "hello"
+    assert hash_pw.startswith("{SHA512-CRYPT}")
+
+
 class TestTokenAccounts:
     MAXUSE = 10
 

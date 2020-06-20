@@ -305,8 +305,8 @@ class UserInfo:
 def get_doveadm_pw(password=None):
     if password is None:
         password = gen_password()
-    hash_pw = crypt.crypt(password)
-    return password, hash_pw
+    hash_pw = crypt.crypt(password, crypt.METHOD_SHA512)
+    return password, "{SHA512-CRYPT}" + hash_pw
 
 
 def gen_password():

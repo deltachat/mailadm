@@ -2,7 +2,7 @@
 import pytest
 from _pytest.pytester import LineMatcher
 from textwrap import dedent
-import mailadm
+import mailadm.config
 
 
 @pytest.fixture(autouse=True)
