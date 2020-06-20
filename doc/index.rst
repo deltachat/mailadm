@@ -113,23 +113,26 @@ integration with dovecot
 We can integrate mailadm with dovecot (for serving IMAP users)
 by producing a passwd configuration file::
 
-    # put this into /etc/dovecot/conf.d/auth-tmp-passwdfile.conf.ext
+    # put this into /etc/dovecot/conf.d/auth-mailadm.conf.ext
+    # Authentication for SQL users. Included from 10-auth.conf.
+    #
+    # <doc/wiki/AuthDatabase.SQL.txt>
     passdb {
-        driver = passwd-file
-        args = scheme=CRYPT username_format=%u /home/mailadm/dovecot-users
+      driver = sql
+      args = /home/mailadm/dovecot-sql.conf.ext
     }
 
+    # <doc/wiki/UserDatabase.Static.txt>
     userdb {
-      driver = passwd-file
-      args = username_format=%u /home/mailadm/dovecot-users
-
-      default_fields = uid=vmail gid=vmail home=/home/vmail/%d/%n mail_location=maildir:/home/vmail/%d/%u/mail:INDEX=/home/vmail/%d/%u/index:LAYOUT=fs
+      driver = static
+      args = username_format=%u uid=vmail gid=vmail home=/home/vmail/testrun.org/%u
     }
+
 
 Now we need to include this file from the `/etc/dovecot/conf.d/10-auth.conf` file
 by adding the following line::
 
-    !include auth-tmp-passwdfile.conf.ext
+    !include auth-mailadm-sql.conf.ext
 
 With these two dovecot related files added/modified we can reload dovecot::
 
