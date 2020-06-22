@@ -18,18 +18,18 @@ Installing and Configuring the command line
 Assumptions used in this doc:
 
 - you are using `dovecot` as MDA (mail delivery agent)
-  and `postfix` as MTA (mail transport agent).
+  and `postfix` as MTA (mail transport agent)
+  and have a working setup of both, including proper SSL setup.
 
-- You have Python and virtualenv installed.
+- You have Python and python-virtualenv installed.
 
-- `/home/vmail/example.org/` is the base directory where all user mail
-  directories are created by dovecot. This directory is managed by dovecot
-  by the `vmail` user and dirs/files are created by the dovecot service.
+- You have a `vmail` user with a home directory that keeps all virtual
+  users and their mailstate. Both `mailadm` and `dovecot` will
+  write or delete files there.
 
-- `/home/mailadm` ("$HOME") is the home directory of the "mailadm" user
-  where mailadm configuration and account state is managed and where mailadm
-  is installed in the virtualenv `/home/mailadm/venv` environment.
-
+- You have a `mailadm` user with a dedicated home directory
+  under which the mailadm software is installed and all
+  mailadm token/user state is managed.
 
 installing mailadm
 +++++++++++++++++++++++++++++++++
@@ -37,15 +37,16 @@ installing mailadm
 Create a user account "mailadm" and login/su to this user.
 Then create and activate a Python virtualenv and install mailadm::
 
-    # go to mailadm home directory
+    # go to mailadm home directory (mailadm user needs to exist!)
     cd ~mailadm
 
-    virtualenv venv
+    # create virtual python environment and install latest stable mailadm
+    python3 -m venv venv
     venv/bin/pip install -q mailadm
 
-    # always activate venv, and set mailadm config path for mailadm user
+    # activate venv and set config location
     echo "source ~/venv/bin/activate venv" >> .bashrc
-    echo "export MAILADM_CONFIG=\$HOME/mailadm.config" >> .bashrc
+    echo "export MAILADM_CFG=\$HOME/mailadm.cfg" >> .bashrc
 
 Now do `source $HOME/.bashrc` so you have the new settings.
 
@@ -59,23 +60,20 @@ Token and user information is kept in the sqlite database
 located at `path_mailadm_db`.  Here, we assume that `$HOME` points to
 the "mailadm" user home directory::
 
-    # content of /home/mailadm/mailadm.config
+    # content of /home/mailadm/mailadm.cfg
     [sysconfig]
     path_mailadm_db = $HOME/mailadm.db
     path_virtual_mailboxes = $HOME/virtual_mailboxes
-    path_vmaildir = /home/vmail/example.org
-
+    vmail_user = vmail
     web_endpoint = http://localhost:3961/
     mail_domain = example.org
-    dovecot_uid = 1000
-    dovecot_gid = 1000
 
 
 Adding a first token and user
 ++++++++++++++++++++++++++++++
 
-With the `MAILADM_CONFIG` environment variable
-pointing to your `mailadm.config` file above,
+With the `MAILADM_CFG` environment variable
+pointing to your `mailadm.cfg` file above,
 you can now add a first "token"::
 
     $ mailadm add-token oneday --expiry 1d --prefix="tmp."
@@ -96,23 +94,20 @@ because the email addresses matches the prefix)::
     $ mailadm add-user tmp.12345@example.org
     added addr 'tmp.12345@example.org' with token 'oneday'
     wrote /home/mailadm/virtual_mailboxes
-    wrote /home/mailadm/dovecot-users
 
-Mailadm writes out files for use by postfix and dovecot
-and the next section provides an example how to integrate them.
+When adding/manipulating users `mailadm` writes out
+virtual mailbox "map" files (including the ".db" form)
+so that Postfix knows which mailadm mailboxes exist.
 
 
 Integrate with system services
 ------------------------------
-
 
 integration with dovecot
 ++++++++++++++++++++++++
 
 We can integrate mailadm with dovecot (for serving IMAP users)
 by producing a passwd configuration file::
-
-    XXX pull from dubby
 
 Now we need to include this file from the `/etc/dovecot/conf.d/10-auth.conf` file
 by adding the following line::
@@ -128,7 +123,7 @@ Integration with postfix
 ++++++++++++++++++++++++
 
 You need to already have configured a "virtual mailboxes" setup with postfix.
-Also, the `mail_domain` in the `mailadm.config` file needs to point
+Also, the `mail_domain` in the `mailadm.cfg` file needs to point
 to the domain which postfix serves.
 
 To let postfix know about mailadm-managed users, add the
@@ -160,7 +155,7 @@ And then we add the following systemd unit file::
 
     [Service]
     User=mailadm
-    Environment="MAILADM_CONFIG=/home/mailadm/mailadm.config"
+    Environment="MAILADM_CFG=/home/mailadm/mailadm.cfg"
     ExecStart=/home/mailadm/venv/bin/gunicorn -b localhost:3961 -w 1 mailadm.app:app
     Restart=always
 
@@ -224,7 +219,7 @@ to proxy to the localhost app::
     }
 
 Note that if you change the `location /` parameter you need to edit
-the `mailadm.config` file and modify the `web_endpoint` value accordingly
+the `mailadm.cfg` file and modify the `web_endpoint` value accordingly
 and then restart the mailadm service.
 
 

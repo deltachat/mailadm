@@ -8,7 +8,7 @@ def mycmd(request, cmd, config, tmpdir, monkeypatch):
     if request.param == "file":
         cmd._rootargs.extend(["--config", str(config.path)])
     elif request.param == "env":
-        monkeypatch.setenv("MAILADM_CONFIG", str(config.path))
+        monkeypatch.setenv("MAILADM_CFG", str(config.path))
     else:
         assert 0
 

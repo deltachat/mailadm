@@ -22,7 +22,7 @@ option_dryrun = click.option(
 
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
-@click.option("--config", type=click.Path(), envvar="MAILADM_CONFIG",
+@click.option("--config", type=click.Path(), envvar="MAILADM_CFG",
               help="config file for mailadm")
 @click.version_option()
 @click.pass_context
@@ -36,7 +36,7 @@ def mailadm_main(context, config):
 def get_mailadm_config(ctx, show=False):
     config_path = ctx.parent.config_path
     if not os.path.exists(config_path):
-        ctx.exit("MAILADM_CONFIG not set, "
+        ctx.exit("MAILADM_CFG not set, "
                  "--config option missing and no config file found: {}".format(config_path))
     try:
         cfg = Config(config_path)

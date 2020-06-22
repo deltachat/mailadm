@@ -1,7 +1,7 @@
 """
 Parsing the mailadm config file, and making sections available.
 
-for a example mailadm.config file, see test_config.py
+for a example mailadm.cfg file, see test_config.py
 """
 
 import os
