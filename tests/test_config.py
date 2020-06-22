@@ -16,8 +16,7 @@ def conn(config):
 def test_sysconfigsimple(config, tmp_path):
     sysconfig = config.sysconfig
     assert sysconfig.mail_domain == "testrun.org"
-    assert sysconfig.path_virtual_mailboxes
-    assert sysconfig.path_vmaildir
+    assert sysconfig.vmail_user == "vmail"
     assert sysconfig.path_mailadm_db
 
 
@@ -27,7 +26,7 @@ def test_sysconfigs_with_vars(config, monkeypatch):
     del d["log"]
     d["path_mailadm_db"] = "$SOMEVAR/world"
     sysconfig = SysConfig(None, **d)
-    assert sysconfig.path_mailadm_db == "/hello/world"
+    assert sysconfig.path_mailadm_db == Path("/hello/world")
 
 
 def test_token_twice(conn):

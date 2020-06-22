@@ -81,7 +81,7 @@ class TestTokenAccounts:
         for user_info in conn.get_user_list():
             if user_info.homedir in known:
                 pytest.fail("duplicate homedir" + str(user_info.homedir))
-            assert user_info.homedir.startswith(conn.config.sysconfig.path_vmaildir)
+            assert user_info.homedir.relative_to(conn.config.sysconfig.path_vmaildir)
             known.add(user_info.homedir)
 
     def test_add_expire_del(self, conn):

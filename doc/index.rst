@@ -112,26 +112,12 @@ integration with dovecot
 We can integrate mailadm with dovecot (for serving IMAP users)
 by producing a passwd configuration file::
 
-    # put this into /etc/dovecot/conf.d/auth-mailadm.conf.ext
-    # Authentication for SQL users. Included from 10-auth.conf.
-    #
-    # <doc/wiki/AuthDatabase.SQL.txt>
-    passdb {
-      driver = sql
-      args = /home/mailadm/dovecot-sql.conf.ext
-    }
-
-    # <doc/wiki/UserDatabase.Static.txt>
-    userdb {
-      driver = static
-      args = username_format=%u uid=vmail gid=vmail home=/home/vmail/testrun.org/%u
-    }
-
+    XXX pull from dubby
 
 Now we need to include this file from the `/etc/dovecot/conf.d/10-auth.conf` file
 by adding the following line::
 
-    !include auth-mailadm-sql.conf.ext
+    !include auth-mailadm.conf.ext
 
 With these two dovecot related files added/modified we can reload dovecot::
 
@@ -141,16 +127,15 @@ With these two dovecot related files added/modified we can reload dovecot::
 Integration with postfix
 ++++++++++++++++++++++++
 
-You need to already have configured "virtual mailboxes" with postfix.
+You need to already have configured a "virtual mailboxes" setup with postfix.
 Also, the `mail_domain` in the `mailadm.config` file needs to point
 to the domain which postfix serves.
 
-To make sure that postfix knows about about users added by
-mailadm, add the `postfix-users` file controlled by mailadm::
+To let postfix know about mailadm-managed users, add the
+mailadm-generated `postfix-users` file to postfix configuration::
 
-    # somewhere in /etc/postfix/main.cfg
+    # add this into your existing and working /etc/postfix/main.cf
     virtual_mailbox_maps =
-        hash:/etc/postfix/virtual_mailboxes
         hash:/home/mailadm/postfix-users
 
 

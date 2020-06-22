@@ -5,6 +5,7 @@ for a example mailadm.config file, see test_config.py
 """
 
 import os
+import pwd
 import pathlib
 import subprocess
 
@@ -23,7 +24,7 @@ class Config:
         self.path = path
         self.cfg = iniconfig.IniConfig(str(self.path))
         self.sysconfig = self._parse_sysconfig()
-        dbpath = pathlib.Path(self.sysconfig.path_mailadm_db)
+        dbpath = self.sysconfig.path_mailadm_db
         self.db = DB(dbpath, config=self)
 
     def log(self, *args):
@@ -54,10 +55,8 @@ class SysConfig:
         "path_mailadm_db",         # path to mailadm database (source of truth)
         "mail_domain",             # on which mail addresses are created
         "web_endpoint",            # how the web endpoint is externally visible
-        "path_virtual_mailboxes",  # postfix virtual mailbox alias file
-        "path_vmaildir",           # where dovecot virtual mail directory resides
-        "dovecot_uid",             # uid of the dovecot process
-        "dovecot_gid",             # gid of the dovecot process
+        "path_virtual_mailboxes",  # postfix virtual mailbox map
+        "vmail_user",              # where dovecot virtual mail directory resides
     )
 
     def __init__(self, log, **kwargs):
@@ -65,10 +64,17 @@ class SysConfig:
         for name in self._names:
             if name not in kwargs:
                 raise KeyError(name)
-            val = kwargs[name]
+            val = str(kwargs[name])
             if "$" in val:
                 val = os.path.expandvars(val)
+            if name.startswith("path_"):
+                val = pathlib.Path(val)
             setattr(self, name, val)
+
+    @property
+    def path_vmaildir(self):
+        entry = pwd.getpwnam(self.vmail_user)
+        return pathlib.Path(entry[0])
 
     def gen_sysfiles(self, userlist, dryrun=False):
         postfix_lines = []

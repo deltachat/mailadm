@@ -101,7 +101,7 @@ class Connection:
         if token and token.usecount >= token.maxuse:
             raise ValueError("token {} is exhausted".format(token_name))
 
-        homedir = Path(self.config.sysconfig.path_vmaildir).joinpath(addr)
+        homedir = self.config.sysconfig.path_vmaildir.joinpath(addr)
         q = """INSERT INTO users (addr, hash_pw, homedir, date, ttl, token_name)
                VALUES (?, ?, ?, ?, ?, ?)"""
         try:
@@ -302,7 +302,7 @@ class UserInfo:
     def __init__(self, addr, hash_pw, homedir, date, ttl, token_name):
         self.addr = addr
         self.hash_pw = hash_pw
-        self.homedir = homedir
+        self.homedir = Path(homedir)
         self.date = date
         self.ttl = ttl
         self.token_name = token_name

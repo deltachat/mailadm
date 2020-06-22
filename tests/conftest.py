@@ -1,4 +1,7 @@
 
+import pwd
+from pathlib import Path
+
 import pytest
 from _pytest.pytester import LineMatcher
 from textwrap import dedent
@@ -72,29 +75,30 @@ def config(tmpdir, make_config):
 
 
 @pytest.fixture
-def make_config():
+def make_config(monkeypatch):
     def make_config(basedir):
         path = basedir.ensure("paths", dir=1)
+        path_mailadm_db = path.join("mailadm.db")
         mail_domain = "testrun.org"
         web_endpoint = "https://testrun.org/new_email"
         path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
-        path_vmaildir = path.ensure("path_vmaildir", dir=1)
-        path_mailadm_db = path.join("mailadm.db")
-        dovecot_uid = 1000
-        dovecot_gid = 1000
         source = dedent("""
             [sysconfig]
+            path_mailadm_db= {path_mailadm_db}
             mail_domain = {mail_domain}
             web_endpoint = {web_endpoint}
-            path_mailadm_db= {path_mailadm_db}
-            path_virtual_mailboxes= {path_virtual_mailboxes}
-            path_vmaildir = {path_vmaildir}
-            dovecot_uid = {dovecot_uid}
-            dovecot_gid = {dovecot_gid}
+            path_virtual_mailboxes = {path_virtual_mailboxes}
+            vmail_user = vmail
         """.format(**locals()))
 
         p = basedir.join("mailadm.cfg")
         p.write(source)
+
+        def getpwnam(name):
+            assert name == "vmail"
+            path_vmaildir = Path(path.ensure("path_vmaildir", dir=1).strpath)
+            return path_vmaildir, 10000, 10000
+        monkeypatch.setattr(pwd, "getpwnam", getpwnam)
         return mailadm.config.Config(str(p))
 
     return make_config
