@@ -82,8 +82,6 @@ class TestUsers:
         """)
         path = mycmd._config.sysconfig.path_virtual_mailboxes
         assert "x@testrun.org" in open(path).read()
-        path = mycmd._config.sysconfig.path_dovecot_users
-        assert "x@testrun.org:" in open(path).read()
 
     def test_add_del_user(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])

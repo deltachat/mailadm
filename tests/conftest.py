@@ -77,7 +77,6 @@ def make_config():
         path = basedir.ensure("paths", dir=1)
         mail_domain = "testrun.org"
         web_endpoint = "https://testrun.org/new_email"
-        path_dovecot_users = path.ensure("path_dovecot_users")
         path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
         path_vmaildir = path.ensure("path_vmaildir", dir=1)
         path_mailadm_db = path.join("mailadm.db")
@@ -88,7 +87,6 @@ def make_config():
             mail_domain = {mail_domain}
             web_endpoint = {web_endpoint}
             path_mailadm_db= {path_mailadm_db}
-            path_dovecot_users= {path_dovecot_users}
             path_virtual_mailboxes= {path_virtual_mailboxes}
             path_vmaildir = {path_vmaildir}
             dovecot_uid = {dovecot_uid}

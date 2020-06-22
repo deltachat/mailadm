@@ -54,7 +54,6 @@ class SysConfig:
         "path_mailadm_db",         # path to mailadm database (source of truth)
         "mail_domain",             # on which mail addresses are created
         "web_endpoint",            # how the web endpoint is externally visible
-        "path_dovecot_users",      # path to dovecot users file
         "path_virtual_mailboxes",  # postfix virtual mailbox alias file
         "path_vmaildir",           # where dovecot virtual mail directory resides
         "dovecot_uid",             # uid of the dovecot process
@@ -73,40 +72,16 @@ class SysConfig:
 
     def gen_sysfiles(self, userlist, dryrun=False):
         postfix_lines = []
-        dovecot_lines = []
         for user_info in userlist:
-            postfix_lines.append(user_info.addr + "   " + user_info.token_name)
-            # this is the format of dovecot-users
-            # {addr}:{hash_pw}:{dovecot_uid}:{dovecot_gid}::{user_vmaildir}::
-            # but we keep all except addr/hash_pw
-            dovecot_lines.append(
-                ":".join([
-                    user_info.addr,
-                    user_info.hash_pw,
-                    "",
-                    "",
-                    "",
-                    "",
-                    "", ""]))
+            postfix_lines.append(user_info.addr + "   " + user_info.addr)
 
         postfix_data = "\n".join(postfix_lines)
-        dovecot_data = "\n".join(dovecot_lines)
 
         if dryrun:
-            self.log("would write", self.path_dovecot_users)
             self.log("would write", self.path_virtual_mailboxes)
             return
 
-        # write postfix virtual_mailboxes style file
         with open(self.path_virtual_mailboxes, "w") as f:
             f.write(postfix_data)
-        if not dryrun:
-            subprocess.check_call(["postmap", self.path_virtual_mailboxes])
+        subprocess.check_call(["postmap", self.path_virtual_mailboxes])
         self.log("wrote", self.path_virtual_mailboxes)
-
-        # write dovecot users file
-        tmp_path = self.path_dovecot_users + "_tmp"
-        with open(tmp_path, "w") as f:
-            f.write(dovecot_data)
-        os.rename(tmp_path, self.path_dovecot_users)
-        self.log("wrote", self.path_dovecot_users)

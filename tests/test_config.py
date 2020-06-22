@@ -16,7 +16,6 @@ def conn(config):
 def test_sysconfigsimple(config, tmp_path):
     sysconfig = config.sysconfig
     assert sysconfig.mail_domain == "testrun.org"
-    assert sysconfig.path_dovecot_users
     assert sysconfig.path_virtual_mailboxes
     assert sysconfig.path_vmaildir
     assert sysconfig.path_mailadm_db
@@ -81,12 +80,6 @@ def test_gen_sysfiles(config):
 
         user_list = conn.get_user_list()
         config.sysconfig.gen_sysfiles(user_list)
-
-    # check dovecot user db was generated
-    p = Path(config.sysconfig.path_dovecot_users)
-    data = p.read_text()
-    for user in users:
-        assert user.addr in data and user.hash_pw in data
 
     # check postfix virtual mailboxes was generated
     p = Path(config.sysconfig.path_virtual_mailboxes)

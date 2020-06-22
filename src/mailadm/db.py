@@ -102,9 +102,6 @@ class Connection:
             raise ValueError("token {} is exhausted".format(token_name))
 
         homedir = Path(self.config.sysconfig.path_vmaildir).joinpath(addr)
-        if homedir.exists():
-            raise ValueError("homedirectory already exists for addr {!r}: {!r}".format(
-                             addr, homedir))
         q = """INSERT INTO users (addr, hash_pw, homedir, date, ttl, token_name)
                VALUES (?, ?, ?, ?, ?, ?)"""
         try:

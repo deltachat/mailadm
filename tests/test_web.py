@@ -54,9 +54,7 @@ def test_gensysfiles(config):
     password = r.json["password"]
     assert password
 
-    dovecot_users = open(config.sysconfig.path_dovecot_users).read()
     postfix_map = open(config.sysconfig.path_virtual_mailboxes).read()
-    assert email in dovecot_users
     assert email in postfix_map
 
 

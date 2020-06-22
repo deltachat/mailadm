@@ -62,7 +62,6 @@ the "mailadm" user home directory::
     # content of /home/mailadm/mailadm.config
     [sysconfig]
     path_mailadm_db = $HOME/mailadm.db
-    path_dovecot_users= $HOME/dovecot-users
     path_virtual_mailboxes = $HOME/virtual_mailboxes
     path_vmaildir = /home/vmail/example.org
 
