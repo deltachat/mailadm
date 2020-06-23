@@ -4,10 +4,13 @@ Parsing the mailadm config file, and making sections available.
 for a example mailadm.cfg file, see test_config.py
 """
 
+import pkg_resources
 import os
+import sys
 import pwd
 import pathlib
 import subprocess
+import urllib
 
 import iniconfig
 
@@ -29,6 +32,41 @@ class Config:
 
     def log(self, *args):
         print(*args)
+
+    def gen_sysconfig(self, dest):
+        dest = pathlib.Path(dest)
+        path = pathlib.Path(pkg_resources.resource_filename('mailadm', 'data/sysconfig'))
+        assert path.exists()
+        mailadm_homedir = pathlib.Path(pwd.getpwnam("mailadm").pw_dir)
+        parts = urllib.parse.urlparse(self.sysconfig.web_endpoint)
+        web_domain = parts.netloc.split(":", 1)[0]
+        web_path = parts.path
+        localhost_mailadm_port = 3961
+
+        if not dest.exists():
+            dest.mkdir()
+
+        for template_fn in path.iterdir():
+            if template_fn.name.startswith("."):
+                continue
+            content = template_fn.read_text()
+            data = content.format(
+                mailadm_homedir=mailadm_homedir,
+                web_domain=web_domain,
+                web_path=web_path,
+                localhost_mailadm_port=localhost_mailadm_port,
+                path_mailadm_db=self.sysconfig.path_mailadm_db,
+                path_virtual_mailboxes=self.sysconfig.path_virtual_mailboxes,
+                mail_domain=self.sysconfig.mail_domain,
+                vmail_user=self.sysconfig.vmail_user,
+                systemd="/etc/systemd/system",
+                dovecot_conf_d="/etc/dovecot/conf.d",
+                postfix_maincf="/etc/postfix/main.cf",
+                mailadm_home="~mailadm",
+                nginx_sites_enabled="/etc/nginx/sites-enabled",
+                args = " ".join(sys.argv[1:]),
+            )
+            yield dest.joinpath(template_fn.name), data
 
     def write_transaction(self):
         return self.db.write_transaction()

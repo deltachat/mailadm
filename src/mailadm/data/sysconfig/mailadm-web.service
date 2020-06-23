@@ -1,0 +1,12 @@
+# put this file into {systemd}/mailadm.service
+[Unit]
+Description=Mailadm Web API 
+After=network.target
+
+[Service]
+User=mailadm 
+ExecStart=/home/mailadm/venv/bin/gunicorn -b localhost:{localhost_mailadm_port} -w 1 mailadm.app:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

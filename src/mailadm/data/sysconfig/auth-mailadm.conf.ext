@@ -1,0 +1,19 @@
+
+# put this into /etc/dovecot/conf.d/auth-mailadm.conf.ext
+# It provides authentication for mailadm managed users through sqlite. 
+# (included from 10-auth.conf)
+
+passdb {{
+  driver = sql
+  args = {mailadm_homedir}/dovecot-sql.conf.ext
+}}
+
+userdb {{
+  driver = prefetch
+}}
+
+# needed for postfix and LDA delivery 
+userdb {{
+  driver = sql
+  args = {mailadm_homedir}/dovecot-sql.conf.ext
+}}

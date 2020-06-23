@@ -36,7 +36,8 @@ def main():
             "flask",
             "iniconfig>=1.0",
             "pillow",
-            "qrcode"
+            "qrcode",
+            "gunicorn",
         ],
         zip_safe=False,
     )

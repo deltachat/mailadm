@@ -6,6 +6,7 @@ https://github.com/codespeaknet/sysadmin/blob/master/docs/postfix-virtual-domain
 
 from __future__ import print_function
 
+from pathlib import Path
 import os
 import time
 import sys
@@ -138,6 +139,24 @@ def gen_qr(ctx, tokenname):
 
 
 @click.command()
+@option_dryrun
+@click.pass_context
+def gen_sysconfig(ctx, dryrun):
+    """generate basic system configuration files. """
+    config = get_mailadm_config(ctx)
+
+    path = Path("sysconfig")
+    for fn, data in config.gen_sysconfig(path):
+        if dryrun:
+            click.secho("would write {}".format(fn))
+            for line in data.splitlines():
+                click.secho("  " + line)
+        else:
+            fn.write_text(data)
+            click.secho("wrote {}".format(fn))
+
+
+@click.command()
 @click.argument("addr", type=str, required=True)
 @click.option("--password", type=str, default=None,
               help="if not specified, generate a random password")
@@ -220,6 +239,7 @@ mailadm_main.add_command(add_user)
 mailadm_main.add_command(del_user)
 mailadm_main.add_command(list_users)
 mailadm_main.add_command(prune)
+mailadm_main.add_command(gen_sysconfig)
 mailadm_main.add_command(serve)
 
 

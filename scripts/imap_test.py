@@ -2,6 +2,8 @@
 import email
 import smtplib
 from textwrap import dedent
+
+import requests
 from imapclient import IMAPClient
 
 
@@ -37,7 +39,14 @@ hi there
 
 if __name__ == "__main__":
     import sys
-    user, password = sys.argv[1:]
+    if sys.argv[1].startswith("https"):
+        res = requests.post(sys.argv[1])
+        assert res.status_code == 200
+        data = res.json()
+        user = data["email"]
+        password = data["password"]
+    else:
+        user, password = sys.argv[1:]
     host = user.split("@", 1)[-1]
     num = 42
     send_self_mail(host, user, password, num)

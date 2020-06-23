@@ -1,3 +1,4 @@
+import os
 import time
 import datetime
 import pytest
@@ -20,6 +21,14 @@ def test_help(cmd):
     cmd.run_ok([], """
         *account creation*
     """)
+
+
+def test_gen_sysconfig(mycmd, tmpdir):
+    with tmpdir.as_cwd():
+        out = mycmd.run_ok(["gen-sysconfig"], "")
+        print(out)
+    names = os.listdir(tmpdir.join("sysconfig").strpath)
+    assert len(names) == 6
 
 
 class TestTokens:
