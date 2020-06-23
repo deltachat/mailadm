@@ -8,6 +8,22 @@ under an Ubuntu 16.04 and Debian 9 system. Other versions or distributions
 may need adaptation.  Development of `mailadm` takes
 place on https://github.com/deltachat/mailadm .
 
+Both mailadm web, prune and command line tools execute as the user
+`mailadm` and do never require root privileges.
+
+`mailadm prune` purges user data and thus needs write-permission
+to `vmail` ownhed directories. You thus need to add the
+`vmail` group for the `mailadm` user.
+
+
+mailadm configuration file
+--------------------------
+
+Default location: `{mailadm_home}/mailadm.cfg`
+
+The mailadm configuration specifies where system file
+locations and the mailadm database are to be found.
+
 
 Integration with dovecot
 ------------------------------
@@ -38,6 +54,15 @@ Default location: `{mailadm_home}/dovecot-sql.conf.ext`
 Dovecot uses the queries and Sqlite path inside this config file
 to perform password authentication and userdb queries
 for delivering mail to a subdirectory of the `vmail` user.
+
+restarting dovecot
++++++++++++++++++++++++++++++++
+
+With all dovecot related integration files in place
+you can test the mailadm integration (as root)::
+
+    # systemctl reload dovecot
+    # systemctl status dovecot
 
 
 Integration with postfix

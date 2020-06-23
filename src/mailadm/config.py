@@ -65,6 +65,9 @@ class Config:
                 mailadm_home="~mailadm",
                 nginx_sites_enabled="/etc/nginx/sites-enabled",
                 args = " ".join(sys.argv[1:]),
+                input_vmail_user="vmail",
+                input_web_endpoint="https://example.org/new_email",
+                input_mail_domain="example.org",
             )
             yield dest.joinpath(template_fn.name), data
 

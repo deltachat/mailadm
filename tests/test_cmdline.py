@@ -28,7 +28,7 @@ def test_gen_sysconfig(mycmd, tmpdir):
         out = mycmd.run_ok(["gen-sysconfig"], "")
         print(out)
     names = os.listdir(tmpdir.join("sysconfig").strpath)
-    assert len(names) == 5
+    assert len(names) == 6
 
 
 class TestTokens:
