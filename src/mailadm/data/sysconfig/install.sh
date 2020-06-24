@@ -9,8 +9,8 @@ cp $DIR/mailadm.cfg /home/mailadm/
 cp $DIR/dovecot-sql.conf.ext /home/mailadm/
 chown {mailadm_user} /home/mailadm/{{dovecot-sql.conf.ext,mailadm.cfg}}
 
-sudo cp $DIR/auth-mailadm.conf.ext /etc/dovecot/conf.d/
-sudo cp $DIR/mailadm-web.service $DIR/mailadm-prune.service /etc/systemd/system/
-sudo systemctl enable mailadm-web mailadm-prune
-sudo systemctl start mailadm-web mailadm-prune 
+cp $DIR/auth-mailadm.conf.ext /etc/dovecot/conf.d/
+cp $DIR/mailadm-web.service $DIR/mailadm-prune.service /etc/systemd/system/
+systemctl enable mailadm-web mailadm-prune
+systemctl start mailadm-web mailadm-prune 
 
