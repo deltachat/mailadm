@@ -96,6 +96,19 @@ class SysConfig:
         self.log("wrote", self.path_virtual_mailboxes)
 
 
+def get_cfg():
+    config_fn = os.environ.get("MAILADM_CFG")
+    if config_fn is None:
+        config_fn = os.path.expanduser("~mailadm/mailadm.cfg")
+        if not os.path.exists(config_fn):
+            raise RuntimeError("mailadm.cfg not found: MAILADM_CFG not set "
+                               "and {!r} does not exist".format(config_fn))
+    else:
+        if not os.path.exists(config_fn):
+            raise RuntimeError("MAILADM_CFG does not exist: '{!r}'".format(config_fn))
+    return config_fn
+
+
 def gen_sysconfig(destdir, web_endpoint, mail_domain, mailadm_info, vmail_info, localhost_web_port):
     destdir = pathlib.Path(destdir)
     path = pathlib.Path(pkg_resources.resource_filename('mailadm', 'data/sysconfig'))

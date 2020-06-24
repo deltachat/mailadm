@@ -1,24 +1,10 @@
-import os
 from flask import Flask, request, jsonify
-from .config import Config
-
-
-def getcfg():
-    config_fn = os.environ.get("MAILADM_CFG")
-    if config_fn is None:
-        config_fn = os.path.expanduser("~mailadm/mailadm.cfg")
-        if not os.path.exists(config_fn):
-            raise RuntimeError("mailadm.cfg not found: MAILADM_CFG not set "
-                               "and {!r} does not exist".format(config_fn))
-    else:
-        if not os.path.exists(config_fn):
-            raise RuntimeError("MAILADM_CFG does not exist: '{!r}'".format(config_fn))
-    return config_fn
+from .config import Config, get_cfg
 
 
 def create_app_from_file(config_fn=None):
     if config_fn is None:
-        config_fn = getcfg()
+        config_fn = get_cfg()
 
     config = Config(config_fn)
     return create_app_from_config(config)

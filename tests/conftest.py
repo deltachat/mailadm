@@ -1,4 +1,5 @@
 
+import os
 import pwd
 import grp
 import collections
@@ -8,6 +9,20 @@ import pytest
 from _pytest.pytester import LineMatcher
 from textwrap import dedent
 import mailadm.config
+
+
+@pytest.fixture(autouse=True)
+def _nocfg(monkeypatch):
+    monkeypatch.delenv("MAILADM_CFG", raising=False)
+
+    cfg = os.path.expanduser("~mailadm") + os.sep + "mailadm.cfg"
+
+    def exists(path, _exists=os.path.exists):
+        if path == cfg:
+            return False
+        return _exists(path)
+
+    monkeypatch.setattr(os.path, "exists", exists)
 
 
 class ClickRunner:

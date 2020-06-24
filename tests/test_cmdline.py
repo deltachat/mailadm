@@ -21,6 +21,9 @@ def test_help(cmd):
     cmd.run_ok([], """
         *account creation*
     """)
+    cmd.run_fail(["list-tokens"], """
+        Error*not*found*
+    """)
 
 
 def test_gen_sysconfig(mycmd, tmpdir):
@@ -42,16 +45,7 @@ def test_gen_sysconfig_no_mailadm(mycmd, tmpdir):
         mycmd.run_fail(["gen-sysconfig", "--mailadm-user", "l1kj23l"])
 
 
-class TestTokens:
-    def test_tokens(self, mycmd):
-        mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
-                      "--prefix", "", "--expiry=1w"])
-        mycmd.run_ok(["list-tokens"], """
-            *oneweek*
-            *https://testrun.org*
-            *DCACCOUNT*
-        """)
-
+class TestQR:
     def test_gen_qr(self, mycmd, tmpdir, monkeypatch):
         mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
                       "--prefix", "", "--expiry=1w"])
@@ -66,6 +60,17 @@ class TestTokens:
     def test_gen_qr_no_token(self, mycmd, tmpdir, monkeypatch):
         mycmd.run_fail(["gen-qr", "notexistingtoken"], """
             *Error*not*
+        """)
+
+
+class TestTokens:
+    def test_tokens(self, mycmd):
+        mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
+                      "--prefix", "", "--expiry=1w"])
+        mycmd.run_ok(["list-tokens"], """
+            *oneweek*
+            *https://testrun.org*
+            *DCACCOUNT*
         """)
 
     def test_tokens_add(self, mycmd):

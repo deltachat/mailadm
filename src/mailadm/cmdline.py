@@ -15,8 +15,8 @@ import sys
 import click
 from click import style
 
-from .config import Config, InvalidConfig
-import mailadm.web
+import mailadm
+from .config import Config, InvalidConfig, get_cfg
 
 
 option_dryrun = click.option(
@@ -25,14 +25,17 @@ option_dryrun = click.option(
 
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
-@click.option("--config", type=click.Path(), envvar="MAILADM_CFG",
+@click.option("--config", type=click.Path(), default=None,
               help="config file for mailadm")
 @click.version_option()
 @click.pass_context
 def mailadm_main(context, config):
     """e-mail account creation admin tool and web service. """
     if config is None:
-        config = mailadm.web.get_cfg()
+        try:
+            config = get_cfg()
+        except RuntimeError as e:
+            context.fail(e.args)
     context.config_path = config
 
 
