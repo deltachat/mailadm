@@ -27,8 +27,7 @@ class Config:
         self.path = path
         self.cfg = iniconfig.IniConfig(str(self.path))
         self.sysconfig = self._parse_sysconfig()
-        dbpath = self.sysconfig.path_mailadm_db
-        self.db = DB(dbpath, config=self)
+        self.db = DB(self.sysconfig.path_mailadm_db, config=self)
 
     def log(self, *args):
         print(*args)
@@ -55,7 +54,6 @@ class Config:
 
 class SysConfig:
     _names = (
-        "path_mailadm_db",         # path to mailadm database (source of truth)
         "mail_domain",             # on which mail addresses are created
         "web_endpoint",            # how the web endpoint is externally visible
         "path_virtual_mailboxes",  # postfix virtual mailbox map
@@ -77,7 +75,12 @@ class SysConfig:
     @property
     def path_vmaildir(self):
         entry = pwd.getpwnam(self.vmail_user)
-        return pathlib.Path(entry[0])
+        return pathlib.Path(entry.pw_dir)
+
+    @property
+    def path_mailadm_db(self):
+        entry = pwd.getpwnam("mailadm")
+        return pathlib.Path(entry.pw_dir).joinpath("mailadm.db")
 
     def gen_sysfiles(self, userlist, dryrun=False):
         postfix_lines = []

@@ -90,17 +90,15 @@ def config(tmpdir, make_config):
 def make_config(monkeypatch):
     def make_config(basedir):
         path = basedir.ensure("paths", dir=1)
-        path_mailadm_db = path.join("mailadm.db")
         mail_domain = "testrun.org"
         web_endpoint = "https://testrun.org/new_email"
         path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
         source = dedent("""
             [sysconfig]
-            path_mailadm_db= {path_mailadm_db}
+            vmail_user = vmail
             mail_domain = {mail_domain}
             web_endpoint = {web_endpoint}
             path_virtual_mailboxes = {path_virtual_mailboxes}
-            vmail_user = vmail
         """.format(**locals()))
 
         p = basedir.join("mailadm.cfg")
@@ -112,7 +110,7 @@ def make_config(monkeypatch):
             if name == "vmail":
                 p = Path(path.ensure("path_vmaildir", dir=1).strpath)
             elif name == "mailadm":
-                p = Path(path.ensure("path_mailadm_home", dir=1).strpath)
+                p = Path(path.ensure("mailadm_home", dir=1).strpath)
             else:
                 raise KeyError("don't know user {!r}".format(name))
             return ttype(name, p, 10000, 10000)  # uid/gid should play no role for testing

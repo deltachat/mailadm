@@ -49,7 +49,9 @@ class TestQR:
     def test_gen_qr(self, mycmd, tmpdir, monkeypatch):
         mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
                       "--prefix", "", "--expiry=1w"])
-        mycmd.run_ok(["list-tokens"])
+        mycmd.run_ok(["list-tokens"], """
+            *oneweek*
+        """)
         monkeypatch.chdir(tmpdir)
         mycmd.run_ok(["gen-qr", "oneweek"], """
             *dcaccount-testrun.org-oneweek.png*

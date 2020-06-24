@@ -24,9 +24,9 @@ def test_sysconfigs_with_vars(config, monkeypatch):
     monkeypatch.setenv("SOMEVAR", "/hello")
     d = config.sysconfig.__dict__.copy()
     del d["log"]
-    d["path_mailadm_db"] = "$SOMEVAR/world"
+    d["path_virtual_mailboxes"] = "$SOMEVAR/world"
     sysconfig = SysConfig(None, **d)
-    assert sysconfig.path_mailadm_db == Path("/hello/world")
+    assert sysconfig.path_virtual_mailboxes == Path("/hello/world")
 
 
 def test_token_twice(conn):
