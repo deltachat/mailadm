@@ -16,8 +16,7 @@ import click
 from click import style
 
 from .config import Config, InvalidConfig
-from . import MAILADM_SYSCONFIG_PATH
-import mailadm
+import mailadm.web
 
 
 option_dryrun = click.option(
@@ -33,7 +32,7 @@ option_dryrun = click.option(
 def mailadm_main(context, config):
     """e-mail account creation admin tool and web service. """
     if config is None:
-        config = MAILADM_SYSCONFIG_PATH
+        config = mailadm.web.get_cfg()
     context.config_path = config
 
 
@@ -257,12 +256,12 @@ def prune(ctx, dryrun):
 @click.pass_context
 @click.option("--debug", is_flag=True, default=False,
               help="run server in debug mode and don't change any files")
-def serve(ctx, debug):
-    """(debugging-only!) serve http account creation with a default token"""
+def web(ctx, debug):
+    """(debugging-only!) serve http account creation Web API on localhost"""
     from .web import create_app_from_config
     config = get_mailadm_config(ctx)
     app = create_app_from_config(config)
-    app.run(debug=debug, host="0.0.0.0", port=3960)
+    app.run(debug=debug, host="localhost", port=3961)
 
 
 mailadm_main.add_command(list_tokens)
@@ -274,7 +273,7 @@ mailadm_main.add_command(del_user)
 mailadm_main.add_command(list_users)
 mailadm_main.add_command(prune)
 mailadm_main.add_command(gen_sysconfig)
-mailadm_main.add_command(serve)
+mailadm_main.add_command(web)
 
 
 if __name__ == "__main__":

@@ -10,11 +10,6 @@ from textwrap import dedent
 import mailadm.config
 
 
-@pytest.fixture(autouse=True)
-def _change_sys_config(monkeypatch):
-    monkeypatch.setattr(mailadm, "MAILADM_SYSCONFIG_PATH", "/tmp/not/existent/i/hope")
-
-
 class ClickRunner:
     def __init__(self, main):
         from click.testing import CliRunner

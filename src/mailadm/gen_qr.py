@@ -10,14 +10,10 @@ def gen_qr(config, token_info):
             domain=config.sysconfig.mail_domain, prefix=token_info.prefix,
             expiry=token_info.expiry))
 
-    steps = (
-            "1. Install https://get.delta.chat\n"
+    steps = ("1. Install https://get.delta.chat\n"
             "2. From setup screen scan above QR code\n"
             "3. Choose nickname & avatar\n"
-            "+ chat with any e-mail address ...\n"
-            .format(
-            domain=config.sysconfig.mail_domain, prefix=token_info.prefix,
-            expiry=token_info.expiry, name=token_info.name))
+            "+ chat with any e-mail address ...\n")
 
     # load QR code
     url = token_info.get_qr_uri()
@@ -33,7 +29,6 @@ def gen_qr(config, token_info):
 
     # paint all elements
     ttf_path = pkg_resources.resource_filename('mailadm', 'data/opensans-regular.ttf')
-    logo_bw_path = pkg_resources.resource_filename('mailadm', 'data/delta-chat-bw.png')
     logo_red_path = pkg_resources.resource_filename('mailadm', 'data/delta-chat-red.png')
 
     assert os.path.exists(ttf_path), ttf_path
@@ -48,14 +43,11 @@ def gen_qr(config, token_info):
     text_height = font_size * num_lines
     height = size + text_height + qr_padding * 2
 
-    logo_img = Image.open(logo_bw_path)
-
     image = Image.new("RGBA", (width, height), "white")
 
     draw = ImageDraw.Draw(image)
 
     qr_final_size = width - (qr_padding * 2)
-    logo_width = int(qr_final_size / 4)
 
     # draw text
     info_pos = (width - font.getsize(info.strip())[0]) // 2
@@ -69,8 +61,10 @@ def gen_qr(config, token_info):
                (qr_padding, qr_padding))
 
     # paste black and white logo
-    #logo = logo_img.resize((logo_width, logo_width), resample=Image.NEAREST)
-    #image.paste(logo, (0, qr_final_size + qr_padding), mask=logo)
+    # logo_bw_path = pkg_resources.resource_filename('mailadm', 'data/delta-chat-bw.png')
+    # logo_img = Image.open(logo_bw_path)
+    # logo = logo_img.resize((logo_width, logo_width), resample=Image.NEAREST)
+    # image.paste(logo, (0, qr_final_size + qr_padding), mask=logo)
 
     # red background delta logo
     logo2_img = Image.open(logo_red_path)

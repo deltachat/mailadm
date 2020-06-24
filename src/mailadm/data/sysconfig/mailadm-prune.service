@@ -8,7 +8,6 @@ User=mailadm
 # note that mailadm needs to be part of the "vmail" group
 # so that it can delete expired accounts 
 ExecStart=/home/mailadm/venv/bin/mailadm prune 
-Environment="MAILADM_CFG={mailadm_cfg}"
 Restart=always
 RestartSec=3600
 
