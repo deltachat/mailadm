@@ -4,7 +4,21 @@ import os
 from PIL import ImageFont, ImageDraw, Image
 
 
-def gen_qr(url, text):
+def gen_qr(config, token_info):
+
+    info = ("{prefix}******@{domain} {expiry}\n".format(
+            domain=config.sysconfig.mail_domain, prefix=token_info.prefix,
+            expiry=token_info.expiry))
+
+    steps = (
+            "1. Install https://get.delta.chat\n"
+            "2. Scan QR Code to get account\n"
+            "3. Choose nickname, enjoy chatting\n"
+            .format(
+            domain=config.sysconfig.mail_domain, prefix=token_info.prefix,
+            expiry=token_info.expiry, name=token_info.name))
+    url = token_info.get_qr_uri()
+
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_Q,
@@ -15,12 +29,12 @@ def gen_qr(url, text):
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="black", back_color="white")
 
-    lines = text.rstrip().split("\n")
+    num_lines = len(info) + len(steps) + 1
 
-    width = 256
-    font_size = 14
-    font_height = len(lines) * font_size * 2
-    height = 256 + font_height
+    size = width = 384
+    font_size = 16
+    font_height = font_size * num_lines
+    height = size + font_height
     qr_padding = 6
     text_margin_right = 6
 
@@ -39,8 +53,8 @@ def gen_qr(url, text):
     qr_final_size = width - (qr_padding * 2)
     logo_width = int(qr_final_size / 4)
 
-    draw.multiline_text((text_margin_right + logo_width, height - font_height), text,
-                        font=font, fill="black", align="center")
+    draw.multiline_text((text_margin_right + logo_width, height - font_height), steps + info,
+                        font=font, fill="black", align="left")
 
     image.paste(qr_img.resize((qr_final_size, qr_final_size), resample=Image.NEAREST),
                 (qr_padding, qr_padding))

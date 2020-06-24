@@ -131,10 +131,10 @@ def gen_qr(ctx, tokenname):
     with config.read_connection() as conn:
         token_info = conn.get_tokeninfo_by_name(tokenname)
 
-    text = ("Scan with Delta Chat app\n"
-            "@{domain} {expiry} {name}").format(
-            domain=config.sysconfig.mail_domain, expiry=token_info.expiry, name=token_info.name)
-    image = gen_qr(token_info.get_qr_uri(), text)
+    if token_info is None:
+        ctx.fail("token {!r} does not exist".format(tokenname))
+
+    image = gen_qr(config, token_info)
     fn = "dcaccount-{domain}-{name}.png".format(
         domain=config.sysconfig.mail_domain, name=token_info.name)
     image.save(fn)

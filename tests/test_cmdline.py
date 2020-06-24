@@ -63,6 +63,11 @@ class TestTokens:
         p = tmpdir.join("dcaccount-testrun.org-oneweek.png")
         assert p.exists()
 
+    def test_gen_qr_no_token(self, mycmd, tmpdir, monkeypatch):
+        mycmd.run_fail(["gen-qr", "notexistingtoken"], """
+            *Error*not*
+        """)
+
     def test_tokens_add(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."], """
             *DCACCOUNT*&n=test1
