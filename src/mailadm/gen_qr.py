@@ -12,13 +12,15 @@ def gen_qr(config, token_info):
 
     steps = (
             "1. Install https://get.delta.chat\n"
-            "2. Scan QR Code to get account\n"
-            "3. Choose nickname, enjoy chatting\n"
+            "2. From setup screen scan above QR code\n"
+            "3. Choose nickname & avatar\n"
+            "+ chat with any e-mail address ...\n"
             .format(
             domain=config.sysconfig.mail_domain, prefix=token_info.prefix,
             expiry=token_info.expiry, name=token_info.name))
-    url = token_info.get_qr_uri()
 
+    # load QR code
+    url = token_info.get_qr_uri()
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -29,21 +31,22 @@ def gen_qr(config, token_info):
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="black", back_color="white")
 
-    num_lines = len(info) + len(steps) + 1
-
-    size = width = 384
-    font_size = 16
-    font_height = font_size * num_lines
-    height = size + font_height
-    qr_padding = 6
-    text_margin_right = 6
-
+    # paint all elements
     ttf_path = pkg_resources.resource_filename('mailadm', 'data/opensans-regular.ttf')
     logo_bw_path = pkg_resources.resource_filename('mailadm', 'data/delta-chat-bw.png')
     logo_red_path = pkg_resources.resource_filename('mailadm', 'data/delta-chat-red.png')
-    assert os.path.exists(ttf_path), ttf_path
 
+    assert os.path.exists(ttf_path), ttf_path
+    font_size = 16
     font = ImageFont.truetype(font=ttf_path, size=font_size)
+
+    num_lines = (info + steps).count("\n") + 2
+
+    size = width = 384
+    qr_padding = 6
+    text_margin_right = 12
+    text_height = font_size * num_lines
+    height = size + text_height + qr_padding * 2
 
     logo_img = Image.open(logo_bw_path)
 
@@ -55,15 +58,19 @@ def gen_qr(config, token_info):
     logo_width = int(qr_final_size / 4)
 
     # draw text
-    draw.multiline_text((text_margin_right + logo_width, height - font_height), steps + info,
+    info_pos = (width - font.getsize(info.strip())[0]) // 2
+    draw.multiline_text((info_pos, size - qr_padding // 2), info,
+                        font=font, fill="red", align="right")
+    draw.multiline_text((text_margin_right, height - text_height + font_size * 1.0), steps,
                         font=font, fill="black", align="left")
 
     # paste QR code
     image.paste(qr_img.resize((qr_final_size, qr_final_size), resample=Image.NEAREST),
-                (qr_padding, qr_padding))
+               (qr_padding, qr_padding))
 
-    logo = logo_img.resize((logo_width, logo_width), resample=Image.NEAREST)
-    image.paste(logo, (0, qr_final_size + qr_padding), mask=logo)
+    # paste black and white logo
+    #logo = logo_img.resize((logo_width, logo_width), resample=Image.NEAREST)
+    #image.paste(logo, (0, qr_final_size + qr_padding), mask=logo)
 
     # red background delta logo
     logo2_img = Image.open(logo_red_path)
