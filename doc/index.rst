@@ -1,26 +1,63 @@
-mailadm: adding and purging e-mail accounts as a service
+mailadm: managing token-based temporary e-mail accounts
 ========================================================
 
-mailadm is a simple administration command lihne tool for creating and
-purging e-mail accounts in Dovecot/Postfix installations that work with
-text files.  Mailadm can be run as a web app that allows remote creation
-of e-mail accounts, based on using secret tokens.  On the server you
-can configure multiple tokens. The mailadm development repo is at:
+mailadm is automated e-mail account management tooling
+for use by [Delta Chat](https://delta.chat).
+
+The `mailadm` command line tool allows to add or remove tokens
+for which a QR code can be generated. This QR code can then be
+scanned in the Setup screen from all Delta Chat apps. After scanning
+the user is asked if they want to create a temporary account.
+The account creation happens via the `mailadm` web interface
+and creates a random user id (the local part of an e-mail).
+
+Mailadm implements a sqlite database for keeping token and user state
+and provides queries to Dovecot and a `virtual_mailboxes` database
+to tell Postfix that a virtual account exists.
+
+The mailadm development repo is at:
 
     https://github.com/deltachat/mailadm
 
 
-Installing and Configuring the command line
--------------------------------------------
+installing mailadm under "mailadm" user
+---------------------------------------
 
-Assumptions used in this doc:
+Create a user account "mailadm" and login/su to this user (`sudo -iu mailadm`).
+Then create and activate a Python3 virtualenv and install the Python mailadm package::
+
+    # go to mailadm home directory (mailadm user needs to exist!)
+    cd ~mailadm
+
+    # create virtual python environment and install latest stable mailadm
+    python3 -m venv venv
+    venv/bin/pip install -q mailadm
+
+    # tell our shell to always activate venv
+    echo "source ~/venv/bin/activate" >> ~/.bashrc
+
+    # use virtualenv in current shell
+    source ~/venv/bin/activate
+
+Lastly, do `source $HOME/.bashrc` to have the correct settings
+in your current shell. Test that your `mailadm` install works::
+
+    $ mailadm list-tokens
+
+You will not see any tokens yet because you haven't created any.
+But your install works, great :)
+
+Integrate with system services
+------------------------------
+
+
+Perequisites
+++++++++++++
 
 - you are using `dovecot` as MDA (mail delivery agent)
   and `postfix` as MTA (mail transport agent)
   and have a working setup of both, including proper SSL and
   and other good practises (DKIM, SPF, DMARC, ...).
-
-- You have Python and python-virtualenv installed.
 
 - You have a `mailadm` user in whose home directory
   the mailadm software is installed and all
@@ -32,30 +69,21 @@ Assumptions used in this doc:
   users and their mailstate. Both `mailadm` and `dovecot` will
   write or delete files there.
 
+- You have `nginx` running and configured, including proper SSL.
 
 
-installing mailadm
-+++++++++++++++++++++++++++++++++
+generating example integration files
+++++++++++++++++++++++++++++++++++++
 
-Create a user account "mailadm" and login/su to this user.
-Then create and activate a Python3 virtualenv and install mailadm::
+Getting Dovecot, Postfix, Nginx, Systemd, users and permissions
+correctly requires a bit of fiddling.  To aid with this integration
+work mailadm can generate example configuration files, including
+a README that guides you through the required work::
 
-    # go to mailadm home directory (mailadm user needs to exist!)
-    cd ~mailadm
+    $ mailadm gen-sysconfig
 
-    # create virtual python environment and install latest stable mailadm
-    python3 -m venv venv
-    venv/bin/pip install -q mailadm
-
-    # activate venv and set config location
-    echo "source ~/venv/bin/activate" >> ~/.bashrc
-    echo "export MAILADM_CFG=~/mailadm.cfg" >> ~/.bashrc
-
-Lastly, do `source $HOME/.bashrc` to have the correct settings
-in your current shell. Test that your `mailadm` install works::
-
-    $ mailadm list-tokens
-
+Note that all invocations of `mailadm` everywhere will need
+to make sure that the environment variable `MAILADM_CFG`.
 
 Adding a first token and user
 ++++++++++++++++++++++++++++++
@@ -86,16 +114,6 @@ because the email addresses matches the prefix)::
 When adding/manipulating users `mailadm` writes out
 virtual mailbox "map" files (including the ".db" form)
 so that Postfix knows which mailadm mailboxes exist.
-
-
-Integrate with system services
-------------------------------
-
-Once you have a `mailadm.cfg` file you can generate some
-config files and fragments which you can integrate
-with your postfix/dovecot setup::
-
-    $ mailadm gen-sysconfig
 
 
 Testing the web app

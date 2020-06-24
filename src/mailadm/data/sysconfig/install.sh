@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
-umask 0077
-cp mailadm.cfg {mailadm_homedir}/
-cp auth-mailadm.conf.ext {dovecot_conf_d}/
-cp dovecot-sql.conf.ext {mailadm_homedir}/
+set -xe
 
-cp mailadm-prune.service {systemd}/
-cp mailadm-web.service {systemd}/
+umask 0077
+cp mailadm.cfg /home/mailadm/
+cp dovecot-sql.conf.ext /home/mailadm/
+cp auth-mailadm.conf.ext /etc/dovecot/conf.d/
+
+sudo cp mailadm-web.service mailadm-prune.service /etc/systemd/system/
+sudo systemctl enable mailadm-web mailadm-prune
+sudo systemctl start mailadm-web mailadm-prune 
+
