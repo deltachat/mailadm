@@ -1,5 +1,6 @@
 
 import pwd
+import grp
 import collections
 from pathlib import Path
 
@@ -95,17 +96,28 @@ def make_config(monkeypatch):
         p = basedir.join("mailadm.cfg")
         p.write(source)
 
-        ttype = collections.namedtuple("pwentry", ["pw_dir", "pw_uid", "pw_gid"])
+        ttype = collections.namedtuple("pwentry", ["pw_name", "pw_dir", "pw_uid", "pw_gid"])
+
         def getpwnam(name):
             if name == "vmail":
                 p = Path(path.ensure("path_vmaildir", dir=1).strpath)
             elif name == "mailadm":
                 p = Path(path.ensure("path_mailadm_home", dir=1).strpath)
             else:
-                raise ValueError("don't know user {!r}".format(name))
-            return ttype(p, 10000, 10000)  # uid/gid should play no role for testing
-
+                raise KeyError("don't know user {!r}".format(name))
+            return ttype(name, p, 10000, 10000)  # uid/gid should play no role for testing
         monkeypatch.setattr(pwd, "getpwnam", getpwnam)
+
+        gtype = collections.namedtuple("grpentry", ["gr_name", "gr_mem"])
+
+        def getgrnam(name):
+            if name == "vmail":
+                gr_mem = ["mailadm"]
+            else:
+                gr_mem = []
+            return gtype(name, gr_mem)
+        monkeypatch.setattr(grp, "getgrnam", getgrnam)
+
         return mailadm.config.Config(str(p))
 
     return make_config

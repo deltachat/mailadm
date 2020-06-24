@@ -33,44 +33,6 @@ class Config:
     def log(self, *args):
         print(*args)
 
-    def gen_sysconfig(self, dest):
-        dest = pathlib.Path(dest)
-        path = pathlib.Path(pkg_resources.resource_filename('mailadm', 'data/sysconfig'))
-        assert path.exists()
-        mailadm_homedir = pathlib.Path(pwd.getpwnam("mailadm").pw_dir)
-        parts = urllib.parse.urlparse(self.sysconfig.web_endpoint)
-        web_domain = parts.netloc.split(":", 1)[0]
-        web_path = parts.path
-        localhost_mailadm_port = 3961
-
-        if not dest.exists():
-            dest.mkdir()
-
-        for template_fn in path.iterdir():
-            if template_fn.name.startswith("."):
-                continue
-            content = template_fn.read_text()
-            data = content.format(
-                mailadm_homedir=mailadm_homedir,
-                web_domain=web_domain,
-                web_path=web_path,
-                localhost_mailadm_port=localhost_mailadm_port,
-                path_mailadm_db=self.sysconfig.path_mailadm_db,
-                path_virtual_mailboxes=self.sysconfig.path_virtual_mailboxes,
-                mail_domain=self.sysconfig.mail_domain,
-                vmail_user=self.sysconfig.vmail_user,
-                systemd="/etc/systemd/system",
-                dovecot_conf_d="/etc/dovecot/conf.d",
-                postfix_maincf="/etc/postfix/main.cf",
-                mailadm_home="~mailadm",
-                nginx_sites_enabled="/etc/nginx/sites-enabled",
-                args = " ".join(sys.argv[1:]),
-                input_vmail_user="vmail",
-                input_web_endpoint="https://example.org/new_email",
-                input_mail_domain="example.org",
-            )
-            yield dest.joinpath(template_fn.name), data
-
     def write_transaction(self):
         return self.db.write_transaction()
 
@@ -132,3 +94,42 @@ class SysConfig:
             f.write(postfix_data)
         subprocess.check_call(["postmap", self.path_virtual_mailboxes])
         self.log("wrote", self.path_virtual_mailboxes)
+
+
+def gen_sysconfig(destdir, web_endpoint, mail_domain, mailadm_info, vmail_info, localhost_web_port):
+    destdir = pathlib.Path(destdir)
+    path = pathlib.Path(pkg_resources.resource_filename('mailadm', 'data/sysconfig'))
+    assert path.exists()
+    mailadm_homedir = pathlib.Path(mailadm_info.pw_dir)
+    parts = urllib.parse.urlparse(web_endpoint)
+    web_domain = parts.netloc.split(":", 1)[0]
+    web_path = parts.path
+
+    if not destdir.exists():
+        destdir.mkdir()
+
+    for template_fn in path.iterdir():
+        if template_fn.name.startswith("."):
+            continue
+        content = template_fn.read_text()
+        data = content.format(
+            mailadm_homedir=mailadm_homedir,
+            web_domain=web_domain,
+            web_path=web_path,
+            web_endpoint=web_endpoint,
+            localhost_web_port=localhost_web_port,
+            mailadm_cfg=mailadm_homedir.joinpath("mailadm.cfg"),
+            mailadm_user=mailadm_info.pw_name,
+            path_mailadm_db=mailadm_homedir.joinpath("mailadm.db"),
+            path_virtual_mailboxes=mailadm_homedir.joinpath("virtual_mailboxes"),
+            mail_domain=mail_domain,
+            vmail_user=vmail_info.pw_name,
+            vmail_homedir=vmail_info.pw_dir,
+            systemd="/etc/systemd/system",
+            dovecot_conf_d="/etc/dovecot/conf.d",
+            postfix_maincf="/etc/postfix/main.cf",
+            mailadm_home=mailadm_homedir,
+            nginx_sites_enabled="/etc/nginx/sites-enabled",
+            args=" ".join(sys.argv[1:]),
+        )
+        yield destdir.joinpath(template_fn.name), data

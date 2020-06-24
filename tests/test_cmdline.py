@@ -27,8 +27,19 @@ def test_gen_sysconfig(mycmd, tmpdir):
     with tmpdir.as_cwd():
         out = mycmd.run_ok(["gen-sysconfig"], "")
         print(out)
+
     names = os.listdir(tmpdir.join("sysconfig").strpath)
-    assert len(names) == 6
+    assert len(names) == 7
+
+
+def test_gen_sysconfig_no_vmail(mycmd, tmpdir):
+    with tmpdir.as_cwd():
+        mycmd.run_fail(["gen-sysconfig", "--vmail-user", "l1kj23l"])
+
+
+def test_gen_sysconfig_no_mailadm(mycmd, tmpdir):
+    with tmpdir.as_cwd():
+        mycmd.run_fail(["gen-sysconfig", "--mailadm-user", "l1kj23l"])
 
 
 class TestTokens:

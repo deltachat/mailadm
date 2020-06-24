@@ -9,15 +9,16 @@ may need adaptation.  Development of `mailadm` takes
 place on https://github.com/deltachat/mailadm .
 
 Both mailadm web, prune and command line tools execute as the user
-`mailadm` and do never require root privileges.
+`mailadm` and do not require root privileges. However, `mailadm`
+needs write permission to `{vmail_homedir}/{mail_domain}` sub directories.
+It is advised to perform this operation::
 
-`mailadm prune` purges user data and thus needs write-permission
-to `vmail` ownhed directories. You thus need to add the
-`vmail` group for the `mailadm` user.
+    sudo chmod -R g+rwS {vmail_homedir}/{mail_domain}
 
+and make sure that the `{mailadm_user}` is a member of the `{vmail_user}` group.
 
-mailadm configuration file
---------------------------
+file: mailadm.cfg
+-----------------
 
 Default location: `{mailadm_home}/mailadm.cfg`
 
@@ -89,7 +90,7 @@ for example `{nginx_sites_enabled}/default`::
 
     # add these lines to domain file in `{nginx_sites_enabled}`
     location /{web_path} {{
-        proxy_pass http://localhost:{localhost_mailadm_port}/
+        proxy_pass http://localhost:{localhost_web_port}/
     }}
 
 This makes nginx proxy external web requests to our `mailadm-web` service.

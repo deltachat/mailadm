@@ -5,8 +5,8 @@ After=network.target
 
 [Service]
 User=mailadm 
-ExecStart=/home/mailadm/venv/bin/gunicorn -b localhost:{localhost_mailadm_port} -w 1 mailadm.app:app
-Environment="MAILADM_CFG={mailadm_home}/mailadm.cfg"
+ExecStart=/home/mailadm/venv/bin/gunicorn -b localhost:{localhost_web_port} -w 1 mailadm.app:app
+Environment="MAILADM_CFG={mailadm_cfg}"
 Restart=always
 
 [Install]

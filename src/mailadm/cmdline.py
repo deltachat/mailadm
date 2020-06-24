@@ -9,12 +9,15 @@ from __future__ import print_function
 from pathlib import Path
 import os
 import time
+import pwd
+import grp
 import sys
 import click
 from click import style
 
 from .config import Config, InvalidConfig
 from . import MAILADM_SYSCONFIG_PATH
+import mailadm
 
 
 option_dryrun = click.option(
@@ -37,12 +40,12 @@ def mailadm_main(context, config):
 def get_mailadm_config(ctx, show=False):
     config_path = ctx.parent.config_path
     if not os.path.exists(config_path):
-        ctx.exit("MAILADM_CFG not set, "
+        ctx.fail("MAILADM_CFG not set, "
                  "--config option missing and no config file found: {}".format(config_path))
     try:
         cfg = Config(config_path)
     except InvalidConfig as e:
-        ctx.exit(str(e))
+        ctx.fail(str(e))
 
     if show:
         click.secho("using config file: {}".format(cfg.cfg.path), file=sys.stderr)
@@ -140,13 +143,37 @@ def gen_qr(ctx, tokenname):
 
 @click.command()
 @option_dryrun
+@click.option("--mailadm-user", type=str,
+              prompt="User which manages all mailadm-token/user state",
+              default="mailadm", show_default="mailadm")
+@click.option("--vmail-user", type=str, prompt="User under which virtual user data is managed",
+              default="vmail", show_default="vmail")
+@click.option("--web-endpoint", type=str, prompt="external URL for Web API create-account requests",
+              default="https://example.org/new_email", show_default="https://example.org/new_email")
+@click.option("--mail-domain", type=str, prompt="mail domain for which we create new users",
+              default="example.org", show_default="example.org")
+@click.option("--localhost_web_port", type=int, prompt="localhost port for the web service",
+              default=3961, show_default=3961)
 @click.pass_context
-def gen_sysconfig(ctx, dryrun):
-    """generate basic system configuration files. """
-    config = get_mailadm_config(ctx)
+def gen_sysconfig(ctx, dryrun, mailadm_user, vmail_user, localhost_web_port,
+                  web_endpoint, mail_domain):
+    """generate pre-configured system configuration files (config/dovecot/postfix/systemd). """
+
+    mailadm_info = get_pwinfo(ctx, "mailadm", mailadm_user)
+    vmail_info = get_pwinfo(ctx, "vmail", vmail_user)
+
+    group_info = grp.getgrnam(vmail_user)
+    if mailadm_user not in group_info.gr_mem:
+        ctx.fail("vmail group {!r} does not have mailadm user "
+                 "{!r} as member".format(vmail_user, mailadm_user))
 
     path = Path("sysconfig")
-    for fn, data in config.gen_sysconfig(path):
+    for fn, data in mailadm.config.gen_sysconfig(
+        destdir=path, mailadm_info=mailadm_info, vmail_info=vmail_info,
+        web_endpoint=web_endpoint, mail_domain=mail_domain,
+        localhost_web_port=localhost_web_port
+    ):
+
         if dryrun:
             click.secho("would write {}".format(fn))
             for line in data.splitlines():
@@ -154,6 +181,13 @@ def gen_sysconfig(ctx, dryrun):
         else:
             fn.write_text(data)
             click.secho("wrote {}".format(fn))
+
+
+def get_pwinfo(ctx, description, username):
+    try:
+        return pwd.getpwnam(username)
+    except KeyError:
+        ctx.fail("{} user {!r} does not exist".format(description, username))
 
 
 @click.command()
@@ -170,19 +204,19 @@ def add_user(ctx, addr, password, token):
     with config.write_transaction() as conn:
         if token is None:
             if "@" not in addr:
-                ctx.exit("invalid email address: {}".format(addr))
+                ctx.fail("invalid email address: {}".format(addr))
 
             token_info = conn.get_tokeninfo_by_addr(addr)
             if token_info is None:
-                ctx.exit("could not determine token for addr: {!r}".format(addr))
+                ctx.fail("could not determine token for addr: {!r}".format(addr))
         else:
             token_info = conn.get_tokeninfo_by_name(token)
             if token_info is None:
-                ctx.exit("token does not exist: {!r}".format(token))
+                ctx.fail("token does not exist: {!r}".format(token))
         try:
             conn.add_email_account(token_info, addr=addr, password=password)
         except ValueError as e:
-            ctx.exit("failed to add e-mail account: {}".format(e))
+            ctx.fail("failed to add e-mail account: {}".format(e))
 
         conn.gen_sysfiles()
 
