@@ -16,6 +16,10 @@ fi
 
 set -xe
 
+# modify the following variables 
+export WEB_ENDPOINT=https://example.org/new_email
+export MAIL_DOMAIN=example.org
+
 export VMAIL_USER=vmail 
 export MAILADM_USER=mailadm 
 export MAILADM_LIB=/var/lib/mailadm

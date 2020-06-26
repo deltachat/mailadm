@@ -44,6 +44,14 @@ class Connection:
         except sqlite3.OperationalError:
             return None
 
+    def get_config_items(self):
+        q = "SELECT name, value from config"
+        c = self._sqlconn.cursor()
+        try:
+            return c.execute(q).fetchall()
+        except sqlite3.OperationalError:
+            return None
+
     def set_dbversion(self, dbversion):
         q = "INSERT OR REPLACE INTO config (name, value) VALUES (?, ?)"
         c = self._sqlconn.cursor()

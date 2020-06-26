@@ -56,6 +56,17 @@ def get_mailadm_config(ctx, show=False):
 
 @click.command()
 @click.pass_context
+def config(ctx):
+    """show and manipulate config settings. """
+    config = get_mailadm_config(ctx)
+    with config.read_connection() as conn:
+        click.secho("mailadm database path: {}".format(conn._sqlpath))
+        for name, val in conn.get_config_items():
+            click.secho("{:22s} {}".format(name, val))
+
+
+@click.command()
+@click.pass_context
 def list_tokens(ctx):
     """list available tokens """
     config = get_mailadm_config(ctx)
@@ -282,6 +293,7 @@ def web(ctx, debug):
     app.run(debug=debug, host="localhost", port=3961)
 
 
+mailadm_main.add_command(config)
 mailadm_main.add_command(list_tokens)
 mailadm_main.add_command(add_token)
 mailadm_main.add_command(del_token)

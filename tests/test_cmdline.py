@@ -43,6 +43,13 @@ def test_gen_sysconfig_no_mailadm(mycmd, tmpdir):
         mycmd.run_fail(["gen-sysconfig", "--mailadm-user", "l1kj23l"])
 
 
+class TestConfig:
+    def test_config_simple(self, mycmd):
+        mycmd.run_ok(["config"], """
+            dbversion*
+        """)
+
+
 class TestQR:
     def test_gen_qr(self, mycmd, tmpdir, monkeypatch):
         mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
