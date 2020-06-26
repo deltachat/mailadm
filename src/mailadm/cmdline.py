@@ -6,7 +6,6 @@ https://github.com/codespeaknet/sysadmin/blob/master/docs/postfix-virtual-domain
 
 from __future__ import print_function
 
-from pathlib import Path
 import os
 import time
 import pwd
@@ -174,7 +173,6 @@ def gen_sysconfig(ctx, dryrun, web_endpoint, mail_domain):
         ctx.fail("vmail group {!r} does not have mailadm user "
                  "{!r} as member".format(vmail_user, mailadm_user))
 
-    path = Path("sysconfig")
     for fn, data, mode in mailadm.config.gen_sysconfig(
         mailadm_etc=get_env("MAILADM_ETC"),
         mailadm_info=mailadm_info, vmail_info=vmail_info,
