@@ -1,6 +1,5 @@
 
-# put this into /etc/dovecot/conf.d/auth-mailadm.conf.ext
-# It provides authentication for mailadm managed users through sqlite. 
+# dovecot authentication for mailadm managed users 
 # (included from 10-auth.conf)
 
 passdb {{

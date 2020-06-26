@@ -15,7 +15,7 @@ import mailadm.config
 def _nocfg(monkeypatch):
     monkeypatch.delenv("MAILADM_CFG", raising=False)
 
-    cfg = os.path.expanduser("~mailadm") + os.sep + "mailadm.cfg"
+    cfg = mailadm.config.MAILADM_ETC_CONFIG
 
     def exists(path, _exists=os.path.exists):
         if path == cfg:

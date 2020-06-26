@@ -31,19 +31,20 @@ option_dryrun = click.option(
 @click.pass_context
 def mailadm_main(context, config):
     """e-mail account creation admin tool and web service. """
-    if config is None:
-        try:
-            config = get_cfg()
-        except RuntimeError as e:
-            context.fail(e.args)
-    context.config_path = config
+
+    def get_config_path():
+        if config is None:
+            try:
+                return get_cfg()
+            except RuntimeError as e:
+                context.fail(e.args)
+        return config
+
+    context.get_config_path = get_config_path
 
 
 def get_mailadm_config(ctx, show=False):
-    config_path = ctx.parent.config_path
-    if not os.path.exists(config_path):
-        ctx.fail("MAILADM_CFG not set, "
-                 "--config option missing and no config file found: {}".format(config_path))
+    config_path = ctx.parent.get_config_path()
     try:
         cfg = Config(config_path)
     except InvalidConfig as e:
@@ -145,21 +146,25 @@ def gen_qr(ctx, tokenname):
 
 @click.command()
 @option_dryrun
-@click.option("--mailadm-user", type=str,
-              prompt="User which manages all mailadm-token/user state",
-              default="mailadm", show_default="mailadm")
-@click.option("--vmail-user", type=str, prompt="User under which virtual user data is managed",
-              default="vmail", show_default="vmail")
 @click.option("--web-endpoint", type=str, prompt="external URL for Web API create-account requests",
               default="https://example.org/new_email", show_default="https://example.org/new_email")
 @click.option("--mail-domain", type=str, prompt="mail domain for which we create new users",
               default="example.org", show_default="example.org")
-@click.option("--localhost_web_port", type=int, prompt="localhost port for the web service",
-              default=3961, show_default=3961)
 @click.pass_context
-def gen_sysconfig(ctx, dryrun, mailadm_user, vmail_user, localhost_web_port,
-                  web_endpoint, mail_domain):
+def gen_sysconfig(ctx, dryrun, web_endpoint, mail_domain):
     """generate pre-configured system configuration files (config/dovecot/postfix/systemd). """
+
+    def get_env(name, default=None):
+        try:
+            return os.environ[name]
+        except KeyError:
+            if not default:
+                ctx.fail("environment variable {} not set".format(name))
+            return default
+
+    mailadm_user = get_env("MAILADM_USER", "mailadm")
+    vmail_user = get_env("VMAIL_USER", "vmail")
+    localhost_web_port = get_env("LOCALHOST_WEB_PORT", "3961")
 
     mailadm_info = get_pwinfo(ctx, "mailadm", mailadm_user)
     vmail_info = get_pwinfo(ctx, "vmail", vmail_user)
@@ -170,19 +175,31 @@ def gen_sysconfig(ctx, dryrun, mailadm_user, vmail_user, localhost_web_port,
                  "{!r} as member".format(vmail_user, mailadm_user))
 
     path = Path("sysconfig")
-    for fn, data in mailadm.config.gen_sysconfig(
-        destdir=path, mailadm_info=mailadm_info, vmail_info=vmail_info,
+    for fn, data, mode in mailadm.config.gen_sysconfig(
+        mailadm_etc=get_env("MAILADM_ETC"),
+        mailadm_info=mailadm_info, vmail_info=vmail_info,
         web_endpoint=web_endpoint, mail_domain=mail_domain,
         localhost_web_port=localhost_web_port
     ):
-
         if dryrun:
-            click.secho("would write {}".format(fn))
-            for line in data.splitlines():
-                click.secho("  " + line)
+            click.secho("")
+            click.secho("")
+            click.secho("DRY-WRITE: {}".format(str(fn)))
+            click.secho("")
+            for line in data.strip().splitlines():
+                click.secho("    " + line)
         else:
             fn.write_text(data)
-            click.secho("wrote {}".format(fn))
+            fn.chmod(mode)
+            os.chown(str(fn), 0, 0)  # uid root, gid root
+            if str(fn.parent) in ("/etc/mailadm", "/var/lib/mailadm"):
+                dirmode = 0o775
+                dirfn = fn.parent
+                dirfn.chmod(dirmode)
+                os.chown(str(dirfn), mailadm_info.pw_uid, mailadm_info.pw_gid)
+                click.secho("change-perm {} [owner={}, mode={:03o}]".format(
+                            dirfn, mailadm_user, dirmode))
+            click.secho("wrote {} [mode={:03o}]".format(fn, mode))
 
 
 def get_pwinfo(ctx, description, username):

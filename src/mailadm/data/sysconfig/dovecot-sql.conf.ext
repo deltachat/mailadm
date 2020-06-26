@@ -1,3 +1,4 @@
+# mailadm configuration file for auth/user meta data access from dovecot 
 
 driver = sqlite
 connect = {path_mailadm_db}

@@ -1,11 +1,10 @@
-# put this file into {systemd}/mailadm.service
 [Unit]
-Description=Mailadm Web API 
+Description=Mailadm Web e-mail account creation API 
 After=network.target
 
 [Service]
 User=mailadm 
-ExecStart=/home/mailadm/venv/bin/gunicorn -b localhost:{localhost_web_port} -w 1 mailadm.app:app
+ExecStart={mailadm_home}/venv/bin/gunicorn -b localhost:{localhost_web_port} -w 1 mailadm.app:app
 Restart=always
 
 [Install]

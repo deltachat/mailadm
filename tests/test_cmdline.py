@@ -26,13 +26,12 @@ def test_help(cmd):
     """)
 
 
-def test_gen_sysconfig(mycmd, tmpdir):
+def test_gen_sysconfig(mycmd, tmpdir, monkeypatch):
+    monkeypatch.setenv("LOCALHOST_WEB_PORT", "5000")
+    monkeypatch.setenv("MAILADM_ETC", tmpdir.ensure("MAILADM_ETC").strpath)
     with tmpdir.as_cwd():
-        out = mycmd.run_ok(["gen-sysconfig"], "")
+        out = mycmd.run_ok(["gen-sysconfig", "--dryrun"], "")
         print(out)
-
-    names = os.listdir(tmpdir.join("sysconfig").strpath)
-    assert len(names) == 7
 
 
 def test_gen_sysconfig_no_vmail(mycmd, tmpdir):

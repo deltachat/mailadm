@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify
-from .config import Config, get_cfg
+import mailadm.config
 
 
 def create_app_from_file(config_fn=None):
     if config_fn is None:
-        config_fn = get_cfg()
+        config_fn = mailadm.config.get_cfg()
 
-    config = Config(config_fn)
+    config = mailadm.config.Config(config_fn)
     return create_app_from_config(config)
 
 

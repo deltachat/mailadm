@@ -18,6 +18,10 @@ import iniconfig
 from .db import DB
 
 
+# if MAILADM_CFG is not set this location is consulted
+MAILADM_ETC_CONFIG = "/etc/mailadm/mailadm.cfg"
+
+
 class InvalidConfig(ValueError):
     """ raised when something is invalid about the init config file. """
 
@@ -102,7 +106,7 @@ class SysConfig:
 def get_cfg():
     config_fn = os.environ.get("MAILADM_CFG")
     if config_fn is None:
-        config_fn = os.path.expanduser("~mailadm/mailadm.cfg")
+        config_fn = MAILADM_ETC_CONFIG
         if not os.path.exists(config_fn):
             raise RuntimeError("mailadm.cfg not found: MAILADM_CFG not set "
                                "and {!r} does not exist".format(config_fn))
@@ -112,8 +116,8 @@ def get_cfg():
     return config_fn
 
 
-def gen_sysconfig(destdir, web_endpoint, mail_domain, mailadm_info, vmail_info, localhost_web_port):
-    destdir = pathlib.Path(destdir)
+def gen_sysconfig(mailadm_etc, web_endpoint, mail_domain,
+                  mailadm_info, vmail_info, localhost_web_port):
     path = pathlib.Path(pkg_resources.resource_filename('mailadm', 'data/sysconfig'))
     assert path.exists()
     mailadm_homedir = pathlib.Path(mailadm_info.pw_dir)
@@ -121,12 +125,17 @@ def gen_sysconfig(destdir, web_endpoint, mail_domain, mailadm_info, vmail_info, 
     web_domain = parts.netloc.split(":", 1)[0]
     web_path = parts.path
 
-    if not destdir.exists():
-        destdir.mkdir()
+    targets = [
+        "/etc/dovecot/conf.d/auth-mailadm.conf.ext",
+        "/etc/dovecot/conf.d/dovecot-sql.conf.ext",
+        "/etc/mailadm/mailadm.cfg",
+        "/etc/systemd/system/mailadm-web.service",
+        "/etc/systemd/system/mailadm-prune.service",
+    ]
 
-    for template_fn in path.iterdir():
-        if template_fn.name.startswith("."):
-            continue
+    for target in targets:
+        bn = os.path.basename(target)
+        template_fn = path.joinpath(bn)
         content = template_fn.read_text()
         data = content.format(
             mailadm_homedir=mailadm_homedir,
@@ -134,7 +143,7 @@ def gen_sysconfig(destdir, web_endpoint, mail_domain, mailadm_info, vmail_info, 
             web_path=web_path,
             web_endpoint=web_endpoint,
             localhost_web_port=localhost_web_port,
-            mailadm_cfg=mailadm_homedir.joinpath("mailadm.cfg"),
+            mailadm_cfg=os.path.join(mailadm_etc, "mailadm.cfg"),
             mailadm_user=mailadm_info.pw_name,
             path_mailadm_db=mailadm_homedir.joinpath("mailadm.db"),
             path_virtual_mailboxes=mailadm_homedir.joinpath("virtual_mailboxes"),
@@ -148,4 +157,4 @@ def gen_sysconfig(destdir, web_endpoint, mail_domain, mailadm_info, vmail_info, 
             nginx_sites_enabled="/etc/nginx/sites-enabled",
             args=" ".join(sys.argv[1:]),
         )
-        yield destdir.joinpath(template_fn.name), data
+        yield pathlib.Path(target), data, 0o644
