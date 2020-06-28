@@ -64,7 +64,9 @@ class Connection:
     def config(self):
         items = self.get_config_items()
         if items:
-            return Config(**dict(items))
+            d = dict(items)
+            d["path_virtual_mailboxes"] = self.path_mailadm_db.parent.joinpath("virtual_mailboxes")
+            return Config(**d)
 
     def is_initialized(self):
         items = self.get_config_items()

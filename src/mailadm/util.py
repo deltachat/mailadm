@@ -2,10 +2,13 @@ import sys
 import os
 import crypt
 import random
+import time
 import pkg_resources
 import pathlib
 import urllib
 import base64
+
+import mailadm
 
 
 def get_doveadm_pw(password=None):
@@ -70,7 +73,7 @@ def gen_sysconfig(db, mailadm_info, vmail_info, localhost_web_port):
             localhost_web_port=localhost_web_port,
             mailadm_user=mailadm_info.pw_name,
             path_mailadm_db=db.path,
-            path_virtual_mailboxes=mailadm_homedir.joinpath("virtual_mailboxes"),
+            path_virtual_mailboxes=config.path_virtual_mailboxes,
             mail_domain=config.mail_domain,
             vmail_user=vmail_info.pw_name,
             vmail_homedir=vmail_info.pw_dir,
@@ -81,4 +84,7 @@ def gen_sysconfig(db, mailadm_info, vmail_info, localhost_web_port):
             nginx_sites_enabled="/etc/nginx/sites-enabled",
             args=" ".join(sys.argv[1:]),
         )
+        data = "# mailadm-generated version={} time={}\n\n{}".format(
+               mailadm.__version__, time.asctime(), data)
+
         yield pathlib.Path(target), data, 0o644

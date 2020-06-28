@@ -91,7 +91,6 @@ def make_db(monkeypatch):
         db = mailadm.db.DB(db_path)
         if init:
             db.init_config(
-                path_virtual_mailboxes=basedir.joinpath("path_virtual_mailboxes"),
                 mail_domain="example.org",
                 web_endpoint="https://example.org/new_email",
                 vmail_user="vmail",
