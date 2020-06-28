@@ -12,12 +12,9 @@ def mycmd(request, cmd, make_db, tmpdir, monkeypatch):
     return cmd
 
 
-def test_help(cmd):
+def test_bare(cmd):
     cmd.run_ok([], """
         *account creation*
-    """)
-    cmd.run_fail(["list-tokens"], """
-        *not initialized*init*
     """)
 
 
@@ -26,20 +23,14 @@ class TestInitAndInstall:
         monkeypatch.setenv("MAILADM_DB", tmpdir.join("mailadm.db").strpath)
         cmd.run_ok(["init"])
 
-    def test_gen_sysconfig(self, mycmd, tmpdir, monkeypatch):
-        monkeypatch.setenv("LOCALHOST_WEB_PORT", "5000")
-        monkeypatch.setenv("MAILADM_ETC", tmpdir.ensure("MAILADM_ETC").strpath)
-        with tmpdir.as_cwd():
-            out = mycmd.run_ok(["gen-sysconfig", "--dryrun"], "")
-            print(out)
+    def test_gen_sysconfig(self, mycmd):
+        mycmd.run_ok(["gen-sysconfig", "--dryrun"], "")
 
-    def test_gen_sysconfig_no_vmail(self, mycmd, tmpdir):
-        with tmpdir.as_cwd():
-            mycmd.run_fail(["gen-sysconfig", "--vmail-user", "l1kj23l"])
+    def test_gen_sysconfig_no_vmail(self, mycmd):
+        mycmd.run_fail(["gen-sysconfig", "--vmail-user", "l1kj23l"])
 
-    def test_gen_sysconfig_no_mailadm(self, mycmd, tmpdir):
-        with tmpdir.as_cwd():
-            mycmd.run_fail(["gen-sysconfig", "--mailadm-user", "l1kj23l"])
+    def test_gen_sysconfig_no_mailadm(self, mycmd):
+        mycmd.run_fail(["gen-sysconfig", "--mailadm-user", "l1kj23l"])
 
 
 class TestConfig:
@@ -70,6 +61,11 @@ class TestQR:
 
 
 class TestTokens:
+    def test_uninitialized(self, cmd):
+        cmd.run_fail(["list-tokens"], """
+            *MAILADM_DB not set*
+        """)
+
     def test_tokens(self, mycmd):
         mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
                       "--prefix", "", "--expiry=1w"])

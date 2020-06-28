@@ -63,6 +63,12 @@ def test_gensysfiles(db):
     assert email in postfix_map
 
 
+def test_env(db, monkeypatch):
+    monkeypatch.setenv("MAILADM_DB", str(db.path))
+    from mailadm.app import app
+    assert app.db.path == db.path
+
+
 # we used to allow setting the username/password through the web
 # but the code has been removed, let's keep the test around
 def xxxtest_new_user_usermod(db):

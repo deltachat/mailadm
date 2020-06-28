@@ -1,5 +1,4 @@
 
-import os
 import pwd
 import grp
 import collections
@@ -16,19 +15,10 @@ def _nocfg(monkeypatch, tmpdir):
     # tests can still set this env var but we want to isolate tests by default
     monkeypatch.delenv("MAILADM_DB", raising=False)
 
-    try:
-        db_path = mailadm.db.get_db_path()
-    except RuntimeError:
-        return
+    def getpwnam(name):
+        raise KeyError(name)
 
-    def exists(path, _exists=os.path.exists):
-        # isolate system locations from the etst environment
-        # and make all "exists" queries for outside files return false
-        if path == db_path:
-            return False
-        return _exists(path)
-
-    monkeypatch.setattr(os.path, "exists", exists)
+    monkeypatch.setattr(pwd, "getpwnam", getpwnam)
 
 
 class ClickRunner:
@@ -83,6 +73,7 @@ def _perform_match(output, fnl):
 def cmd():
     """ invoke a command line subcommand. """
     from mailadm.cmdline import mailadm_main
+
     return ClickRunner(mailadm_main)
 
 

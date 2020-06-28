@@ -12,8 +12,9 @@ from .conn import Connection
 def get_db_path(mailadm_user="mailadm"):
     db_path = os.environ.get("MAILADM_DB")
     if db_path is None:
-        entry = pwd.getpwnam(mailadm_user)
-        if not entry:
+        try:
+            entry = pwd.getpwnam(mailadm_user)
+        except KeyError:
             raise RuntimeError("mailadm.db not found: MAILADM_DB not set "
                                "and {!r} user does not exist".format(mailadm_user))
         db_path = os.path.join(entry.pw_dir, "mailadm.db")

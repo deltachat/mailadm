@@ -41,12 +41,12 @@ def parse_expiry_code(code):
         return val * 60 * 60
 
 
-def gen_sysconfig(mailadm_etc, web_endpoint, mail_domain,
-                  mailadm_info, vmail_info, localhost_web_port):
+def gen_sysconfig(db, mailadm_info, vmail_info, localhost_web_port):
+    config = db.get_config()
     path = pathlib.Path(pkg_resources.resource_filename('mailadm', 'data/sysconfig'))
     assert path.exists()
     mailadm_homedir = pathlib.Path(mailadm_info.pw_dir)
-    parts = urllib.parse.urlparse(web_endpoint)
+    parts = urllib.parse.urlparse(config.web_endpoint)
     web_domain = parts.netloc.split(":", 1)[0]
     web_path = parts.path
 
@@ -55,6 +55,7 @@ def gen_sysconfig(mailadm_etc, web_endpoint, mail_domain,
         "/etc/dovecot/conf.d/dovecot-sql.conf.ext",
         "/etc/systemd/system/mailadm-web.service",
         "/etc/systemd/system/mailadm-prune.service",
+        "{}/README.txt".format(mailadm_homedir),
     ]
 
     for target in targets:
@@ -65,13 +66,12 @@ def gen_sysconfig(mailadm_etc, web_endpoint, mail_domain,
             mailadm_homedir=mailadm_homedir,
             web_domain=web_domain,
             web_path=web_path,
-            web_endpoint=web_endpoint,
+            web_endpoint=config.web_endpoint,
             localhost_web_port=localhost_web_port,
-            mailadm_cfg=os.path.join(mailadm_etc, "mailadm.cfg"),
             mailadm_user=mailadm_info.pw_name,
-            path_mailadm_db=mailadm_homedir.joinpath("mailadm.db"),
+            path_mailadm_db=db.path,
             path_virtual_mailboxes=mailadm_homedir.joinpath("virtual_mailboxes"),
-            mail_domain=mail_domain,
+            mail_domain=config.mail_domain,
             vmail_user=vmail_info.pw_name,
             vmail_homedir=vmail_info.pw_dir,
             systemd="/etc/systemd/system",
