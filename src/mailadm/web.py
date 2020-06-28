@@ -1,18 +1,19 @@
 from flask import Flask, request, jsonify
-import mailadm.config
+import mailadm.db
+from mailadm.conn import DBError
 
 
-def create_app_from_file(config_fn=None):
-    if config_fn is None:
-        config_fn = mailadm.config.get_cfg()
+def create_app_from_db_path(db_path=None):
+    if db_path is None:
+        db_path = mailadm.db.get_db_path()
 
-    config = mailadm.config.Config(config_fn)
-    return create_app_from_config(config)
+    db = mailadm.db.DB(db_path)
+    return create_app_from_db(db)
 
 
-def create_app_from_config(config):
+def create_app_from_db(db):
     app = Flask("mailadm-account-server")
-    app.mailadm_config = config
+    app.db = db
 
     @app.route('/', methods=["POST"])
     def new_email():
@@ -20,7 +21,7 @@ def create_app_from_config(config):
         if token is None:
             return "?t (token) parameter not specified", 403
 
-        with config.write_transaction() as conn:
+        with db.write_transaction() as conn:
             token_info = conn.get_tokeninfo_by_token(token)
             if token_info is None:
                 return "token {} is invalid".format(token), 403
@@ -28,7 +29,7 @@ def create_app_from_config(config):
             try:
                 user_info = conn.add_email_account(token_info, tries=10)
                 conn.gen_sysfiles()
-            except ValueError as e:
+            except DBError as e:
                 return str(e), 409
             return jsonify(email=user_info.addr, password=user_info.clear_pw,
                            expiry=token_info.expiry, ttl=user_info.ttl)

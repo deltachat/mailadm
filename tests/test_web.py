@@ -1,14 +1,15 @@
 import time
-from mailadm.web import create_app_from_file
+from mailadm.web import create_app_from_db_path
 import mailadm
+import random
 
 
-def test_new_user_random(config, monkeypatch):
+def test_new_user_random(db, monkeypatch):
     token = "12319831923123"
-    with config.write_transaction() as conn:
+    with db.write_transaction() as conn:
         conn.add_token(name="test123", token=token, prefix="tmp.", expiry="1w")
 
-    app = create_app_from_file(config.path)
+    app = create_app_from_db_path(db.path)
     app.debug = True
     app = app.test_client()
 
@@ -17,8 +18,12 @@ def test_new_user_random(config, monkeypatch):
     r = app.post('/?t=123123&username=hello')
     assert r.status_code == 403
 
-    monkeypatch.setattr(mailadm.db, "TMP_EMAIL_LEN", 1)
-    monkeypatch.setattr(mailadm.db, "TMP_EMAIL_CHARS", "ab")
+    chars = list("ab")
+
+    def get_human_readable_id(*args, **kwargs):
+        return random.choice(chars)
+
+    monkeypatch.setattr(mailadm.util, "get_human_readable_id", get_human_readable_id)
 
     r = app.post('/?t=' + token)
     assert r.status_code == 200
@@ -36,14 +41,14 @@ def test_new_user_random(config, monkeypatch):
     assert r3.status_code == 409
 
 
-def test_gensysfiles(config):
+def test_gensysfiles(db):
     token = "12319831923123"
-    with config.write_transaction() as conn:
+    with db.write_transaction() as conn:
         conn.add_token(name="test123", token=token, prefix="tmp.", expiry="1w")
-    app = create_app_from_file(config.path)
+        config = conn.config
+    app = create_app_from_db_path(db.path)
     app.debug = True
 
-    config = app.mailadm_config
     app = app.test_client()
 
     r = app.post('/?t=' + token)
@@ -54,20 +59,14 @@ def test_gensysfiles(config):
     password = r.json["password"]
     assert password
 
-    postfix_map = open(config.sysconfig.path_virtual_mailboxes).read()
+    postfix_map = open(config.path_virtual_mailboxes).read()
     assert email in postfix_map
 
 
 # we used to allow setting the username/password through the web
 # but the code has been removed, let's keep the test around
-def xxxtest_new_user_usermod(make_ini_from_values):
-    inipath = make_ini_from_values(
-        name="test123",
-        token="123123123123123",
-        prefix="",
-        expiry="5w",
-    )
-    app = create_app_from_file(inipath)
+def xxxtest_new_user_usermod(db):
+    app = create_app_from_db_path(db.path)
     app.debug = True
     app = app.test_client()
 

@@ -7,18 +7,24 @@ from pathlib import Path
 
 import pytest
 from _pytest.pytester import LineMatcher
-from textwrap import dedent
-import mailadm.config
+
+import mailadm.db
 
 
 @pytest.fixture(autouse=True)
-def _nocfg(monkeypatch):
-    monkeypatch.delenv("MAILADM_CFG", raising=False)
+def _nocfg(monkeypatch, tmpdir):
+    # tests can still set this env var but we want to isolate tests by default
+    monkeypatch.delenv("MAILADM_DB", raising=False)
 
-    cfg = mailadm.config.MAILADM_ETC_CONFIG
+    try:
+        db_path = mailadm.db.get_db_path()
+    except RuntimeError:
+        return
 
     def exists(path, _exists=os.path.exists):
-        if path == cfg:
+        # isolate system locations from the etst environment
+        # and make all "exists" queries for outside files return false
+        if path == db_path:
             return False
         return _exists(path)
 
@@ -81,36 +87,34 @@ def cmd():
 
 
 @pytest.fixture
-def config(tmpdir, make_config):
+def db(tmpdir, make_db):
     path = tmpdir.ensure("base", dir=1)
-    return make_config(path)
+    return make_db(path)
 
 
 @pytest.fixture
-def make_config(monkeypatch):
-    def make_config(basedir):
-        path = basedir.ensure("paths", dir=1)
-        mail_domain = "testrun.org"
-        web_endpoint = "https://testrun.org/new_email"
-        path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
-        source = dedent("""
-            [sysconfig]
-            vmail_user = vmail
-            mail_domain = {mail_domain}
-            web_endpoint = {web_endpoint}
-            path_virtual_mailboxes = {path_virtual_mailboxes}
-        """.format(**locals()))
+def make_db(monkeypatch):
+    def make_db(basedir):
+        basedir = Path(str(basedir))
+        db_path = basedir.joinpath("mailadm.db")
+        db = mailadm.db.DB(db_path)
+        db.init_config(
+            path_virtual_mailboxes=basedir.joinpath("path_virtual_mailboxes"),
+            mail_domain="testrun.org",
+            web_endpoint="https://testrun.org/new_email",
+            vmail_user="vmail",
+        )
 
-        p = basedir.join("mailadm.cfg")
-        p.write(source)
-
+        # re-route all queries for sysfiles to the tmpdir
         ttype = collections.namedtuple("pwentry", ["pw_name", "pw_dir", "pw_uid", "pw_gid"])
 
         def getpwnam(name):
             if name == "vmail":
-                p = Path(path.ensure("path_vmaildir", dir=1).strpath)
+                p = basedir.joinpath("path_vmaildir")
+                if not p.exists():
+                    p.mkdir()
             elif name == "mailadm":
-                p = Path(path.ensure("mailadm_home", dir=1).strpath)
+                p = basedir
             else:
                 raise KeyError("don't know user {!r}".format(name))
             return ttype(name, p, 10000, 10000)  # uid/gid should play no role for testing
@@ -126,6 +130,6 @@ def make_config(monkeypatch):
             return gtype(name, gr_mem)
         monkeypatch.setattr(grp, "getgrnam", getgrnam)
 
-        return mailadm.config.Config(str(p))
+        return db
 
-    return make_config
+    return make_db

@@ -7,7 +7,7 @@ from PIL import ImageFont, ImageDraw, Image
 def gen_qr(config, token_info):
 
     info = ("{prefix}******@{domain} {expiry}\n".format(
-            domain=config.sysconfig.mail_domain, prefix=token_info.prefix,
+            domain=config.mail_domain, prefix=token_info.prefix,
             expiry=token_info.expiry))
 
     steps = ("1. Install https://get.delta.chat\n"

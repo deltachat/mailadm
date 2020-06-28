@@ -34,7 +34,6 @@ def main():
         install_requires=[
             "click>=6.0",
             "flask",
-            "iniconfig>=1.0",
             "pillow",
             "qrcode",
             "gunicorn",

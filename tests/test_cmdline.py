@@ -3,16 +3,10 @@ import datetime
 import pytest
 
 
-@pytest.fixture(params=["file", "env"])
-def mycmd(request, cmd, config, tmpdir, monkeypatch):
-    if request.param == "file":
-        cmd._rootargs.extend(["--config", str(config.path)])
-    elif request.param == "env":
-        monkeypatch.setenv("MAILADM_CFG", str(config.path))
-    else:
-        assert 0
-
-    cmd._config = config
+@pytest.fixture
+def mycmd(request, cmd, db, tmpdir, monkeypatch):
+    monkeypatch.setenv("MAILADM_DB", str(db.path))
+    cmd.db = db
     return cmd
 
 
@@ -21,7 +15,7 @@ def test_help(cmd):
         *account creation*
     """)
     cmd.run_fail(["list-tokens"], """
-        Error*not*found*
+        *not initialized*init*
     """)
 
 
@@ -117,7 +111,7 @@ class TestUsers:
         mycmd.run_ok(["add-user", "x@testrun.org"], """
             *added*x@testrun.org*
         """)
-        path = mycmd._config.sysconfig.path_virtual_mailboxes
+        path = mycmd.db.get_connection().config.path_virtual_mailboxes
         assert "x@testrun.org" in open(path).read()
 
     def test_add_del_user(self, mycmd):

@@ -15,7 +15,8 @@ import click
 from click import style
 
 import mailadm
-from .config import Config, InvalidConfig, get_cfg
+from .db import get_db_path, DB
+from .conn import DBError
 
 
 option_dryrun = click.option(
@@ -24,43 +25,39 @@ option_dryrun = click.option(
 
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
-@click.option("--config", type=click.Path(), default=None,
-              help="config file for mailadm")
 @click.version_option()
 @click.pass_context
-def mailadm_main(context, config):
+def mailadm_main(context):
     """e-mail account creation admin tool and web service. """
 
-    def get_config_path():
-        if config is None:
-            try:
-                return get_cfg()
-            except RuntimeError as e:
-                context.fail(e.args)
-        return config
 
-    context.get_config_path = get_config_path
-
-
-def get_mailadm_config(ctx, show=False):
-    config_path = ctx.parent.get_config_path()
+def get_mailadm_db(ctx, show=False, fail_missing_config=True):
     try:
-        cfg = Config(config_path)
-    except InvalidConfig as e:
+        db_path = get_db_path()
+    except RuntimeError as e:
+        ctx.fail(e.args)
+
+    try:
+        db = DB(db_path)
+    except DBError as e:
         ctx.fail(str(e))
 
     if show:
-        click.secho("using config file: {}".format(cfg.cfg.path), file=sys.stderr)
-    return cfg
+        click.secho("using db: {}".format(db_path), file=sys.stderr)
+    if fail_missing_config:
+        with db.read_connection() as conn:
+            if not conn.is_initialized():
+                ctx.fail("database not initialized, use 'init' subcommand to do so")
+    return db
 
 
 @click.command()
 @click.pass_context
 def config(ctx):
     """show and manipulate config settings. """
-    config = get_mailadm_config(ctx)
-    with config.read_connection() as conn:
-        click.secho("mailadm database path: {}".format(conn._sqlpath))
+    db = get_mailadm_db(ctx)
+    with db.read_connection() as conn:
+        click.secho("mailadm database path: {}".format(db.path))
         for name, val in conn.get_config_items():
             click.secho("{:22s} {}".format(name, val))
 
@@ -69,8 +66,8 @@ def config(ctx):
 @click.pass_context
 def list_tokens(ctx):
     """list available tokens """
-    config = get_mailadm_config(ctx)
-    with config.read_connection() as conn:
+    db = get_mailadm_db(ctx)
+    with db.read_connection() as conn:
         for name in conn.get_token_list():
             token_info = conn.get_tokeninfo_by_name(name)
             dump_token_info(token_info)
@@ -81,8 +78,8 @@ def list_tokens(ctx):
 @click.pass_context
 def list_users(ctx, token):
     """list users """
-    config = get_mailadm_config(ctx)
-    with config.read_connection() as conn:
+    db = get_mailadm_db(ctx)
+    with db.read_connection() as conn:
         for user_info in conn.get_user_list(token=token):
             click.secho("{} [token={}]".format(user_info.addr, user_info.token_name))
 
@@ -111,12 +108,12 @@ def dump_token_info(token_info):
 def add_token(ctx, name, expiry, prefix, token, maxuse):
     """add new token for generating new e-mail addresses
     """
-    from mailadm.db import gen_password
+    from .util import gen_password
 
-    config = get_mailadm_config(ctx)
+    db = get_mailadm_db(ctx)
     if token is None:
         token = expiry + "_" + gen_password()
-    with config.write_transaction() as conn:
+    with db.write_transaction() as conn:
         info = conn.add_token(name=name, token=token, expiry=expiry,
                               maxuse=maxuse, prefix=prefix)
         tc = conn.get_tokeninfo_by_name(info.name)
@@ -128,8 +125,8 @@ def add_token(ctx, name, expiry, prefix, token, maxuse):
 @click.pass_context
 def del_token(ctx, name):
     """remove named token"""
-    config = get_mailadm_config(ctx)
-    with config.write_transaction() as conn:
+    db = get_mailadm_db(ctx)
+    with db.write_transaction() as conn:
         conn.del_token(name=name)
 
 
@@ -140,16 +137,17 @@ def gen_qr(ctx, tokenname):
     """generate qr code image for a token. """
     from .gen_qr import gen_qr
 
-    config = get_mailadm_config(ctx)
-    with config.read_connection() as conn:
+    db = get_mailadm_db(ctx)
+    with db.read_connection() as conn:
         token_info = conn.get_tokeninfo_by_name(tokenname)
+        config = conn.config
 
     if token_info is None:
         ctx.fail("token {!r} does not exist".format(tokenname))
 
     image = gen_qr(config, token_info)
     fn = "dcaccount-{domain}-{name}.png".format(
-        domain=config.sysconfig.mail_domain, name=token_info.name)
+        domain=config.mail_domain, name=token_info.name)
     image.save(fn)
     click.secho("{} written for token '{}'".format(fn, token_info.name))
 
@@ -184,6 +182,12 @@ def gen_sysconfig(ctx, dryrun, web_endpoint, mail_domain):
         ctx.fail("vmail group {!r} does not have mailadm user "
                  "{!r} as member".format(vmail_user, mailadm_user))
 
+    mailadm.db.init_config(
+        mailadm_etc=get_env("MAILADM_ETC"),
+        mailadm_info=mailadm_info, vmail_info=vmail_info,
+        web_endpoint=web_endpoint, mail_domain=mail_domain,
+        localhost_web_port=localhost_web_port,
+    )
     for fn, data, mode in mailadm.config.gen_sysconfig(
         mailadm_etc=get_env("MAILADM_ETC"),
         mailadm_info=mailadm_info, vmail_info=vmail_info,
@@ -228,8 +232,7 @@ def get_pwinfo(ctx, description, username):
 def add_user(ctx, addr, password, token):
     """add user as a mailadm managed account.
     """
-    config = get_mailadm_config(ctx)
-    with config.write_transaction() as conn:
+    with get_mailadm_db(ctx).write_transaction() as conn:
         if token is None:
             if "@" not in addr:
                 ctx.fail("invalid email address: {}".format(addr))
@@ -243,8 +246,8 @@ def add_user(ctx, addr, password, token):
                 ctx.fail("token does not exist: {!r}".format(token))
         try:
             conn.add_email_account(token_info, addr=addr, password=password)
-        except ValueError as e:
-            ctx.fail("failed to add e-mail account: {}".format(e))
+        except DBError as e:
+            ctx.fail("failed to add e-mail account {}: {}".format(addr, e))
 
         conn.gen_sysfiles()
 
@@ -254,8 +257,7 @@ def add_user(ctx, addr, password, token):
 @click.pass_context
 def del_user(ctx, addr):
     """remove e-mail address"""
-    config = get_mailadm_config(ctx)
-    with config.write_transaction() as conn:
+    with get_mailadm_db(ctx).write_transaction() as conn:
         conn.del_user(addr=addr)
 
 
@@ -264,9 +266,8 @@ def del_user(ctx, addr):
 @click.pass_context
 def prune(ctx, dryrun):
     """prune expired users from postfix and dovecot configurations """
-    config = get_mailadm_config(ctx)
     sysdate = int(time.time())
-    with config.write_transaction() as conn:
+    with get_mailadm_db(ctx).write_transaction() as conn:
         expired_users = conn.get_expired_users(sysdate)
         if not expired_users:
             click.secho("nothing to prune")
@@ -287,9 +288,10 @@ def prune(ctx, dryrun):
               help="run server in debug mode and don't change any files")
 def web(ctx, debug):
     """(debugging-only!) serve http account creation Web API on localhost"""
-    from .web import create_app_from_config
-    config = get_mailadm_config(ctx)
-    app = create_app_from_config(config)
+    from .web import create_app_from_db
+
+    db = get_mailadm_db(ctx)
+    app = create_app_from_db(db)
     app.run(debug=debug, host="localhost", port=3961)
 
 
