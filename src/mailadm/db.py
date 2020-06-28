@@ -17,8 +17,6 @@ def get_db_path(mailadm_user="mailadm"):
             raise RuntimeError("mailadm.db not found: MAILADM_DB not set "
                                "and {!r} user does not exist".format(mailadm_user))
         db_path = os.path.join(entry.pw_dir, "mailadm.db")
-    if not os.path.exists(db_path):
-        raise RuntimeError("DB not found {!r}".format(db_path))
     return Path(db_path)
 
 
@@ -77,6 +75,10 @@ class DB:
             conn.set_config("web_endpoint", web_endpoint)
             conn.set_config("path_virtual_mailboxes", str(path_virtual_mailboxes))
             conn.set_config("vmail_user", vmail_user)
+
+    def is_initialized(self):
+        with self.read_connection() as conn:
+            return conn.is_initialized()
 
     def get_config(self):
         with self.read_connection() as conn:

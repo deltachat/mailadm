@@ -44,7 +44,7 @@ class TestTokenAccounts:
 
     def test_add_with_wrong_token(self, conn):
         now = 10000
-        addr = "tmp.123@testrun.org"
+        addr = "tmp.123@example.org"
         clear_pw, hash_pw = get_doveadm_pw()
         with pytest.raises(DBError):
             conn.add_user(addr=addr, hash_pw=hash_pw,
@@ -54,21 +54,21 @@ class TestTokenAccounts:
         now = 10000
         clear_pw, hash_pw = get_doveadm_pw()
         for i in range(self.MAXUSE):
-            addr = "tmp.{}@testrun.org".format(i)
+            addr = "tmp.{}@example.org".format(i)
             conn.add_user(addr=addr, hash_pw=hash_pw, date=now, ttl=60 * 60, token_name="onehour")
 
         with pytest.raises(TokenExhausted):
-            conn.add_user(addr="tmp.xx@testrun.org", hash_pw=hash_pw,
+            conn.add_user(addr="tmp.xx@example.org", hash_pw=hash_pw,
                           date=now, ttl=60 * 60, token_name="onehour")
 
     def test_homedirs(self, conn):
         clear_pw, hash_pw = get_doveadm_pw()
 
         conn.add_user(
-            addr="tmp.1@testrun.org", hash_pw=hash_pw,
+            addr="tmp.1@example.org", hash_pw=hash_pw,
             date=10, ttl=60 * 60, token_name="onehour")
         conn.add_user(
-            addr="tmp.2@testrun.org", hash_pw=hash_pw,
+            addr="tmp.2@example.org", hash_pw=hash_pw,
             date=11, ttl=60 * 60, token_name="onehour")
         known = set()
         for user_info in conn.get_user_list():
@@ -79,9 +79,9 @@ class TestTokenAccounts:
 
     def test_add_expire_del(self, conn):
         now = 10000
-        addr = "tmp.123@testrun.org"
-        addr2 = "tmp.456@testrun.org"
-        addr3 = "tmp.789@testrun.org"
+        addr = "tmp.123@example.org"
+        addr2 = "tmp.456@example.org"
+        addr3 = "tmp.789@example.org"
         clear_pw, hash_pw = get_doveadm_pw()
         conn.add_user(addr=addr, hash_pw=hash_pw, date=now, ttl=60 * 60, token_name="onehour")
         with pytest.raises(DBError):

@@ -4,9 +4,11 @@ import pytest
 
 
 @pytest.fixture
-def mycmd(request, cmd, db, tmpdir, monkeypatch):
+def mycmd(request, cmd, make_db, tmpdir, monkeypatch):
+    db = make_db(tmpdir.mkdir("mycmd"), init=False)
     monkeypatch.setenv("MAILADM_DB", str(db.path))
     cmd.db = db
+    cmd.run_ok(["init"])
     return cmd
 
 
@@ -19,22 +21,25 @@ def test_help(cmd):
     """)
 
 
-def test_gen_sysconfig(mycmd, tmpdir, monkeypatch):
-    monkeypatch.setenv("LOCALHOST_WEB_PORT", "5000")
-    monkeypatch.setenv("MAILADM_ETC", tmpdir.ensure("MAILADM_ETC").strpath)
-    with tmpdir.as_cwd():
-        out = mycmd.run_ok(["gen-sysconfig", "--dryrun"], "")
-        print(out)
+class TestInitAndInstall:
+    def test_init(self, cmd, monkeypatch, tmpdir):
+        monkeypatch.setenv("MAILADM_DB", tmpdir.join("mailadm.db").strpath)
+        cmd.run_ok(["init"])
 
+    def test_gen_sysconfig(self, mycmd, tmpdir, monkeypatch):
+        monkeypatch.setenv("LOCALHOST_WEB_PORT", "5000")
+        monkeypatch.setenv("MAILADM_ETC", tmpdir.ensure("MAILADM_ETC").strpath)
+        with tmpdir.as_cwd():
+            out = mycmd.run_ok(["gen-sysconfig", "--dryrun"], "")
+            print(out)
 
-def test_gen_sysconfig_no_vmail(mycmd, tmpdir):
-    with tmpdir.as_cwd():
-        mycmd.run_fail(["gen-sysconfig", "--vmail-user", "l1kj23l"])
+    def test_gen_sysconfig_no_vmail(self, mycmd, tmpdir):
+        with tmpdir.as_cwd():
+            mycmd.run_fail(["gen-sysconfig", "--vmail-user", "l1kj23l"])
 
-
-def test_gen_sysconfig_no_mailadm(mycmd, tmpdir):
-    with tmpdir.as_cwd():
-        mycmd.run_fail(["gen-sysconfig", "--mailadm-user", "l1kj23l"])
+    def test_gen_sysconfig_no_mailadm(self, mycmd, tmpdir):
+        with tmpdir.as_cwd():
+            mycmd.run_fail(["gen-sysconfig", "--mailadm-user", "l1kj23l"])
 
 
 class TestConfig:
@@ -53,9 +58,9 @@ class TestQR:
         """)
         monkeypatch.chdir(tmpdir)
         mycmd.run_ok(["gen-qr", "oneweek"], """
-            *dcaccount-testrun.org-oneweek.png*
+            *dcaccount-example.org-oneweek.png*
         """)
-        p = tmpdir.join("dcaccount-testrun.org-oneweek.png")
+        p = tmpdir.join("dcaccount-example.org-oneweek.png")
         assert p.exists()
 
     def test_gen_qr_no_token(self, mycmd, tmpdir, monkeypatch):
@@ -70,7 +75,7 @@ class TestTokens:
                       "--prefix", "", "--expiry=1w"])
         mycmd.run_ok(["list-tokens"], """
             *oneweek*
-            *https://testrun.org*
+            *https://example.org*
             *DCACCOUNT*
         """)
 
@@ -108,31 +113,31 @@ class TestUsers:
 
     def test_add_user_sysfiles(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
-        mycmd.run_ok(["add-user", "x@testrun.org"], """
-            *added*x@testrun.org*
+        mycmd.run_ok(["add-user", "x@example.org"], """
+            *added*x@example.org*
         """)
         path = mycmd.db.get_connection().config.path_virtual_mailboxes
-        assert "x@testrun.org" in open(path).read()
+        assert "x@example.org" in open(path).read()
 
     def test_add_del_user(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
-        mycmd.run_ok(["add-user", "x@testrun.org"], """
-            *added*x@testrun.org*
+        mycmd.run_ok(["add-user", "x@example.org"], """
+            *added*x@example.org*
         """)
         mycmd.run_ok(["list-users"], """
-            *x@testrun.org*test1*
+            *x@example.org*test1*
         """)
-        mycmd.run_fail(["add-user", "x@testrun.org"], """
-            *failed to add*x@testrun.org*
+        mycmd.run_fail(["add-user", "x@example.org"], """
+            *failed to add*x@example.org*
         """)
-        mycmd.run_ok(["del-user", "x@testrun.org"], """
-            *deleted*x@testrun.org*
+        mycmd.run_ok(["del-user", "x@example.org"], """
+            *deleted*x@example.org*
         """)
 
     def test_adduser_and_expire(self, mycmd, monkeypatch):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
-        mycmd.run_ok(["add-user", "x@testrun.org"], """
-            *added*x@testrun.org*
+        mycmd.run_ok(["add-user", "x@example.org"], """
+            *added*x@example.org*
         """)
 
         to_expire = time.time() - datetime.timedelta(weeks=1).total_seconds() - 1
@@ -140,25 +145,25 @@ class TestUsers:
         # create an old account that should expire
         with monkeypatch.context() as m:
             m.setattr(time, "time", lambda: to_expire)
-            mycmd.run_ok(["add-user", "y@testrun.org"], """
-                *added*y@testrun.org*
+            mycmd.run_ok(["add-user", "y@example.org"], """
+                *added*y@example.org*
             """)
 
         out = mycmd.run_ok(["list-users"])
-        assert "y@testrun.org" in out
+        assert "y@example.org" in out
 
         mycmd.run_ok(["prune"])
 
         out = mycmd.run_ok(["list-users"])
-        assert "x@testrun.org" in out
-        assert "y@testrun.org" not in out
+        assert "x@example.org" in out
+        assert "y@example.org" not in out
 
     def test_two_tokens_users(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."])
         mycmd.run_ok(["add-token", "test2", "--expiry=1d", "--prefix=tmpx."])
-        mycmd.run_fail(["add-user", "x@testrun.org"])
-        mycmd.run_ok(["add-user", "tmpy.123@testrun.org"])
-        mycmd.run_ok(["add-user", "tmpx.456@testrun.org"])
+        mycmd.run_fail(["add-user", "x@example.org"])
+        mycmd.run_ok(["add-user", "tmpy.123@example.org"])
+        mycmd.run_ok(["add-user", "tmpx.456@example.org"])
         mycmd.run_ok(["list-users"], """
             tmpy.123*test1*
             tmpx.456*test2*

@@ -94,16 +94,17 @@ def db(tmpdir, make_db):
 
 @pytest.fixture
 def make_db(monkeypatch):
-    def make_db(basedir):
+    def make_db(basedir, init=True):
         basedir = Path(str(basedir))
         db_path = basedir.joinpath("mailadm.db")
         db = mailadm.db.DB(db_path)
-        db.init_config(
-            path_virtual_mailboxes=basedir.joinpath("path_virtual_mailboxes"),
-            mail_domain="testrun.org",
-            web_endpoint="https://testrun.org/new_email",
-            vmail_user="vmail",
-        )
+        if init:
+            db.init_config(
+                path_virtual_mailboxes=basedir.joinpath("path_virtual_mailboxes"),
+                mail_domain="example.org",
+                web_endpoint="https://example.org/new_email",
+                vmail_user="vmail",
+            )
 
         # re-route all queries for sysfiles to the tmpdir
         ttype = collections.namedtuple("pwentry", ["pw_name", "pw_dir", "pw_uid", "pw_gid"])

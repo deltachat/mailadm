@@ -27,15 +27,15 @@ def test_new_user_random(db, monkeypatch):
 
     r = app.post('/?t=' + token)
     assert r.status_code == 200
-    assert r.json["email"].endswith("@testrun.org")
+    assert r.json["email"].endswith("@example.org")
     assert r.json["password"]
     email = r.json["email"]
-    assert email in ["tmp.a@testrun.org", "tmp.b@testrun.org"]
+    assert email in ["tmp.a@example.org", "tmp.b@example.org"]
 
     r2 = app.post('/?t=' + token)
     assert r2.status_code == 200
     assert r2.json["email"] != email
-    assert r2.json["email"] in ["tmp.a@testrun.org", "tmp.b@testrun.org"]
+    assert r2.json["email"] in ["tmp.a@example.org", "tmp.b@example.org"]
 
     r3 = app.post('/?t=' + token)
     assert r3.status_code == 409
@@ -55,7 +55,7 @@ def test_gensysfiles(db):
     assert r.status_code == 200
 
     email = r.json["email"]
-    assert email.endswith("@testrun.org")
+    assert email.endswith("@example.org")
     password = r.json["password"]
     assert password
 
@@ -76,12 +76,12 @@ def xxxtest_new_user_usermod(db):
     r = app.post('/?t=123123123123123&username=hello')
     assert r.status_code == 200
 
-    assert r.json["email"] == "hello@testrun.org"
+    assert r.json["email"] == "hello@example.org"
     assert len(r.json["password"]) >= 12
 
     now = time.time()
     r = app.post('/?t=123123123123123&username=hello2&password=l123123123123')
     assert r.status_code == 200
-    assert r.json["email"] == "hello2@testrun.org"
+    assert r.json["email"] == "hello2@example.org"
     assert r.json["password"] == "l123123123123"
     assert int(r.json["expires"]) > (now + 4 * 24 * 60 * 60)
