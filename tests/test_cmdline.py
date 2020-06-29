@@ -1,3 +1,4 @@
+import os
 import time
 import datetime
 import pytest
@@ -145,6 +146,11 @@ class TestUsers:
                 *added*y@example.org*
             """)
 
+        config = mycmd.db.get_config()
+        user_path = config.get_vmail_user_dir("y@example.org")
+        os.makedirs(str(user_path))
+        user_path.joinpath("something").write_text("hello")
+
         out = mycmd.run_ok(["list-users"])
         assert "y@example.org" in out
 
@@ -153,6 +159,8 @@ class TestUsers:
         out = mycmd.run_ok(["list-users"])
         assert "x@example.org" in out
         assert "y@example.org" not in out
+
+        assert not user_path.exists()
 
     def test_two_tokens_users(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."])
