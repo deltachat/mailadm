@@ -1,5 +1,6 @@
 
 import pathlib
+import shutil
 import pwd
 import time
 import sqlite3
@@ -174,6 +175,9 @@ class Connection:
         c = self.execute(q, (addr, ))
         if c.rowcount == 0:
             raise UserNotFound("addr {!r} does not exist".format(addr))
+        path = self.config.get_vmail_user_dir(addr)
+        if path.exists():
+            shutil.rmtree(str(path))
         self.log("deleted user {!r}".format(addr))
 
     def get_user_by_addr(self, addr):
@@ -274,3 +278,6 @@ class Config:
     def path_vmaildir(self):
         entry = pwd.getpwnam(self.vmail_user)
         return pathlib.Path(entry.pw_dir)
+
+    def get_vmail_user_dir(self, user):
+        return self.path_vmaildir.joinpath(self.mail_domain, user)
