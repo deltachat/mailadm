@@ -4,23 +4,23 @@ mailadm: managing token-based temporary e-mail accounts
 mailadm is automated e-mail account management tooling
 for use by [Delta Chat](https://delta.chat).
 
-The `mailadm` command line tool allows to add or remove tokens
-for which a QR code can be generated. This QR code can then be
-scanned in the Setup screen from all Delta Chat apps. After scanning
-the user is asked if they want to create a temporary account.
+The `mailadm` command line tool allows to add or remove tokens which are
+typically presented to users as QR tokens.  This QR code can then be
+scanned in the Setup screen from all Delta Chat apps. After scanning the
+user is asked if they want to create a temporary account.
 
 The account creation happens via the `mailadm` web interface
 and creates a random user id (the local part of an e-mail).
 
-Mailadm implements a sqlite database for keeping token and user state
-and provides queries to Dovecot and a `virtual_mailboxes` database
-to tell Postfix that a virtual account exists.
+Mailadm keeps all configuration, token and user state in a single
+sqlite database.  It comes with an example install script that
+can be modified for distributions.
 
 .. note::
 
     At this point installation is only well supported/documented for particular
-    Dovecot/Postfix/Systemd/Nginx configurations. The mailadm software does
-    not depend on it but you will have to figure the use of other server software
+    Dovecot/Postfix/Systemd/Nginx configurations. The mailadm python software does
+    not depend on it much but you will have to figure the use of other server software
     yourselve. It might still make sense to use part of the install script.
     As we are advocating working from a git checkout you may keep your own
     branch in your local git and update with remote master from time to time.
@@ -30,17 +30,23 @@ to tell Postfix that a virtual account exists.
 Quickstart
 ----------
 
-Cd into a local git copy of the mailadm repository::
+Get a git copy of the mailadm repository and change into it.
 
     $ git clone https://github.com/deltachat/mailadm
-
-
     $ cd mailadm
 
 
-Now **review and run** as root the install script:
+Now **review and then run** the install script:
 
     $ sudo bash install_mailadm.sh
+
+By default this script will:
+
+- create a `mailadm` user and install the mailadm software into it (from
+  the checkout, not via pypi)
+
+- create config files at approprirate system locations
+  for integrating with systemd, dovecot, postfix and nginx.
 
 
 Final touches with nginx and dovecot

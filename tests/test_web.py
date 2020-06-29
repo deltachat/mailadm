@@ -59,7 +59,7 @@ def test_gensysfiles(db):
     password = r.json["password"]
     assert password
 
-    postfix_map = open(config.path_virtual_mailboxes).read()
+    postfix_map = config.path_virtual_mailboxes.read_text()
     assert email in postfix_map
 
 

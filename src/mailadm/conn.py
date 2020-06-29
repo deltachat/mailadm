@@ -101,11 +101,11 @@ class Connection:
             self.log("would write", self.path_virtual_mailboxes)
             return
 
-        with open(self.config.path_virtual_mailboxes, "w") as f:
-            f.write(pf_data)
+        mapfn = self.config.path_virtual_mailboxes
+        mapfn.write_text(pf_data)
 
-        subprocess.check_call(["postmap", self.config.path_virtual_mailboxes])
-        self.log("wrote {} len={} bytes".format(self.config.path_virtual_mailboxes, len(pf_data)))
+        subprocess.check_call(["postmap", str(mapfn)])
+        self.log("wrote {} len={} bytes".format(mapfn, len(pf_data)))
 
     #
     # token management
