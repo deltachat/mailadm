@@ -36,28 +36,31 @@ Get a git copy of the mailadm repository and change into it.
     $ cd mailadm
 
 
-Now **review and then run** the install script:
+Now **review and then run** this install script:
 
     $ sudo bash install_mailadm.sh
 
-By default this script will:
+Note that you can call this command repetetively if you want
+to play around. By default this script:
 
-- create a `mailadm` user and install the mailadm software into it (from
-  the checkout, not via pypi)
+- creates a `mailadm` user and install the mailadm software into it (from
+  the checkout, not via the Python package index)
 
-- create config files at approprirate system locations
+- creates config files at approprirate system locations
   for integrating with systemd, dovecot, postfix and nginx.
 
+- creates a `~mailadm/README.txt` file with further instructions
+  how to do 2-3 line changes to your existing nginx and dovecot
+  config files.
 
-Final touches with nginx and dovecot
-++++++++++++++++++++++++++++++++++++
 
 Adding a first token and user
 ++++++++++++++++++++++++++++++
 
-With the `MAILADM_CFG` environment variable
-pointing to the `~mailadm/mailadm.cfg` file above,
-you can now add a first "token"::
+In order to use `mailadm` you need to be able
+to execute `~mailadm/venv/bin/mailadm` and you
+need write rights to the `mailadm/mailadm.db` file.
+You can then add a first token::
 
     $ mailadm add-token oneday --expiry 1d --prefix="tmp."
     DB: Creating schema /home/mailadm/mailadm.db
@@ -105,35 +108,8 @@ The second last line is the one we can use with curl::
 
 We got an e-mail account through the web API, nice.
 
-Note that we are using a localhost-url.  Let's see how
-we could configure "nginx" to serve our web app.
-
-
-nginx configuration
-++++++++++++++++++++++++++++
-
-We assume here that you:
-
-- have HTTPS working for your web domain
-
-- have an operational postfix/dovecot configuration for the domain
-  configured by `mail_domain`
-
-- mailadm is running as a service and dovecot and postfix are using its files.
-
-To make the web API available you can configure nginx
-to proxy to the localhost app::
-
-    # add these lines to your nginx-site config
-    # (/etc/nginx/sites-enabled/XXX)
-    location / {
-        proxy_pass http://localhost:3961/;
-    }
-
-Note that if you change the `location /` parameter you need to edit
-the `mailadm.cfg` file and modify the `web_endpoint` value accordingly
-and then restart the mailadm service.
-
+Note that we are using a localhost-url whereas in reality
+your "web_endpoint" will be a full https-url.
 
 Purging old accounts
 ++++++++++++++++++++++++
@@ -148,7 +124,6 @@ Purging old accounts
 The `mailadm purge` command will remove accounts
 including the home directories of expired users.
 You can call it from a "cron.daily" script.
-
 
 
 Bonus: QR code generation
