@@ -1,16 +1,19 @@
 from flask import Flask, request, jsonify
-from .config import Config
-from .mailctl import AccountExists
+import mailadm.db
+from mailadm.conn import DBError
 
 
-def create_app_from_file(config_fn):
-    config = Config(config_fn)
-    return create_app_from_config(config)
+def create_app_from_db_path(db_path=None):
+    if db_path is None:
+        db_path = mailadm.db.get_db_path()
+
+    db = mailadm.db.DB(db_path)
+    return create_app_from_db(db)
 
 
-def create_app_from_config(config):
+def create_app_from_db(db):
     app = Flask("mailadm-account-server")
-    app.mailadm_config = config
+    app.db = db
 
     @app.route('/', methods=["POST"])
     def new_email():
@@ -18,32 +21,16 @@ def create_app_from_config(config):
         if token is None:
             return "?t (token) parameter not specified", 403
 
-        mailconfig = config.get_token_config_from_token(token)
-        if mailconfig is None:
-            return "token {} is invalid".format(token), 403
-
-        username = request.args.get("username")
-        password = request.args.get("password")
-
-        mc = mailconfig.make_controller()
-
-        # we trying multiple times to generate a password
-        # because an account might already be taken
-        repeat = 1 if username else 10
-
-        for i in range(repeat):
-            try:
-                email = mailconfig.make_email_address(username)
-            except ValueError:
-                return "username can not be set", 403
+        with db.write_transaction() as conn:
+            token_info = conn.get_tokeninfo_by_token(token)
+            if token_info is None:
+                return "token {} is invalid".format(token), 403
 
             try:
-                d = mc.add_email_account(email, password=password)
-            except ValueError as e:
+                user_info = conn.add_email_account(token_info, tries=10)
+                conn.gen_sysfiles()
+            except DBError as e:
                 return str(e), 409
-            except AccountExists:
-                continue
-            return jsonify(d)
-        return "all accounts taken", 410
-
+            return jsonify(email=user_info.addr, password=user_info.clear_pw,
+                           expiry=token_info.expiry, ttl=user_info.ttl)
     return app

@@ -3,88 +3,170 @@ import datetime
 import pytest
 
 
-@pytest.fixture(params=["file", "env"])
-def mycmd(request, cmd, make_ini_from_values, tmpdir, monkeypatch):
-    p = make_ini_from_values(
-        name="oneweek",
-        token="1w_Zeeg1RSOK4e3Nh0V",
-        prefix="",
-        expiry="1w",
-    )
-    if request.param == "file":
-        cmd._rootargs.extend(["--config", p])
-    elif request.param == "env":
-        monkeypatch.setenv("MAILADM_CONFIG", p)
-    else:
-        assert 0
-
+@pytest.fixture
+def mycmd(request, cmd, make_db, tmpdir, monkeypatch):
+    db = make_db(tmpdir.mkdir("mycmd"), init=False)
+    monkeypatch.setenv("MAILADM_DB", str(db.path))
+    cmd.db = db
+    cmd.run_ok(["init"])
     return cmd
 
 
-def test_help(cmd):
+def test_bare(cmd):
     cmd.run_ok([], """
         *account creation*
     """)
 
 
-def test_tokens(mycmd, make_ini):
-    mycmd.run_ok(["list-tokens"], """
-        *oneweek*
-        *https://testrun.org*
-        *DCACCOUNT*
-    """)
+class TestInitAndInstall:
+    def test_init(self, cmd, monkeypatch, tmpdir):
+        monkeypatch.setenv("MAILADM_DB", tmpdir.join("mailadm.db").strpath)
+        cmd.run_ok(["init"])
+
+    def test_gen_sysconfig(self, mycmd):
+        mycmd.run_ok(["gen-sysconfig", "--dryrun"], "")
+
+    def test_gen_sysconfig_no_vmail(self, mycmd):
+        mycmd.run_fail(["gen-sysconfig", "--vmail-user", "l1kj23l"])
+
+    def test_gen_sysconfig_no_mailadm(self, mycmd):
+        mycmd.run_fail(["gen-sysconfig", "--mailadm-user", "l1kj23l"])
 
 
-def test_gen_qr(mycmd, make_ini, tmpdir, monkeypatch):
-    mycmd.run_ok(["list-tokens"])
-    monkeypatch.chdir(tmpdir)
-    mycmd.run_ok(["gen-qr", "oneweek"], """
-        *dcaccount-testrun.org-oneweek.png*
-    """)
-    p = tmpdir.join("dcaccount-testrun.org-oneweek.png")
-    assert p.exists()
-
-
-def test_tokens_usermod(cmd, make_ini_from_values):
-    p = make_ini_from_values(
-        name="forever",
-        token="1w_Zeeg1RSOK4e3Nh0V",
-        prefix="",
-        expiry="10000d",
-    )
-    cmd._rootargs.extend(["--config", p])
-    cmd.run_ok(["list-tokens"], """
-        *DCACCOUNT*&n=forever
-    """)
-
-
-def test_adduser_help(mycmd):
-    mycmd.run_ok(["add-user", "-h"], """
-        *add*user*
-    """)
-
-
-def test_adduser(mycmd):
-    mycmd.run_ok(["add-user", "x@testrun.org"], """
-        *added*x@testrun.org*
-    """)
-    mycmd.run_fail(["add-user", "x@testrun.org"], """
-        *failed to add*x@testrun.org*
-    """)
-
-
-def test_adduser_and_expire(mycmd, monkeypatch):
-    mycmd.run_ok(["add-user", "x@testrun.org"], """
-        *added*x@testrun.org*
-    """)
-
-    to_expire = time.time() - datetime.timedelta(weeks=1).total_seconds() - 1
-
-    # create an old account that should expire
-    with monkeypatch.context() as m:
-        m.setattr(time, "time", lambda: to_expire)
-        mycmd.run_ok(["add-user", "y@testrun.org"], """
-            *added*y@testrun.org*
+class TestConfig:
+    def test_config_simple(self, mycmd):
+        mycmd.run_ok(["config"], """
+            dbversion*
         """)
 
-    mycmd.run_ok(["prune", "-n"])
+
+class TestQR:
+    def test_gen_qr(self, mycmd, tmpdir, monkeypatch):
+        mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
+                      "--prefix", "", "--expiry=1w"])
+        mycmd.run_ok(["list-tokens"], """
+            *oneweek*
+        """)
+        monkeypatch.chdir(tmpdir)
+        mycmd.run_ok(["gen-qr", "oneweek"], """
+            *dcaccount-example.org-oneweek.png*
+        """)
+        p = tmpdir.join("dcaccount-example.org-oneweek.png")
+        assert p.exists()
+
+    def test_gen_qr_no_token(self, mycmd, tmpdir, monkeypatch):
+        mycmd.run_fail(["gen-qr", "notexistingtoken"], """
+            *Error*not*
+        """)
+
+
+class TestTokens:
+    def test_uninitialized(self, cmd):
+        cmd.run_fail(["list-tokens"], """
+            *MAILADM_DB not set*
+        """)
+
+    def test_tokens(self, mycmd):
+        mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
+                      "--prefix", "", "--expiry=1w"])
+        mycmd.run_ok(["list-tokens"], """
+            *oneweek*
+            *https://example.org*
+            *DCACCOUNT*
+        """)
+
+    def test_tokens_add(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."], """
+            *DCACCOUNT*&n=test1
+        """)
+        mycmd.run_ok(["list-tokens"], """
+            *maxuse*50*
+            *usecount*
+            *DCACCOUNT*&n=test1
+        """)
+        mycmd.run_ok(["del-token", "test1"], """
+            *deleted*test1*
+        """)
+        out = mycmd.run_ok(["list-tokens"])
+        assert "test1" not in out
+
+    def test_tokens_add_maxuse(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--maxuse=10"], """
+            *maxuse*10
+            *DCACCOUNT*&n=test1
+        """)
+        mycmd.run_ok(["list-tokens"], """
+            *maxuse*10*
+            *DCACCOUNT*&n=test1
+        """)
+
+
+class TestUsers:
+    def test_adduser_help(self, mycmd):
+        mycmd.run_ok(["add-user", "-h"], """
+            *add*user*
+        """)
+
+    def test_add_user_sysfiles(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
+        mycmd.run_ok(["add-user", "x@example.org"], """
+            *added*x@example.org*
+        """)
+        path = mycmd.db.get_connection().config.path_virtual_mailboxes
+        assert "x@example.org" in path.read_text()
+
+    def test_add_del_user(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
+        mycmd.run_ok(["add-user", "x@example.org"], """
+            *added*x@example.org*
+        """)
+        mycmd.run_ok(["list-users"], """
+            *x@example.org*test1*
+        """)
+        mycmd.run_fail(["add-user", "x@example.org"], """
+            *failed to add*x@example.org*
+        """)
+        mycmd.run_ok(["del-user", "x@example.org"], """
+            *deleted*x@example.org*
+        """)
+
+    def test_adduser_and_expire(self, mycmd, monkeypatch):
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
+        mycmd.run_ok(["add-user", "x@example.org"], """
+            *added*x@example.org*
+        """)
+
+        to_expire = time.time() - datetime.timedelta(weeks=1).total_seconds() - 1
+
+        # create an old account that should expire
+        with monkeypatch.context() as m:
+            m.setattr(time, "time", lambda: to_expire)
+            mycmd.run_ok(["add-user", "y@example.org"], """
+                *added*y@example.org*
+            """)
+
+        out = mycmd.run_ok(["list-users"])
+        assert "y@example.org" in out
+
+        mycmd.run_ok(["prune"])
+
+        out = mycmd.run_ok(["list-users"])
+        assert "x@example.org" in out
+        assert "y@example.org" not in out
+
+    def test_two_tokens_users(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."])
+        mycmd.run_ok(["add-token", "test2", "--expiry=1d", "--prefix=tmpx."])
+        mycmd.run_fail(["add-user", "x@example.org"])
+        mycmd.run_ok(["add-user", "tmpy.123@example.org"])
+        mycmd.run_ok(["add-user", "tmpx.456@example.org"])
+        mycmd.run_ok(["list-users"], """
+            tmpy.123*test1*
+            tmpx.456*test2*
+        """)
+        out = mycmd.run_ok(["list-users", "--token", "test1"])
+        assert "tmpy.123" in out
+        assert "tmpx.456" not in out
+        out = mycmd.run_ok(["list-users", "--token", "test2"])
+        assert "tmpy.123" not in out
+        assert "tmpx.456" in out

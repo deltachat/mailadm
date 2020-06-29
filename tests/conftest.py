@@ -1,13 +1,24 @@
 
+import pwd
+import grp
+import collections
+from pathlib import Path
+
 import pytest
 from _pytest.pytester import LineMatcher
-from textwrap import dedent
-import mailadm
+
+import mailadm.db
 
 
 @pytest.fixture(autouse=True)
-def _change_sys_config(monkeypatch):
-    monkeypatch.setattr(mailadm, "MAILADM_SYSCONFIG_PATH", "/tmp/not/existent/i/hope")
+def _nocfg(monkeypatch, tmpdir):
+    # tests can still set this env var but we want to isolate tests by default
+    monkeypatch.delenv("MAILADM_DB", raising=False)
+
+    def getpwnam(name):
+        raise KeyError(name)
+
+    monkeypatch.setattr(pwd, "getpwnam", getpwnam)
 
 
 class ClickRunner:
@@ -62,63 +73,54 @@ def _perform_match(output, fnl):
 def cmd():
     """ invoke a command line subcommand. """
     from mailadm.cmdline import mailadm_main
+
     return ClickRunner(mailadm_main)
 
 
 @pytest.fixture
-def make_ini(tmpdir):
-    made = []
-
-    def make(source, autosysconfig=True):
-        p = tmpdir.join("mailadm-{}.ini".format(len(made)))
-        data = dedent(source)
-        if autosysconfig:
-            data += "\n" + dedent("""
-                [sysconfig]
-                mail_domain = testrun.org
-                web_endpoint = https://testrun.org
-                path_mailadm_db= /etc/dovecot/mailadmdb
-                path_dovecot_users= /etc/dovecot/users
-                path_virtual_mailboxes= /etc/postfix/virtual_mailboxes
-                path_vmaildir = /home/vmail/testrun.org
-                dovecot_uid = 1000
-                dovecot_gid = 1000
-            """)
-        p.write(data)
-        made.append(p)
-        return p.strpath
-    return make
+def db(tmpdir, make_db):
+    path = tmpdir.ensure("base", dir=1)
+    return make_db(path)
 
 
 @pytest.fixture
-def make_ini_from_values(make_ini, tmpdir):
-    def make_ini_from_values(
-        name="oneweek",
-        token="1w_Zeeg1RSOK4e3Nh0V",
-        prefix="",
-        expiry="1w",
-    ):
-        path = tmpdir.mkdir(name)
-        web_endpoint = "https://testrun.org/new_email"
-        path_dovecot_users = path.ensure("path_dovecot_users")
-        path_virtual_mailboxes = path.ensure("path_virtual_mailboxes")
-        path_vmaildir = path.ensure("path_vmaildir", dir=1)
-        path_mailadm_db = path.ensure("path_mailadm_db")
+def make_db(monkeypatch):
+    def make_db(basedir, init=True):
+        basedir = Path(str(basedir))
+        db_path = basedir.joinpath("mailadm.db")
+        db = mailadm.db.DB(db_path)
+        if init:
+            db.init_config(
+                mail_domain="example.org",
+                web_endpoint="https://example.org/new_email",
+                vmail_user="vmail",
+            )
 
-        return make_ini("""
-            [sysconfig]
-            mail_domain = testrun.org
-            web_endpoint = https://testrun.org/new_email
-            path_mailadm_db= {path_mailadm_db}
-            path_dovecot_users= {path_dovecot_users}
-            path_virtual_mailboxes= {path_virtual_mailboxes}
-            path_vmaildir = {path_vmaildir}
-            dovecot_uid = 1000
-            dovecot_gid = 1000
+        # re-route all queries for sysfiles to the tmpdir
+        ttype = collections.namedtuple("pwentry", ["pw_name", "pw_dir", "pw_uid", "pw_gid"])
 
-            [token:{name}]
-            token = {token}
-            expiry = {expiry}
-            prefix = {prefix}
-        """.format(**locals()), autosysconfig=False)
-    return make_ini_from_values
+        def getpwnam(name):
+            if name == "vmail":
+                p = basedir.joinpath("path_vmaildir")
+                if not p.exists():
+                    p.mkdir()
+            elif name == "mailadm":
+                p = basedir
+            else:
+                raise KeyError("don't know user {!r}".format(name))
+            return ttype(name, p, 10000, 10000)  # uid/gid should play no role for testing
+        monkeypatch.setattr(pwd, "getpwnam", getpwnam)
+
+        gtype = collections.namedtuple("grpentry", ["gr_name", "gr_mem"])
+
+        def getgrnam(name):
+            if name == "vmail":
+                gr_mem = ["mailadm"]
+            else:
+                gr_mem = []
+            return gtype(name, gr_mem)
+        monkeypatch.setattr(grp, "getgrnam", getgrnam)
+
+        return db
+
+    return make_db

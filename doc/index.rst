@@ -1,161 +1,165 @@
-mailadm: adding and purging e-mail accounts as a service
+mailadm: managing token-based temporary e-mail accounts
 ========================================================
 
-mailadm is a simple administration command lihne tool for creating and
-purging e-mail accounts in Dovecot/Postfix installations that work with
-text files.  Mailadm can be run as a web app that allows remote creation
-of e-mail accounts, based on using secret tokens.  On the server you
-can configure multiple tokens
+mailadm is automated e-mail account management tooling
+for use by [Delta Chat](https://delta.chat).
 
-The development repository is at
+The `mailadm` command line tool allows to add or remove tokens which are
+typically presented to users as QR tokens.  This QR code can then be
+scanned in the Setup screen from all Delta Chat apps. After scanning the
+user is asked if they want to create a temporary account.
 
-    https://github.com/deltachat/mailadm
+The account creation happens via the `mailadm` web interface
+and creates a random user id (the local part of an e-mail).
 
+Mailadm keeps all configuration, token and user state in a single
+sqlite database.  It comes with an example install script that
+can be modified for distributions.
 
-Installing and Configuring the server part
--------------------------------------------
+.. note::
 
-Assumptions used in this doc:
-
-- you are using `dovecot` as MDA (mail delivery agent)
-  and `postfix` as MTA (mail transport agent).
-
-- You have Python and virtualenv installed.
-
-- `/home/vmail/testrun.org/` is the base directory where all user mail
-  directories are created by dovecot. This directory is managed by dovecot
-  by the `vmail` user and dirs/files are created by the dovecot service.
-
-- `/home/mailadm` ("$HOME") is the home directory of the "mailadm" user
-  where mailadm configuration is managed and where mailadm
-  is installed in the virtualenv `/home/mailadm/venv` environment.
+    At this point installation is only well supported/documented for particular
+    Dovecot/Postfix/Systemd/Nginx configurations. The mailadm python software does
+    not depend on it much but you will have to figure the use of other server software
+    yourselve. It might still make sense to use part of the install script.
+    As we are advocating working from a git checkout you may keep your own
+    branch in your local git and update with remote master from time to time.
+    Please report bugs and improvements as issues or PR requests.
 
 
-installing mailadm
-+++++++++++++++++++++++++++++++++
+Quickstart
+----------
 
-Create and activate a Python virtualenv and install mailadm::
+Get a git copy of the mailadm repository and change into it.
 
-    # go to mailadm home directory
-    cd ~mailadm
-
-    python3 -m venv venv
-    venv/bin/pip install mailadm
-
-    # activate venv, and set mailadm config path on login
-    echo "source ~/venv/bin/activate venv" >> .bashrc
-    echo "export MAILADM_CONFIG=\$HOME/mailadm.config" >> .bashrc
-
-Now do `source $HOME/.bashrc` so you have the new settings.
+    $ git clone https://github.com/deltachat/mailadm
+    $ cd mailadm
 
 
-mailadm core configuration file
-+++++++++++++++++++++++++++++++++
+Now **review and then run** the install script:
 
-Example `$HOME/mailadm.config` file which configures one token
-that allows creating e-mail accounts, of the form `tmp.*@testrun.org`::
+    $ sudo bash install_mailadm.sh
 
-    # content of $HOME/mailadm.config
-    [token:oneweek]
-    domain = testrun.org
-    webdomain = testrun.org
-    expiry = 1w
-    prefix = tmp.
-    path_dovecot_users= /home/mailadm/dovecot-users
-    path_virtual_mailboxes= /home/mailadm/postfix-users
-    path_vmaildir = /home/mailadm/vmail
-    token = 1w_7wDioPeeXyZx96v3
+By default this script will:
 
-You should now be able to run a first mailadm subcommand::
+- create a `mailadm` user and install the mailadm software into it (from
+  the checkout, not via pypi)
 
-    mailadm list-tokens
+- create config files at approprirate system locations
+  for integrating with systemd, dovecot, postfix and nginx.
 
-which should show you::
 
-    token:oneweek
+Final touches with nginx and dovecot
+++++++++++++++++++++++++++++++++++++
+
+Adding a first token and user
+++++++++++++++++++++++++++++++
+
+With the `MAILADM_CFG` environment variable
+pointing to the `~mailadm/mailadm.cfg` file above,
+you can now add a first "token"::
+
+    $ mailadm add-token oneday --expiry 1d --prefix="tmp."
+    DB: Creating schema /home/mailadm/mailadm.db
+    added token 'oneday'
+    token:oneday
       prefix = tmp.
-      expiry = 1w
-      DCACCOUNT:https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3
+      expiry = 1d
+      maxuse = 50
+      usecount = 0
+      token  = 1d_r84EW3N8hEKk
+      http://localhost:3961/new_email?t=1d_r84EW3N8hEKk&n=oneday
+      DCACCOUNT:http://localhost:3961/new_email?t=1d_r84EW3N8hEKk&n=oneday
+
+and then we can add a user (which will automatically use the token
+because the email addresses matches the prefix)::
+
+    $ mailadm add-user tmp.12345@example.org
+    added addr 'tmp.12345@example.org' with token 'oneday'
+    wrote /home/mailadm/virtual_mailboxes
+
+When adding/manipulating users `mailadm` writes out
+virtual mailbox "map" files (including the ".db" form)
+so that Postfix knows which mailadm mailboxes exist.
 
 
-mailadm systemd unit file
-++++++++++++++++++++++++++
+Testing the web app
+-----------------------------
 
-You may copy this file to a systemd service directory::
+Let's find out the URL again for creating new users::
 
-    # content of /etc/systemd/system/mailadm.service
-    [Unit]
-    Description=Account management administration web API
-    After=network.target
+    $ mailadm list-tokens
+    token:oneday
+      prefix = tmp.
+      expiry = 1d
+      maxuse = 50
+      usecount = 1
+      token  = 1d_r84EW3N8hEKk
+      http://localhost:3961/?t=1d_r84EW3N8hEKk&n=oneday
+      DCACCOUNT:http://localhost:3961/new_email?t=1d_r84EW3N8hEKk&n=oneday
 
-    [Service]
-    User=mailadm
-    Environment="MAILADM_CONFIG=/home/mailadm/mailadm.config"
-    ExecStart=/home/mailadm/venv/bin/gunicorn -b localhost:3961 -w 1 mailadm.app:app
-    Restart=always
+The second last line is the one we can use with curl::
 
-    [Install]
-    WantedBy=multi-user.target
+   $ curl -X POST 'http://localhost:3961/?t=1d_r84EW3N8hEKk&n=oneday'
+   {"email":"tmp.km5y5@example.org","expiry":"1d","password":"cg8VL5f0jH2U","ttl":86400}
 
-You can then start the web service (on localhost port 3961) like this::
+We got an e-mail account through the web API, nice.
 
-    systemctl enable mailadm
-    systemctl start mailadm
+Note that we are using a localhost-url.  Let's see how
+we could configure "nginx" to serve our web app.
 
 
 nginx configuration
 ++++++++++++++++++++++++++++
 
-If your nginx serves a domain you may add this endpoint to its config
-to make mailadm available through the web::
+We assume here that you:
 
-You can configure your nginx site config by including this endpoint::
+- have HTTPS working for your web domain
+
+- have an operational postfix/dovecot configuration for the domain
+  configured by `mail_domain`
+
+- mailadm is running as a service and dovecot and postfix are using its files.
+
+To make the web API available you can configure nginx
+to proxy to the localhost app::
 
     # add these lines to your nginx-site config
     # (/etc/nginx/sites-enabled/XXX)
-    location /new_email {
+    location / {
         proxy_pass http://localhost:3961/;
     }
 
-We assume here that the site is exposed as `testrun.org` (see `webdomain` in the `mailadm.config` file)
+Note that if you change the `location /` parameter you need to edit
+the `mailadm.cfg` file and modify the `web_endpoint` value accordingly
+and then restart the mailadm service.
 
 
-creating a temporary account
-+++++++++++++++++++++++++++++++++
+Purging old accounts
+++++++++++++++++++++++++
 
-A typical `DCACCOUNT` code specifies the token-configuration in URL format::
+The `mailadm purge` command will remove accounts
+including the home directories of expired users.
+You can call it from a "cron.daily" script.
 
-   DCACCOUNT:https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3&name=<NAME_OF_TOKEN>>
+Purging old accounts
+++++++++++++++++++++++++
 
-To get a random e-mail address with a random password you may issue::
-
-   curl -X POST https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3
-
-To get a specific e-mail address with a random password you may issue::
-
-   curl -X POST https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3&username=<name>
-
-To get a specific e-mail address with a specific password you may issue::
-
-   curl -X POST https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3&username=<name>&password=<password>
-
-In each case, the server will return :
-
-- 409 status code if the name is already taken.
-
-- 200 status code and json content with these keys::
-
-      email: <final e-mail address>
-      password: <final password>
-      expires: <expiration UTC timestamp in seconds>
-
-is
+The `mailadm purge` command will remove accounts
+including the home directories of expired users.
+You can call it from a "cron.daily" script.
 
 
-from python::
 
-    import requests
-    r = requests.post("https://testrun.org/new_email?t=1w_7wDioPeeXyZx96v3")
-    account = r.json()
-    assert "@" in account["email"] and account["email"].startswith("tmp_")
-    assert len(account["password"]) > 10
+Bonus: QR code generation
+---------------------------
+
+Once you have mailadm configured and integrated with
+nginx, postfix and dovecot you can generate a QR code:
+
+    $ mailadm gen-qr oneday
+    dcaccount-testrun.org-oneday.png written for token 'oneday'
+
+You can print or hand out this QR code file and people can scan it with
+their Delta Chat to get a oneday "burner" account.
+

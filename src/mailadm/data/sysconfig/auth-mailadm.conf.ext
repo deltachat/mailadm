@@ -1,0 +1,18 @@
+
+# dovecot authentication for mailadm managed users 
+# (included from 10-auth.conf)
+
+passdb {{
+  driver = sql
+  args = {mailadm_homedir}/dovecot-sql.conf.ext
+}}
+
+userdb {{
+  driver = prefetch
+}}
+
+# needed for postfix and LDA delivery 
+userdb {{
+  driver = sql
+  args = {mailadm_homedir}/dovecot-sql.conf.ext
+}}

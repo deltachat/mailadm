@@ -1,0 +1,12 @@
+[Unit]
+Description=Mailadm account pruning job
+After=network.target
+
+[Service]
+User=mailadm 
+ExecStart={mailadm_home}/venv/bin/mailadm prune
+Restart=always
+RestartSec=3600
+
+[Install]
+WantedBy=multi-user.target

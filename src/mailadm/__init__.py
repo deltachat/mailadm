@@ -5,5 +5,3 @@ try:
 except DistributionNotFound:
     # package is not installed
     __version__ = "0.0.0.dev0-unknown"
-
-MAILADM_SYSCONFIG_PATH = "/etc/mailadm/mailadm.config"

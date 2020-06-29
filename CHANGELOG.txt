@@ -2,7 +2,9 @@
 NEXT
 -------------
 
-- changed ini-file format
+- env var for config file is MAILADM_CFG
+
+- majorly changed ini-file format, see doc/index.rst
 
 - improved README
 

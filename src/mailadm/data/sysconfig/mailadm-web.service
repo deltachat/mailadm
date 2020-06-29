@@ -1,0 +1,11 @@
+[Unit]
+Description=Mailadm Web e-mail account creation API 
+After=network.target
+
+[Service]
+User=mailadm 
+ExecStart={mailadm_home}/venv/bin/gunicorn -b localhost:{localhost_web_port} -w 1 mailadm.app:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
