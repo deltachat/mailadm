@@ -2,7 +2,7 @@
 import sys
 import pytest
 
-from mailadm.util import parse_expiry_code, get_doveadm_pw
+from mailadm.util import parse_expiry_code, get_doveadm_pw, get_human_readable_id
 
 
 @pytest.mark.parametrize("code,duration", [
@@ -33,3 +33,8 @@ def test_get_doveadm_pw():
     clear, hash_pw = get_doveadm_pw("hello")
     assert clear == "hello"
     assert hash_pw.startswith("{SHA512-CRYPT}")
+
+
+def test_human_readable_id():
+    s = get_human_readable_id(len=20)
+    assert s.isalnum()
