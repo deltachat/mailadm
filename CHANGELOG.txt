@@ -1,4 +1,9 @@
 
+0.10.1
+-------------
+
+- fixed tokens to not contain special chars
+
 0.10.0
 -------------
 
