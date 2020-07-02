@@ -124,6 +124,26 @@ def add_token(ctx, name, expiry, prefix, token, maxuse):
 
 @click.command()
 @click.argument("name", type=str, required=True)
+@click.option("--expiry", type=str, default=None,
+              help="account expiry eg 1w 3d -- default is to not change")
+@click.option("--maxuse", type=int, default=None,
+              help="maximum number of accounts this token can create, default is not to change")
+@click.option("--prefix", type=str, default=None,
+              help="prefix for all e-mail addresses for this token, default is not to change")
+@click.pass_context
+def mod_token(ctx, name, expiry, prefix, maxuse):
+    """modify a token selectively
+    """
+    db = get_mailadm_db(ctx)
+
+    with db.write_transaction() as conn:
+        conn.mod_token(name=name, expiry=expiry, maxuse=maxuse, prefix=prefix)
+        tc = conn.get_tokeninfo_by_name(name)
+        dump_token_info(tc)
+
+
+@click.command()
+@click.argument("name", type=str, required=True)
 @click.pass_context
 def del_token(ctx, name):
     """remove named token"""
@@ -310,6 +330,7 @@ mailadm_main.add_command(init)
 mailadm_main.add_command(config)
 mailadm_main.add_command(list_tokens)
 mailadm_main.add_command(add_token)
+mailadm_main.add_command(mod_token)
 mailadm_main.add_command(del_token)
 mailadm_main.add_command(gen_qr)
 mailadm_main.add_command(add_user)
