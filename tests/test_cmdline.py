@@ -76,15 +76,25 @@ class TestTokens:
             *DCACCOUNT*
         """)
 
-    def test_tokens_add(self, mycmd):
+    @pytest.mark.parametrize("i", range(3))
+    def test_tokens_add(self, mycmd, i):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."], """
             *DCACCOUNT*&n=test1
         """)
-        mycmd.run_ok(["list-tokens"], """
+        out = mycmd.run_ok(["list-tokens"], """
             *maxuse*50*
             *usecount*
             *DCACCOUNT*&n=test1
         """)
+        for line in out.splitlines():
+            parts = line.split("=")
+            if len(parts) >= 2 and parts[0].strip() == "token":
+                token = parts[1].strip().replace("_", "")
+                assert token.isalnum()
+                break
+        else:
+            assert 0
+
         mycmd.run_ok(["del-token", "test1"], """
             *deleted*test1*
         """)

@@ -110,11 +110,11 @@ def dump_token_info(token_info):
 def add_token(ctx, name, expiry, prefix, token, maxuse):
     """add new token for generating new e-mail addresses
     """
-    from .util import gen_password
+    from mailadm.util import get_human_readable_id
 
     db = get_mailadm_db(ctx)
     if token is None:
-        token = expiry + "_" + gen_password()
+        token = expiry + "_" + get_human_readable_id(len=15)
     with db.write_transaction() as conn:
         info = conn.add_token(name=name, token=token, expiry=expiry,
                               maxuse=maxuse, prefix=prefix)
