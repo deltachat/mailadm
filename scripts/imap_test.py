@@ -1,10 +1,8 @@
-
-import email
-import smtplib
-from textwrap import dedent
-
-import requests
 from imapclient import IMAPClient
+import email
+import requests
+import smtplib
+import urllib.parse
 
 
 def receive_imap(host, user, password, num):
@@ -24,8 +22,9 @@ def receive_imap(host, user, password, num):
 
 
 def send_self_mail(host, user, password, num):
-    smtp = smtplib.SMTP_SSL(host)
-    smtp.connect(host)
+    smtp = smtplib.SMTP(host, 587)
+    smtp.set_debuglevel(1)
+    smtp.starttls()
     smtp.login(user, password)
     msg = """\
 From: {user}
@@ -37,6 +36,7 @@ hi there
     smtp.sendmail(user, [user], msg)
     print("send message num={}".format(num))
 
+
 if __name__ == "__main__":
     import sys
     if sys.argv[1].startswith("https"):
@@ -45,9 +45,13 @@ if __name__ == "__main__":
         data = res.json()
         user = data["email"]
         password = data["password"]
+
+        if len(sys.argv) >= 3:
+            host = sys.argv[2]
+        else:
+            host = urllib.parse.urlparse(sys.argv[1]).hostname
     else:
-        user, password = sys.argv[1:]
-    host = user.split("@", 1)[-1]
+        user, password, host = sys.argv[1:]
     num = 42
     send_self_mail(host, user, password, num)
     receive_imap(host, user, password, num)
