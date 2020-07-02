@@ -110,6 +110,11 @@ class TestTokens:
             *maxuse*10*
             *DCACCOUNT*&n=test1
         """)
+        mycmd.run_ok(["mod-token", "--maxuse=1000", "test1"])
+        mycmd.run_ok(["list-tokens"], """
+            *maxuse*1000*
+            *DCACCOUNT*&n=test1
+        """)
 
 
 class TestUsers:

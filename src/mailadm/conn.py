@@ -122,6 +122,16 @@ class Connection:
         self.log("added token {!r}".format(name))
         return self.get_tokeninfo_by_name(name)
 
+    def mod_token(self, name, expiry=None, prefix=None, maxuse=None):
+        token_info = self.get_tokeninfo_by_name(name)
+        expiry = expiry if expiry is not None else token_info.expiry
+        maxuse = maxuse if maxuse is not None else token_info.maxuse
+        prefix = prefix if prefix is not None else token_info.prefix
+        q = "REPLACE INTO tokens (name, token, prefix, expiry, maxuse) VALUES (?, ?, ?, ?, ?)"
+        self.execute(q, (name, token_info.token, prefix, expiry, maxuse))
+        self.log("modified token {!r}".format(name))
+        return self.get_tokeninfo_by_name(name)
+
     def del_token(self, name):
         q = "DELETE FROM tokens WHERE name=?"
         c = self.cursor()

@@ -1,4 +1,9 @@
 
+0.10.2
+-------------
+
+- add mod-token command to modify parameters of a token
+
 0.10.1
 -------------
 
