@@ -1,12 +1,13 @@
 mailadm tool (beta)
 ======================
 
-mailadm is the reference administration tool for managing
-e-mail accounts at https://testrun.org which uses a
-standard dovecot/postfix installation.
+mailadm is the reference administration tool for creating
+and removing e-mail accounts ("burner accounts"). It can
+generate QR codes and URLs to be used for performing
+account creation.
 
-On a debian system it allows to run a https-exposed
-e-mail account creation service as a wsgi server app
-that you can run via systemd (see mailadm.service example).
+The https://delta.chat messenger (on all platforms)
+has support to scan QR codes and setup e-mail accounts
+easily.
 
 See the `docs/index.rst` file or https://mailadm.readthedocs.io for more info.

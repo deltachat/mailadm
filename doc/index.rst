@@ -114,19 +114,12 @@ your "web_endpoint" will be a full https-url.
 Purging old accounts
 ++++++++++++++++++++++++
 
-The `mailadm purge` command will remove accounts
+The `mailadm prune` command will remove accounts
 including the home directories of expired users.
-You can call it from a "cron.daily" script.
+The install-script mentioned above makes systemd
+execute a `mailadm-prune` service which runs every hour.
 
-Purging old accounts
-++++++++++++++++++++++++
-
-The `mailadm purge` command will remove accounts
-including the home directories of expired users.
-You can call it from a "cron.daily" script.
-
-
-Bonus: QR code generation
+QR code generation
 ---------------------------
 
 Once you have mailadm configured and integrated with
