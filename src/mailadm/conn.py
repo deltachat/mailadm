@@ -173,7 +173,7 @@ class Connection:
         if token and token.usecount >= token.maxuse:
             raise TokenExhausted("token {} is exhausted".format(token_name))
 
-        homedir = self.config.path_vmaildir.joinpath(addr)
+        homedir = self.config.get_vmail_user_dir(addr)
         q = """INSERT INTO users (addr, hash_pw, homedir, date, ttl, token_name)
                VALUES (?, ?, ?, ?, ?, ?)"""
         self.execute(q, (addr, hash_pw, str(homedir), date, ttl, token_name))

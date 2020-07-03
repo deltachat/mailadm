@@ -1,4 +1,9 @@
 
+0.10.3
+-------------
+
+- fix computing the user vmail dir
+
 0.10.2
 -------------
 
