@@ -1,4 +1,10 @@
 
+0.10.4
+-------------
+
+- fix #15 using a mailadm user not named "mailadm"
+- fix various little errors
+
 0.10.3
 -------------
 
