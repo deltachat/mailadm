@@ -52,18 +52,21 @@ chmod ug+rwx $MAILADM_HOME
 chmod -R g+ws $VMAIL_HOME/$MAIL_DOMAIN 
 
 python3 -m venv $MAILADM_HOME/venv
-$MAILADM_HOME/venv/bin/pip install -q .
+$MAILADM_HOME/venv/bin/pip install -U -q .
+
+export MAILADM_DB=$MAILADM_HOME/mailadm.db
 
 $MAILADM_HOME/venv/bin/mailadm init \
     --web-endpoint=$WEB_ENDPOINT \
     --mail-domain=$MAIL_DOMAIN \
     --vmail-user=$VMAIL_USER 
 
-chown $MAILADM_USER:$MAILADM_USER $MAILADM_HOME/mailadm.db
-chmod ug+rw $MAILADM_HOME/mailadm.db
+chown $MAILADM_USER:$MAILADM_USER $MAILADM_DB
+chmod ug+rw $MAILADM_DB
 
 $MAILADM_HOME/venv/bin/mailadm gen-sysconfig \
     --localhost-web-port=$LOCALHOST_WEB_PORT \
+    --mailadm-user $MAILADM_USER
 
 
 systemctl daemon-reload 
