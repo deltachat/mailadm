@@ -62,7 +62,7 @@ You need to add the following directies to an enabled domain,
 for example `{nginx_sites_enabled}/default`::
 
     # add these lines to domain file in `{nginx_sites_enabled}`
-    location /{web_path} {{
+    location {web_path} {{
         proxy_pass http://localhost:{localhost_web_port}/
     }}
 

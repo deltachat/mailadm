@@ -4,15 +4,16 @@
 
 passdb {{
   driver = sql
-  args = {mailadm_homedir}/dovecot-sql.conf.ext
+  args = {dovecot_conf_d}/dovecot-sql.conf.ext
 }}
 
-userdb {{
-  driver = prefetch
-}}
+#userdb {{
+#  driver = prefetch
+#}}
 
 # needed for postfix and LDA delivery 
 userdb {{
   driver = sql
-  args = {mailadm_homedir}/dovecot-sql.conf.ext
+  args = {dovecot_conf_d}/dovecot-sql.conf.ext
+  default_fields = uid=vmail gid=vmail mail_location=maildir:~/mail:INDEX=~/index:LAYOUT=fs
 }}

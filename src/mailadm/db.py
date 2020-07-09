@@ -9,9 +9,10 @@ from pathlib import Path
 from .conn import Connection
 
 
-def get_db_path(mailadm_user="mailadm"):
+def get_db_path():
     db_path = os.environ.get("MAILADM_DB")
     if db_path is None:
+        mailadm_user = os.environ.get("MAILADM_USER", "mailadm")
         try:
             entry = pwd.getpwnam(mailadm_user)
         except KeyError:
