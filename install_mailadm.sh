@@ -38,13 +38,13 @@ if ! getent passwd $MAILADM_USER > /dev/null 2>&1; then
     echo "** adding mailadm user"
     mkdir -p $MAILADM_HOME
     useradd --no-log-init --system --home-dir $MAILADM_HOME $MAILADM_USER
-    chown -R $MAILADM_USER $MAILADM_HOME 
 else
     echo "** mailadm user already exists, using it"
 fi
 
+echo "** fixing permissions"
 umask 0022
-chown -R $MAILADM_USER $MAILADM_HOME
+chown -R $MAILADM_USER:$VMAIL_USER $MAILADM_HOME
 chmod ug+rwx $MAILADM_HOME
 
 python3 -m venv $MAILADM_HOME/venv
