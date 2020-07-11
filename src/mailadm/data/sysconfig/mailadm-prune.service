@@ -3,7 +3,8 @@ Description=Mailadm account pruning job
 After=network.target
 
 [Service]
-User=mailadm 
+User={mailadm_user}
+Environment="MAILADM_USER={mailadm_user}"
 ExecStart={mailadm_home}/venv/bin/mailadm prune
 Restart=always
 RestartSec=3600
