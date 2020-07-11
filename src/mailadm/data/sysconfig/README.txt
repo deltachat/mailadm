@@ -16,7 +16,7 @@ Both mailadm web, prune and command line tools execute as the user
 needs write permission to `{vmail_homedir}/{mail_domain}` sub directories.
 It is advised to perform this operation::
 
-    sudo chmod -R g+rwS {vmail_homedir}/{mail_domain}
+    sudo chmod -R g+rwxs {vmail_homedir}/{mail_domain}
 
 and make sure that the `{mailadm_user}` is a member of the `{vmail_user}` group.
 

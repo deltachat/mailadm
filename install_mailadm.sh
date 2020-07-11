@@ -49,7 +49,7 @@ chown -R $MAILADM_USER $MAILADM_HOME
 chmod ug+rwx $MAILADM_HOME
 
 # allow mailadm sticky write access to vmail user directory for our domain 
-chmod -R g+ws $VMAIL_HOME/$MAIL_DOMAIN 
+chmod -R g+rwsx $VMAIL_HOME/$MAIL_DOMAIN 
 
 python3 -m venv $MAILADM_HOME/venv
 $MAILADM_HOME/venv/bin/pip install -U -q .

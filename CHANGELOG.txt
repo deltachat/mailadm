@@ -1,4 +1,9 @@
 
+0.10.5
+-------------
+
+- fix permission issue in install and readme
+
 0.10.4
 -------------
 
