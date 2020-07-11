@@ -1,6 +1,5 @@
 
 import os
-import pwd
 import contextlib
 import sqlite3
 import time
@@ -12,13 +11,7 @@ from .conn import Connection
 def get_db_path():
     db_path = os.environ.get("MAILADM_DB")
     if db_path is None:
-        mailadm_user = os.environ.get("MAILADM_USER", "mailadm")
-        try:
-            entry = pwd.getpwnam(mailadm_user)
-        except KeyError:
-            raise RuntimeError("mailadm.db not found: MAILADM_DB not set "
-                               "and {!r} user does not exist".format(mailadm_user))
-        db_path = os.path.join(entry.pw_dir, "mailadm.db")
+        raise RuntimeError("mailadm.db not found: MAILADM_DB not set")
     return Path(db_path)
 
 

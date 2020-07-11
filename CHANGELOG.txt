@@ -1,4 +1,12 @@
 
+0.10.5
+-------------
+
+- fix permission issue in install and readme
+
+- make "mailadm-prune" systemd service run as vmail user
+  and set group for mailadm.db as vmail user.
+
 0.10.4
 -------------
 
