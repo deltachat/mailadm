@@ -37,19 +37,15 @@ fi
 if ! getent passwd $MAILADM_USER > /dev/null 2>&1; then
     echo "** adding mailadm user"
     mkdir -p $MAILADM_HOME
-    useradd --no-log-init --system --home-dir $MAILADM_HOME --groups $VMAIL_USER $MAILADM_USER
+    useradd --no-log-init --system --home-dir $MAILADM_HOME $MAILADM_USER
     chown -R $MAILADM_USER $MAILADM_HOME 
 else
-    echo "** adding vmail group to mailadm user"
-    usermod -G vmail $MAILADM_USER 
+    echo "** mailadm user already exists, using it"
 fi
 
 umask 0022
 chown -R $MAILADM_USER $MAILADM_HOME
 chmod ug+rwx $MAILADM_HOME
-
-# allow mailadm sticky write access to vmail user directory for our domain 
-chmod -R g+rwsx $VMAIL_HOME/$MAIL_DOMAIN 
 
 python3 -m venv $MAILADM_HOME/venv
 $MAILADM_HOME/venv/bin/pip install -U -q .
@@ -61,7 +57,8 @@ $MAILADM_HOME/venv/bin/mailadm init \
     --mail-domain=$MAIL_DOMAIN \
     --vmail-user=$VMAIL_USER 
 
-chown $MAILADM_USER:$MAILADM_USER $MAILADM_DB
+# allow vmail user (which runs mailadm-prune job) to write to db 
+chown $MAILADM_USER:$VMAIL_USER $MAILADM_DB
 chmod ug+rw $MAILADM_DB
 
 $MAILADM_HOME/venv/bin/mailadm gen-sysconfig \

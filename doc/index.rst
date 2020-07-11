@@ -60,6 +60,11 @@ Adding a first token and user
 In order to use `mailadm` you need to be able
 to execute `~mailadm/venv/bin/mailadm` and you
 need write rights to the `mailadm/mailadm.db` file.
+Moreover you need to set an environment variable
+for finding the mailadm database file::
+
+    export MAILADM_DB=~mailadm/mailadm.db
+
 You can then add a first token::
 
     $ mailadm add-token oneday --expiry 1d --prefix="tmp."

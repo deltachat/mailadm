@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 User={mailadm_user}
-Environment="MAILADM_USER={mailadm_user}"
+Environment="MAILADM_DB={path_mailadm_db}"
 ExecStart={mailadm_home}/venv/bin/gunicorn -b localhost:{localhost_web_port} -w 1 mailadm.app:app
 Restart=always
 
