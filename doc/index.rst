@@ -2,7 +2,7 @@ mailadm: managing token-based temporary e-mail accounts
 ========================================================
 
 mailadm is automated e-mail account management tooling
-for use by [Delta Chat](https://delta.chat).
+for use by `Delta Chat <https://delta.chat>`_.
 
 The `mailadm` command line tool allows to add or remove tokens which are
 typically presented to users as QR tokens.  This QR code can then be
