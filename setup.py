@@ -32,7 +32,7 @@ def main():
             mailadm=mailadm.cmdline:mailadm_main
 
             [entry_points]
-            simplebot.plugins=mailadm.bot
+            mailadm.bot=mailadm.bot
         ''',
         install_requires=[
             "click>=6.0",
