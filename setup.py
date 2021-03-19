@@ -30,6 +30,9 @@ def main():
         entry_points='''
             [console_scripts]
             mailadm=mailadm.cmdline:mailadm_main
+
+            [entry_points]
+            simplebot.plugins=mailadm.bot
         ''',
         install_requires=[
             "click>=6.0",
@@ -37,6 +40,10 @@ def main():
             "pillow",
             "qrcode",
             "gunicorn",
+            'simplebot',
+            'matplotlib',
+            'segno',
+            'socket',
         ],
         zip_safe=False,
     )
