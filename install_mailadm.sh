@@ -69,3 +69,9 @@ $MAILADM_HOME/venv/bin/mailadm gen-sysconfig \
 systemctl daemon-reload 
 systemctl enable mailadm-web mailadm-prune
 systemctl restart mailadm-web  mailadm-prune 
+
+# :todo
+# create mail address for sending out messages to users
+# simplebot init to send out messages to users
+# ask user whether they want to use the admin group
+# if yes, show an invite QR code for the admin group
