@@ -7,6 +7,7 @@ import sqlite3
 from pathlib import Path
 from .util import get_doveadm_pw, parse_expiry_code
 import mailadm.util
+from datetime import datetime
 
 
 class DBError(Exception):
@@ -174,9 +175,9 @@ class Connection:
             raise TokenExhausted("token {} is exhausted".format(token_name))
 
         homedir = self.config.get_vmail_user_dir(addr)
-        q = """INSERT INTO users (addr, hash_pw, homedir, date, ttl, token_name)
-               VALUES (?, ?, ?, ?, ?, ?)"""
-        self.execute(q, (addr, hash_pw, str(homedir), date, ttl, token_name))
+        q = """INSERT INTO users (addr, hash_pw, homedir, date, last_seen, ttl, token_name)
+               VALUES (?, ?, ?, ?, ?, ?, ?)"""
+        self.execute(q, (addr, hash_pw, str(homedir), date, str(datetime.now().astimezone()) ttl, token_name))
         self.execute("UPDATE tokens SET usecount = usecount + 1"
                      "  WHERE name=?", (token_name,))
 
@@ -236,6 +237,22 @@ class Connection:
         self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
         user_info.clear_pw = clear_pw
         return user_info
+    
+    def set_usercount(self, key, value):
+        self._execute('REPLACE INTO statistics VALUES (?,?)', (key, value))
+    
+    def get_usercount(self):
+        users = []
+        dates = []
+        rows = self._execute('SELECT * FROM statistics').fetchall()
+        for row in rows:
+            users.append(row['users'])
+            dates.append(date.fromisoformat(row['date']))
+        return dates, users
+    
+    def set_last_seen(self, addr, last_seen):
+        q = "UPDATE users SET last_seen = ?  WHERE addr=?"
+        self.execute(q, (last_seen, addr,))
 
 
 class TokenInfo:
@@ -265,13 +282,14 @@ class TokenInfo:
 
 
 class UserInfo:
-    _select_user_columns = "SELECT addr, hash_pw, homedir, date, ttl, token_name from users\n"
+    _select_user_columns = "SELECT addr, hash_pw, homedir, date, last_seen, ttl, token_name from users\n"
 
     def __init__(self, addr, hash_pw, homedir, date, ttl, token_name):
         self.addr = addr
         self.hash_pw = hash_pw
         self.homedir = Path(homedir)
         self.date = date
+        self.last_seen = last_seen
         self.ttl = ttl
         self.token_name = token_name
 

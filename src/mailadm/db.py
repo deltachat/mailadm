@@ -103,6 +103,7 @@ class DB:
                     hash_pw TEXT NOT NULL,
                     homedir TEXT NOT NULL,
                     date INTEGER,
+                    last_seen TEXT,
                     ttl INTEGER,
                     token_name TEXT NOT NULL,
                     FOREIGN KEY (token_name) REFERENCES tokens (name)
@@ -112,6 +113,11 @@ class DB:
                 CREATE TABLE config (
                     name TEXT PRIMARY KEY,
                     value TEXT
+                )
+            """)
+            conn.execute("""CREATE TABLE statistics (
+                    date TEXT PRIMARY KEY,
+                    users INTEGER
                 )
             """)
             conn.set_config("dbversion", self.CURRENT_DBVERSION)

@@ -36,7 +36,7 @@ def deltabot_init(bot: DeltaBot) -> None:
 def deltabot_start(bot: DeltaBot, chat = Chat) -> None:
     groups = []
     groups = db.get_groups()
-    if groups:
+    if groups: ## to be deleted
         for g in groups:
             if g['topic'] == 'Admin group on {}'.format(socket.gethostname()) and g['id'] == int(dbot.get('admgrpid')):
                 dbot.logger.info("found Admin group")
@@ -64,7 +64,7 @@ def cmd_info(command: IncomingCommand, replies: Replies) -> None:
 
 
 def cmd_refresh(command: IncomingCommand, replies: Replies) -> None:
-    """Reads logfile and creates a summary
+    """Reads logfile and creates a summary. To be replaced. Should be done daily.
     """
     if check_priv(command.message, dbot):
         lastseen = parse("/var/log/mail.log")
