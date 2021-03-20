@@ -7,7 +7,7 @@ import sqlite3
 from pathlib import Path
 from .util import get_doveadm_pw, parse_expiry_code
 import mailadm.util
-from datetime import datetime
+from datetime import datetime, date
 
 
 class DBError(Exception):
