@@ -1,0 +1,14 @@
+[Unit]
+Description=Mailadm last seen
+After=network.target
+
+[Service]
+User={vmail_user}
+Group={vmail_user}
+Environment="MAILADM_DB={path_mailadm_db}"
+ExecStart={mailadm_home}/venv/bin/mailadm last_seen
+Restart=always
+RestartSec=86400
+
+[Install]
+WantedBy=multi-user.target
