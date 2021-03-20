@@ -284,7 +284,7 @@ class TokenInfo:
 class UserInfo:
     _select_user_columns = "SELECT addr, hash_pw, homedir, date, last_seen, ttl, token_name from users\n"
 
-    def __init__(self, addr, hash_pw, homedir, date, ttl, token_name):
+    def __init__(self, addr, hash_pw, homedir, date, last_seen, ttl, token_name):
         self.addr = addr
         self.hash_pw = hash_pw
         self.homedir = Path(homedir)
