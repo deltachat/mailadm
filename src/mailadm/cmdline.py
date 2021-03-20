@@ -12,6 +12,8 @@ import pwd
 import grp
 import sys
 import click
+import re
+from datetime import datetime
 from click import style
 
 import mailadm
@@ -324,6 +326,23 @@ def web(ctx, debug):
     db = get_mailadm_db(ctx)
     app = create_app_from_db(db)
     app.run(debug=debug, host="localhost", port=3961)
+
+
+@click.command()
+@click.pass_context
+def last_seen(ctx):
+    lastseen = {}
+    db = get_mailadm_db(ctx)
+    with open("/var/log/mail.log", "r") as logfile:
+        for line in logfile:
+            matchLogin = re.search(r'Login: user=<([a-zA-Z0-9_.+-]+@testrun.org)', line)
+            if matchLogin: 
+                matchDate = re.match(r'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\d\d\d\d\+\d\d:00', line)
+                if matchDate: 
+                    lastseen.update({matchLogin.group()[13:]: matchDate.group()})
+    for user, timestamp in lastseen:
+        timestamp = datetime.fromisoformat(timestamp)
+        db.store_mailusers(user, timestamp)
 
 
 mailadm_main.add_command(init)
