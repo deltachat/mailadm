@@ -177,7 +177,7 @@ class Connection:
         homedir = self.config.get_vmail_user_dir(addr)
         q = """INSERT INTO users (addr, hash_pw, homedir, date, last_seen, ttl, token_name)
                VALUES (?, ?, ?, ?, ?, ?, ?)"""
-        self.execute(q, (addr, hash_pw, str(homedir), date, str(datetime.now().astimezone()) ttl, token_name))
+        self.execute(q, (addr, hash_pw, str(homedir), date, str(datetime.now().astimezone()), ttl, token_name))
         self.execute("UPDATE tokens SET usecount = usecount + 1"
                      "  WHERE name=?", (token_name,))
 
