@@ -38,6 +38,9 @@ if ! getent passwd $MAILADM_USER > /dev/null 2>&1; then
     echo "** adding mailadm user"
     mkdir -p $MAILADM_HOME
     useradd --no-log-init --system --home-dir $MAILADM_HOME $MAILADM_USER
+    echo "export MAILADM_DB=$MAILADM_HOME/mailadm.db" >> $MAILADM_HOME/.bashrc
+    echo "cd ~" >> $MAILADM_HOME/.bashrc
+    echo "source venv/bin/activate" >> $MAILADM_HOME/.bashrc
 else
     echo "** mailadm user already exists, using it"
 fi
@@ -51,10 +54,6 @@ python3 -m venv $MAILADM_HOME/venv
 $MAILADM_HOME/venv/bin/pip install -U -q .
 
 export MAILADM_DB=$MAILADM_HOME/mailadm.db
-
-echo "export MAILADM_DB=$MAILADM_HOME/mailadm.db" >> $MAILADM_HOME/.bashrc
-echo "cd ~" >> $MAILADM_HOME/.bashrc
-echo "source venv/bin/activate" >> $MAILADM_HOME/.bashrc
 
 $MAILADM_HOME/venv/bin/mailadm init \
     --web-endpoint=$WEB_ENDPOINT \
