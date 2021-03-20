@@ -52,6 +52,10 @@ $MAILADM_HOME/venv/bin/pip install -U -q .
 
 export MAILADM_DB=$MAILADM_HOME/mailadm.db
 
+echo "export MAILADM_DB=$MAILADM_HOME/mailadm.db" >> $MAILADM_HOME/.bashrc
+echo "cd ~" >> $MAILADM_HOME/.bashrc
+echo "source venv/bin/activate" >> $MAILADM_HOME/.bashrc
+
 $MAILADM_HOME/venv/bin/mailadm init \
     --web-endpoint=$WEB_ENDPOINT \
     --mail-domain=$MAIL_DOMAIN \
@@ -75,3 +79,4 @@ systemctl restart mailadm-web  mailadm-prune
 # simplebot init to send out messages to users
 # ask user whether they want to use the admin group
 # if yes, show an invite QR code for the admin group
+
