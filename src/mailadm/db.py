@@ -91,7 +91,7 @@ class DB:
                      """)
                      wconn.execute("""
                          UPDATE users SET last_seen = ?
-                     """, (str(datetime.now().astimezone())))
+                     """, (str(datetime.now().astimezone()),))
                      wconn.execute("""
                          CREATE TABLE statistics (
                              date TEXT PRIMARY KEY,
