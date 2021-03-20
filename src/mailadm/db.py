@@ -96,7 +96,7 @@ class DB:
                         users INTEGER
                     )
                 """)
-                conn.set_config("dbversion", 2)
+                conn.set_config("dbversion", "2")
             if conn.get_dbversion() == self.CURRENT_DBVERSION:
                 return
         with self.write_transaction() as conn:
