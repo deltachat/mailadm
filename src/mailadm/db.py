@@ -78,11 +78,11 @@ class DB:
         with self.read_connection() as conn:
             return conn.config
 
-    CURRENT_DBVERSION = 2
+    CURRENT_DBVERSION = "2"
 
     def ensure_tables(self):
         with self.read_connection() as conn:
-            if conn.get_dbversion() == 1:
+            if conn.get_dbversion() == "1":
                 conn.execute("""
                     ALTER TABLE users
                     ADD COLUMN last_seen
