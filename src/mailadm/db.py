@@ -83,26 +83,27 @@ class DB:
     def ensure_tables(self):
         with self.read_connection() as conn:
             if conn.get_dbversion() == "1":
-                conn.execute("""
-                    ALTER TABLE users
-                    ADD COLUMN last_seen
-                """)
-                conn.execute("""
-                    UPDATE users SET last_seen = ?
-                """, (str(datetime.now().astimezone())))
-                conn.execute("""
-                    CREATE TABLE statistics (
-                        date TEXT PRIMARY KEY,
-                        users INTEGER
-                    )
-                """)
-                conn.set_config("dbversion", "2")
+                with self.write_transaction() as wconn:
+                     wconn.execute("""
+                         ALTER TABLE users
+                         ADD COLUMN last_seen
+                     """)
+                     wconn.execute("""
+                         UPDATE users SET last_seen = ?
+                     """, (str(datetime.now().astimezone())))
+                     wconn.execute("""
+                         CREATE TABLE statistics (
+                             date TEXT PRIMARY KEY,
+                             users INTEGER
+                         )
+                     """)
+                     wconn.set_config("dbversion", "2")
             if conn.get_dbversion() == self.CURRENT_DBVERSION:
                 return
-        with self.write_transaction() as conn:
+        with self.write_transaction() as wconn:
             print("DB: Creating tables", self.path)
 
-            conn.execute("""
+            wconn.execute("""
                 CREATE TABLE tokens (
                     name TEXT PRIMARY KEY,
                     token TEXT NOT NULL UNIQUE,
@@ -112,7 +113,7 @@ class DB:
                     usecount INTEGER default 0
                 )
             """)
-            conn.execute("""
+            wconn.execute("""
                 CREATE TABLE users (
                     addr TEXT PRIMARY KEY,
                     hash_pw TEXT NOT NULL,
@@ -124,16 +125,16 @@ class DB:
                     FOREIGN KEY (token_name) REFERENCES tokens (name)
                 )
             """)
-            conn.execute("""
+            wconn.execute("""
                 CREATE TABLE config (
                     name TEXT PRIMARY KEY,
                     value TEXT
                 )
             """)
-            conn.execute("""
+            wconn.execute("""
                 CREATE TABLE statistics (
                     date TEXT PRIMARY KEY,
                     users INTEGER
                 )
             """)
-            conn.set_config("dbversion", self.CURRENT_DBVERSION)
+            wconn.set_config("dbversion", self.CURRENT_DBVERSION)
