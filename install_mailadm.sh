@@ -51,7 +51,7 @@ chown -R $MAILADM_USER:$VMAIL_USER $MAILADM_HOME
 chmod ug+rwx $MAILADM_HOME
 
 python3 -m venv $MAILADM_HOME/venv
-$MAILADM_HOME/venv/bin/pip install -U pip
+$MAILADM_HOME/venv/bin/pip install -U -q pip
 $MAILADM_HOME/venv/bin/pip install -U -q .
 
 export MAILADM_DB=$MAILADM_HOME/mailadm.db
