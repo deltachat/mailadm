@@ -43,7 +43,6 @@ def main():
             'simplebot',
             'matplotlib',
             'segno',
-            'socket',
         ],
         zip_safe=False,
     )
