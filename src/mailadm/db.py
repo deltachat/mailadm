@@ -82,7 +82,7 @@ class DB:
 
     def ensure_tables(self):
         with self.read_connection() as conn:
-            if conn.get_dbversion() == CURRENT_DBVERSION:
+            if conn.get_dbversion() == self.CURRENT_DBVERSION:
                 return
             if conn.get_dbversion() == 1:
                 conn.execute("""
