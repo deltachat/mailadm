@@ -78,12 +78,26 @@ class DB:
         with self.read_connection() as conn:
             return conn.config
 
-    CURRENT_DBVERSION = 1
+    CURRENT_DBVERSION = 2
 
     def ensure_tables(self):
         with self.read_connection() as conn:
-            if conn.get_dbversion():
+            if conn.get_dbversion() == CURRENT_DBVERSION:
                 return
+            if conn.get_dbversion() == 1:
+                conn.execute("""
+                    ALTER TABLE users
+                    ADD COLUMN last_seen
+                """)
+                conn.execute("""
+                    UPDATE users SET last_seen = ?
+                """, (str(datetime.now().astimezone()))
+                conn.execute("""CREATE TABLE statistics (
+                        date TEXT PRIMARY KEY,
+                        users INTEGER
+                    )
+                """)
+                conn.set_config("dbversion", 2)
         with self.write_transaction() as conn:
             print("DB: Creating tables", self.path)
 
