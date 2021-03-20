@@ -71,8 +71,8 @@ $MAILADM_HOME/venv/bin/mailadm gen-sysconfig \
 
 
 systemctl daemon-reload 
-systemctl enable mailadm-web mailadm-prune
-systemctl restart mailadm-web  mailadm-prune 
+systemctl enable mailadm-web mailadm-prune mailadm-last_seen
+systemctl restart mailadm-web  mailadm-prune mailadm-last_seen
 
 # :todo
 # create mail address for sending out messages to users
