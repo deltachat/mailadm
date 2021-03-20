@@ -238,9 +238,11 @@ class Connection:
         user_info.clear_pw = clear_pw
         return user_info
     
+    # :todo rewrite, imported from old db.py
     def set_usercount(self, key, value):
         self._execute('REPLACE INTO statistics VALUES (?,?)', (key, value))
     
+    # :todo rewrite, imported from old db.py
     def get_usercount(self):
         users = []
         dates = []
@@ -250,6 +252,7 @@ class Connection:
             dates.append(date.fromisoformat(row['date']))
         return dates, users
     
+    # :todo rewrite, imported from old db.py
     def set_last_seen(self, addr, last_seen):
         q = "UPDATE users SET last_seen = ?  WHERE addr=?"
         self.execute(q, (last_seen, addr,))
