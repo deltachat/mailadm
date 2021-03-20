@@ -87,7 +87,7 @@ class DB:
                 with self.write_transaction() as wconn:
                      wconn.execute("""
                          ALTER TABLE users
-                         ADD COLUMN last_seen
+                         ADD COLUMN last_seen TEXT
                      """)
                      wconn.execute("""
                          UPDATE users SET last_seen = ?
