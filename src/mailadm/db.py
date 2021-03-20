@@ -82,8 +82,6 @@ class DB:
 
     def ensure_tables(self):
         with self.read_connection() as conn:
-            if conn.get_dbversion() == self.CURRENT_DBVERSION:
-                return
             if conn.get_dbversion() == 1:
                 conn.execute("""
                     ALTER TABLE users
@@ -99,6 +97,8 @@ class DB:
                     )
                 """)
                 conn.set_config("dbversion", 2)
+            if conn.get_dbversion() == self.CURRENT_DBVERSION:
+                return
         with self.write_transaction() as conn:
             print("DB: Creating tables", self.path)
 
