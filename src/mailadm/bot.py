@@ -3,7 +3,7 @@ from simplebot.hookspec import deltabot_hookimpl
 from simplebot import DeltaBot
 from simplebot.bot import Replies
 from simplebot.commands import IncomingCommand
-from .db import DBManager
+from .db import DB
 from deltachat import Chat, Contact, Message
 from datetime import datetime, timezone, timedelta
 import matplotlib.pyplot as plt
@@ -12,10 +12,11 @@ import socket
 import re
 import os
 import segno
-
+import mailadm
+import mailadm.db
 
 version = '1.0.0'
-db: DBManager
+db: DB
 dbot: DeltaBot
 
 
@@ -25,18 +26,18 @@ dbot: DeltaBot
 def deltabot_init(bot: DeltaBot) -> None:
     global db, dbot
     dbot = bot
-    db = get_db(bot)
+    db = get_mailadm_db()
 
     bot.commands.register(name="/info", func=cmd_info)
-    bot.commands.register(name="/refresh", func=cmd_refresh)
     bot.commands.register(name="/show", func=cmd_show)
 
 
 @deltabot_hookimpl
 def deltabot_start(bot: DeltaBot, chat = Chat) -> None:
+    ## to be deleted
     groups = []
     groups = db.get_groups()
-    if groups: ## to be deleted
+    if groups: 
         for g in groups:
             if g['topic'] == 'Admin group on {}'.format(socket.gethostname()) and g['id'] == int(dbot.get('admgrpid')):
                 dbot.logger.info("found Admin group")
@@ -61,17 +62,6 @@ def cmd_info(command: IncomingCommand, replies: Replies) -> None:
     if check_priv(command.message, dbot):
         replies.add(text='?? Userbot active on: {} '.format(socket.gethostname()))
         replies.add(text='Available commands:\n/info - show this info \n/refresh - scan logs \n/show <all|active|inactive> <hours default=24>\nshow active or inactive users in the last n hours')
-
-
-def cmd_refresh(command: IncomingCommand, replies: Replies) -> None:
-    """Reads logfile and creates a summary. To be replaced. Should be done daily.
-    """
-    if check_priv(command.message, dbot):
-        lastseen = parse("/var/log/mail.log")
-        writetodatabase(lastseen)
-        replies.add(text='✅ scanned for new logins: {}'.format(str(datetime.now())))
-    else:
-        replies.add("You are not authorzied!")
 
 
 def cmd_show(command: IncomingCommand, replies: Replies) -> None:
@@ -114,29 +104,16 @@ def cmd_show(command: IncomingCommand, replies: Replies) -> None:
 
 # ======== Utilities ===============
 
-def writetodatabase(dict_obj):
-    for user, timestamp in dict_obj.items():
-        timestamp = datetime.fromisoformat(timestamp)
-        db.store_mailusers(user, timestamp)
+def get_mailadm_db():
+    try:
+        db_path = mailadm.db.get_db_path()
+    except RuntimeError as e:
+        print(str(e))
 
-
-def get_db(bot: DeltaBot) -> DBManager:
-    path = os.path.join(os.path.dirname(bot.account.db_path), __name__)
-    if not os.path.exists(path):
-        os.makedirs(path)
-    return DBManager(os.path.join(path, 'sqlite.db'))
-
-
-def parse(file):
-    lastseen = {}
-    with open(file, "r") as logfile:
-        for line in logfile:
-            matchLogin = re.search(r'Login: user=<([a-zA-Z0-9_.+-]+@testrun.org)', line)
-            if matchLogin: 
-                matchDate = re.match(r'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\d\d\d\d\+\d\d:00', line)
-                if matchDate: 
-                    lastseen.update({matchLogin.group()[13:]: matchDate.group()})
-    return lastseen
+    try:
+        db = mailadm.db.DB(db_path)
+    except DBError as e:
+        print(str(e))
 
 
 def check_priv(message: Message, bot: DeltaBot) -> None:
@@ -153,14 +130,12 @@ def check_priv(message: Message, bot: DeltaBot) -> None:
 
 
 def create_graph():
-    path = os.path.join(os.path.dirname(dbot.account.db_path), __name__)
-    filename = os.path.join(path, 'plot.png')
-    dates = []
-    users = []
+    path = os.path.join(os.path.dirname(dbot.account.db_path), __name__) # Will this work?
+    filename = os.path.join(path, 'plot.png') 
+    dates, users = []
     dates, users = db.list_usercount()
 
     plt.plot(dates, users)
-    #plt.xlabel.set_major_formatter(DateFormatter('%d/%m'))
     plt.grid(linestyle='-')
     plt.xlabel("Date")
     plt.ylabel("Users")
@@ -190,4 +165,3 @@ def writetofile(sign, startdate, now):
                 file.writelines("{0:25} {1} \n".format(user, timestamp[:-13]))
         db.store_usercount(now.strftime("%Y-%m-%d"), usercount)
     return usercount, filename
-
