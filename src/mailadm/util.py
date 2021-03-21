@@ -58,6 +58,7 @@ def gen_sysconfig(db, mailadm_info, vmail_info, localhost_web_port):
         "/etc/dovecot/conf.d/dovecot-sql.conf.ext",
         "/etc/systemd/system/mailadm-web.service",
         "/etc/systemd/system/mailadm-prune.service",
+        "/etc/systemd/system/mailadm-last_seen.service",
         "{}/README.txt".format(mailadm_homedir),
     ]
 
