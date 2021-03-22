@@ -200,7 +200,7 @@ class TestNotify:
         mycmd.run_ok(["add-token", "test1", "--expiry=7d", "--prefix=tmpy."])
         mycmd.run_ok(["add-user", "tmpy.123@example.org"])
         time.sleep(1)
-        mycmd.run_ok(["notify-expiration","--dryrun"],"""
+        mycmd.run_ok(["notify-expiration", "--dryrun"], """
             Notified tmpy.123*
         """)
         # Figure out how to test if the notification arrived
@@ -210,7 +210,7 @@ class TestNotify:
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."])
         mycmd.run_ok(["add-user", "tmpy.123@example.org"])
         time.sleep(1)
-        mycmd.run_ok(["notify-expiration","--dryrun"],"""
+        mycmd.run_ok(["notify-expiration", "--dryrun"], """
             Notified tmpy.123*
         """)
         # Figure out how to test if the notification arrived
@@ -221,10 +221,10 @@ class TestNotify:
         mycmd.run_ok(["add-token", "test2", "--expiry=10d", "--prefix=tmpx."])
         mycmd.run_ok(["add-user", "tmpy.123@example.org"])
         mycmd.run_ok(["add-user", "tmpx.456@example.org"])
-        mycmd.run_ok(["notify-expiration","--dryrun"],"""
+        mycmd.run_ok(["notify-expiration", "--dryrun"], """
         """)
 
     def test_empty(self, mycmd):
-        mycmd.run_ok(["notify-expiration"],"""
+        mycmd.run_ok(["notify-expiration"], """
             no one to notify
         """)

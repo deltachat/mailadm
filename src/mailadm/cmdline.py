@@ -346,15 +346,14 @@ def notify_expiration(ctx, dryrun):
                     Your account will expire on %s - you should create
                     a new account and tell your contacts your future
                     address.
-                    """ %d)
+                    """ % d)
             elif daysleft > 0 and daysleft < 6:
                 # Don't notify if daysleft is between 1 and 5
                 continue
             click.secho("Notified {} [{}]: {} days left".format(
                     user_info.addr,
                     user_info.token_name,
-                    str(daysleft),
-                    fg="red"))
+                    str(daysleft)))
 
 
 @click.command()
@@ -378,9 +377,9 @@ def last_seen(ctx):
     with open("/var/log/mail.log", "r") as logfile:
         for line in logfile:
             matchLogin = re.search(r'Login: user=<([a-zA-Z0-9_.+-]+@testrun.org)', line)
-            if matchLogin: 
+            if matchLogin:
                 matchDate = re.match(r'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\d\d\d\d\+\d\d:00', line)
-                if matchDate: 
+                if matchDate:
                     lastseen.update({matchLogin.group()[13:]: matchDate.group()})
     for user, timestamp in lastseen:
         timestamp = datetime.fromisoformat(timestamp)
