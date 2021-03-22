@@ -332,31 +332,30 @@ def notify_expiration(ctx, dryrun):
             click.secho("no one to notify")
             return
         for user_info in expiring_users:
-            daysleft = (user_info.date + user_info.ttl - sysdate) / 86400
-            if not dryrun:
-                deltabot_init(DeltaBot)
-                chat = dbot.get_chat(user_info.addr)
-                if daysleft == 0:
-                    chat.send_text("""
-                        Your account will expire tomorrow - you should create
-                        a new account and tell your contacts your future
-                        address.
-                        """)
-                elif daysleft == 6:
-                    d = date.fromtimestamp(sysdate + 604800).strftime("%B %d")
-                    chat.send_text("""
-                        Your account will expire on %s - you should create
-                        a new account and tell your contacts your future
-                        address.
-                        """ %d)
-                else:
-                    # Don't notify if daysleft is between 1 and 5
-                    break
+            daysleft = int((user_info.date + user_info.ttl - sysdate) / 86400)
+            deltabot_init(DeltaBot)
+            chat = dbot.get_chat(user_info.addr)
+            if daysleft == 0 and not dryrun:
+                chat.send_text("""
+                    Your account will expire tomorrow - you should create
+                    a new account and tell your contacts your future
+                    address.
+                    """)
+            elif daysleft == 6 and not dryrun:
+                d = date.fromtimestamp(sysdate + 604800).strftime("%B %d")
+                chat.send_text("""
+                    Your account will expire on %s - you should create
+                    a new account and tell your contacts your future
+                    address.
+                    """ %d)
+            elif daysleft > 0 and daysleft < 6:
+                # Don't notify if daysleft is between 1 and 5
+                continue
             click.secho("Notified {} [{}]: {} days left".format(
                     user_info.addr,
                     user_info.token_name,
-                    str((user_info.date + user_info.ttl - sysdate) / 86400)),
-                    fg="red")
+                    str(daysleft),
+                    fg="red"))
 
 
 @click.command()
