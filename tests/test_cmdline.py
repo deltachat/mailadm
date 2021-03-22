@@ -216,10 +216,11 @@ class TestNotify:
         # Figure out how to test if the notification arrived
         # then test without --dryrun
 
-    def test_3days(self, mycmd):
+    def test_out_of_range(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=3d", "--prefix=tmpy."])
+        mycmd.run_ok(["add-token", "test2", "--expiry=10d", "--prefix=tmpx."])
         mycmd.run_ok(["add-user", "tmpy.123@example.org"])
-        time.sleep(1)
+        mycmd.run_ok(["add-user", "tmpx.456@example.org"])
         mycmd.run_ok(["notify-expiration","--dryrun"],"""
         """)
 
