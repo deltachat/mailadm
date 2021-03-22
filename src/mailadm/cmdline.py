@@ -16,7 +16,6 @@ import re
 from datetime import datetime, date
 from simplebot import DeltaBot
 from click import style
-from deltachat import Message
 
 import mailadm
 import mailadm.db
