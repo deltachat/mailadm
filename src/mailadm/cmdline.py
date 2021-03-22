@@ -336,13 +336,13 @@ def notify_expiration(ctx, dryrun):
             if not dryrun:
                 deltabot_init(DeltaBot)
                 chat = dbot.get_chat(user_info.addr)
-                if daysleft is 0:
+                if daysleft == 0:
                     chat.send_text("""
                         Your account will expire tomorrow - you should create
                         a new account and tell your contacts your future
                         address.
                         """)
-                elif daysleft is 6:
+                elif daysleft == 6:
                     d = date.fromtimestamp(sysdate + 604800).strftime("%B %d")
                     chat.send_text("""
                         Your account will expire on %s - you should create
