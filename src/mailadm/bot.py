@@ -28,47 +28,29 @@ def deltabot_init(bot: DeltaBot) -> None:
     dbot = bot
     db = get_mailadm_db()
 
-    bot.commands.register(name="/info", func=cmd_info)
     bot.commands.register(name="/show", func=cmd_show)
 
 
 @deltabot_hookimpl
-def deltabot_start(bot: DeltaBot, chat = Chat) -> None:
-    ## to be deleted
-    groups = []
-    groups = db.get_groups()
-    if groups: 
-        for g in groups:
-            if g['topic'] == 'Admin group on {}'.format(socket.gethostname()) and g['id'] == int(dbot.get('admgrpid')):
-                dbot.logger.info("found Admin group")
-            else:
-                dbot.logger.warn("no admin group found. removing groups. gid:" + str(g['id']))
-                db.remove_group(g['id'])         
+def deltabot_start(chat: Chat) -> None:
+    if  check_priv(dbot, chat):
+        dbot.logger.warn("Found Admingroup")
     else:
-        dbot.logger.warn("no groups found. Creating an admin group")
+        dbot.logger.warn("Creating an admin group")
         chat = dbot.account.create_group_chat("Admin group on {}".format(socket.gethostname()), contacts=[], verified=True)
-        db.upsert_group(chat.id, chat.get_name())
         dbot.set("admgrpid",chat.id)
         qr = segno.make(chat.get_join_qr())
-        print("\nPlease scan this qr code to join a verified group chat with the bot:\n\n")
+        print("\nPlease scan this qr code to join a verified admin group chat:\n\n")
         qr.terminal()
 
 
 # ======== Commands ===============
 
-def cmd_info(command: IncomingCommand, replies: Replies) -> None:
-    """Shows info
-    """
-    if check_priv(command.message, dbot):
-        replies.add(text='?? Userbot active on: {} '.format(socket.gethostname()))
-        replies.add(text='Available commands:\n/info - show this info \n/refresh - scan logs \n/show <all|active|inactive> <hours default=24>\nshow active or inactive users in the last n hours')
-
-
 def cmd_show(command: IncomingCommand, replies: Replies) -> None:
-    """Shows last login dates for every user seen
+    """Shows last login dates for every user seen in the parsed log files
     Show active or inactive users in the last n hours
     """
-    if check_priv(command.message, dbot):
+    if check_priv(dbot, command.message.chat):
         usercount = 0
         textlist = "❌ Wrong syntax!\n/show <all|active|inactive> <hours default=24>"
         text = command.payload
@@ -116,16 +98,12 @@ def get_mailadm_db():
         print(str(e))
 
 
-def check_priv(message: Message, bot: DeltaBot) -> None:
-    groups = db.get_groups()
-    if message.chat.is_group():
-        for g in groups:
-            if g['id'] == message.chat.id:
-                dbot.logger.info("recieved message from a registered group")
-                if message.chat.is_protected():
-                    return True
-    dbot.logger.error("recieved message from not registered group, not protected group or 1on1.")
-    dbot.logger.error("Sender: {} Chat: {}".format(message.get_sender_contact().addr, message.chat.get_name()))
+def check_priv(bot: DeltaBot, chat: Chat) -> None:
+    if chat.is_group() and int(dbot.get('admgrpid')) == chat.id:
+            if chat.is_protected() and int(chat.num_contacts) >= 2:
+                return True
+    dbot.logger.error("recieved message from wrong or not protected chat.")
+    dbot.logger.error("Sender: {} Chat: {}".format(chat.get_sender_contact().addr, chat.get_name()))
     return False
 
 
@@ -133,7 +111,7 @@ def create_graph():
     path = os.path.join(os.path.dirname(dbot.account.db_path), __name__) # Will this work?
     filename = os.path.join(path, 'plot.png') 
     dates, users = []
-    dates, users = db.list_usercount()
+    dates, users = db.get_usercount()
 
     plt.plot(dates, users)
     plt.grid(linestyle='-')
