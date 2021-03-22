@@ -13,12 +13,15 @@ import grp
 import sys
 import click
 import re
-from datetime import datetime
+from datetime import datetime, date
+from simplebot import DeltaBot
 from click import style
+from deltachat import Message
 
 import mailadm
 import mailadm.db
 from .conn import DBError
+from .bot import deltabot_init
 import mailadm.util
 
 
@@ -301,18 +304,59 @@ def prune(ctx, dryrun):
     """prune expired users from postfix and dovecot configurations """
     sysdate = int(time.time())
     with get_mailadm_db(ctx).write_transaction() as conn:
-        expired_users = conn.get_expired_users(sysdate)
-        if not expired_users:
+        expiring_users = conn.get_expired_users(sysdate)
+        if not expiring_users:
             click.secho("nothing to prune")
             return
 
         if dryrun:
-            for user_info in expired_users:
+            for user_info in expiring_users:
                 click.secho("{} [{}]".format(user_info.addr, user_info.token_name), fg="red")
         else:
-            for user_info in expired_users:
+            for user_info in expiring_users:
                 conn.del_user(user_info.addr)
                 click.secho("{} (token {!r})".format(user_info.addr, user_info.token_name))
+
+
+@click.command()
+@option_dryrun
+@click.pass_context
+def notify_expiration(ctx, dryrun):
+    """notify users before their accounts expire. """
+    # notify the users where a week is left
+    sysdate = int(time.time())
+    with get_mailadm_db(ctx).read_connection() as conn:
+        # get all users which will be expired in a week:
+        expiring_users = conn.get_expired_users(sysdate + 604800)
+        if not expiring_users:
+            click.secho("no one to notify")
+            return
+        for user_info in expiring_users:
+            daysleft = (user_info.date + user_info.ttl - sysdate) / 86400
+            if not dryrun:
+                deltabot_init(DeltaBot)
+                chat = dbot.get_chat(user_info.addr)
+                if daysleft is 0:
+                    chat.send_text("""
+                        Your account will expire tomorrow - you should create
+                        a new account and tell your contacts your future
+                        address.
+                        """)
+                elif daysleft is 6:
+                    d = date.fromtimestamp(sysdate + 604800).strftime("%B %d")
+                    chat.send_text("""
+                        Your account will expire on %s - you should create
+                        a new account and tell your contacts your future
+                        address.
+                        """ %d)
+                else:
+                    # Don't notify if daysleft is between 1 and 5
+                    break
+            click.secho("Notified {} [{}]: {} days left".format(
+                    user_info.addr,
+                    user_info.token_name,
+                    str((user_info.date + user_info.ttl - sysdate) / 86400)),
+                    fg="red")
 
 
 @click.command()
@@ -356,6 +400,7 @@ mailadm_main.add_command(add_user)
 mailadm_main.add_command(del_user)
 mailadm_main.add_command(list_users)
 mailadm_main.add_command(prune)
+mailadm_main.add_command(notify_expiration)
 mailadm_main.add_command(gen_sysconfig)
 mailadm_main.add_command(web)
 
