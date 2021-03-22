@@ -303,16 +303,16 @@ def prune(ctx, dryrun):
     """prune expired users from postfix and dovecot configurations """
     sysdate = int(time.time())
     with get_mailadm_db(ctx).write_transaction() as conn:
-        expiring_users = conn.get_expired_users(sysdate)
-        if not expiring_users:
+        expired_users = conn.get_expired_users(sysdate)
+        if not expired_users:
             click.secho("nothing to prune")
             return
 
         if dryrun:
-            for user_info in expiring_users:
+            for user_info in expired_users:
                 click.secho("{} [{}]".format(user_info.addr, user_info.token_name), fg="red")
         else:
-            for user_info in expiring_users:
+            for user_info in expired_users:
                 conn.del_user(user_info.addr)
                 click.secho("{} (token {!r})".format(user_info.addr, user_info.token_name))
 
