@@ -193,3 +193,37 @@ class TestUsers:
         out = mycmd.run_ok(["list-users", "--token", "test2"])
         assert "tmpy.123" not in out
         assert "tmpx.456" in out
+
+
+class TestNotify:
+    def test_week_dry_run(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--expiry=7d", "--prefix=tmpy."])
+        mycmd.run_ok(["add-user", "tmpy.123@example.org"])
+        time.sleep(1)
+        mycmd.run_ok(["notify-expiration","--dryrun"],"""
+            Notified tmpy.123*
+        """)
+        # Figure out how to test if the notification arrived
+        # then test without --dryrun
+
+    def test_day_dry_run(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."])
+        mycmd.run_ok(["add-user", "tmpy.123@example.org"])
+        time.sleep(1)
+        mycmd.run_ok(["notify-expiration","--dryrun"],"""
+            Notified tmpy.123*
+        """)
+        # Figure out how to test if the notification arrived
+        # then test without --dryrun
+
+    def test_3days(self, mycmd):
+        mycmd.run_ok(["add-token", "test1", "--expiry=3d", "--prefix=tmpy."])
+        mycmd.run_ok(["add-user", "tmpy.123@example.org"])
+        time.sleep(1)
+        mycmd.run_ok(["notify-expiration","--dryrun"],"""
+        """)
+
+    def test_empty(self, mycmd):
+        mycmd.run_ok(["notify-expiration"],"""
+            no one to notify
+        """)
