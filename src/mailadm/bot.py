@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from simplebot import hookimpl, DeltaBot, command
-from simplebot.bot import Replies
-from simplebot.commands import IncomingCommand
+from deltabot import deltabot_hookimpl, DeltaBot, command
+from deltabot.bot import Replies
+from deltabot.commands import IncomingCommand
 from .db import DB
 from .conn import DBError
 from deltachat import Chat, Contact, Message
@@ -24,7 +24,7 @@ tl = Timeloop()
 
 # ======== Hooks ===============
 
-@hookimpl
+@deltabot_hookimpl
 def deltabot_init(bot: DeltaBot) -> None:
     global db, dbot
     dbot = bot
@@ -34,7 +34,7 @@ def deltabot_init(bot: DeltaBot) -> None:
     bot.commands.register(name="/notify-expiration", func=notify_expiration)
 
 
-@hookimpl
+@deltabot_hookimpl
 def deltabot_start(chat: Chat) -> None:
     if  check_priv(dbot, chat):
         dbot.logger.warn("Found Admingroup")
@@ -157,14 +157,10 @@ def check_priv(bot: DeltaBot, chat: Chat) -> None:
     dbot.logger.error("Sender: {}".format(chat.get_sender_contact().addr))
     dbot.logger.error("Chat: {}".format(chat.get_name()))
     dbot.logger.error("Message: {}".format(chat.message.text))
-
-
-
     return False
 
 
 def create_graph():
-    # Will this work?
     path = os.path.join(os.path.dirname(dbot.account.db_path), __name__)
     filename = os.path.join(path, 'plot.png') 
     dates, users = db.get_usercount()
