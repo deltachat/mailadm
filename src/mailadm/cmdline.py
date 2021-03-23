@@ -358,7 +358,6 @@ mailadm_main.add_command(add_user)
 mailadm_main.add_command(del_user)
 mailadm_main.add_command(list_users)
 mailadm_main.add_command(prune)
-mailadm_main.add_command(notify_expiration)
 mailadm_main.add_command(gen_sysconfig)
 mailadm_main.add_command(web)
 
