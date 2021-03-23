@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from simplebot.hookspec import deltabot_hookimpl
+from simplebot import hookimpl
 from simplebot import DeltaBot
 from simplebot.bot import Replies
 from simplebot.commands import IncomingCommand
@@ -22,7 +22,7 @@ dbot: DeltaBot
 
 # ======== Hooks ===============
 
-@deltabot_hookimpl
+@hookimpl
 def deltabot_init(bot: DeltaBot) -> None:
     global db, dbot
     dbot = bot
@@ -31,7 +31,7 @@ def deltabot_init(bot: DeltaBot) -> None:
     bot.commands.register(name="/show", func=cmd_show)
 
 
-@deltabot_hookimpl
+@hookimpl
 def deltabot_start(chat: Chat) -> None:
     if  check_priv(dbot, chat):
         dbot.logger.warn("Found Admingroup")
