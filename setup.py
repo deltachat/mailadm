@@ -40,7 +40,7 @@ def main():
             "pillow",
             "qrcode",
             "gunicorn",
-            'simplebot',
+            'deltabot',
             'matplotlib',
             'segno',
             'timeloop',
