@@ -43,6 +43,7 @@ def main():
             'simplebot',
             'matplotlib',
             'segno',
+            'timeloop',
         ],
         zip_safe=False,
     )

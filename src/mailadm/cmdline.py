@@ -318,47 +318,6 @@ def prune(ctx, dryrun):
 
 
 @click.command()
-@option_dryrun
-@click.pass_context
-def notify_expiration(ctx, dryrun):
-    """notify users before their accounts expire. """
-    # notify the users where a week is left
-    sysdate = int(time.time())
-    with get_mailadm_db(ctx).read_connection() as conn:
-        # get all users which will be expired in a week:
-        expiring_users = conn.get_expired_users(sysdate + 604800)
-        if not expiring_users:
-            click.secho("no one to notify")
-            return
-
-        dbot = deltabot_init(DeltaBot)
-
-        for user_info in expiring_users:
-            daysleft = int((user_info.date + user_info.ttl - sysdate) / 86400)
-            chat = dbot.get_chat(user_info.addr)
-            if daysleft == 0 and not dryrun:
-                chat.send_text("""
-                    Your account will expire tomorrow - you should create
-                    a new account and tell your contacts your future
-                    address.
-                    """)
-            elif daysleft == 6 and not dryrun:
-                d = date.fromtimestamp(sysdate + 604800).strftime("%B %d")
-                chat.send_text("""
-                    Your account will expire on %s - you should create
-                    a new account and tell your contacts your future
-                    address.
-                    """ % d)
-            elif daysleft > 0 and daysleft < 6:
-                # Don't notify if daysleft is between 1 and 5
-                continue
-            click.secho("Notified {} [{}]: {} days left".format(
-                    user_info.addr,
-                    user_info.token_name,
-                    str(daysleft)))
-
-
-@click.command()
 @click.pass_context
 @click.option("--debug", is_flag=True, default=False,
               help="run server in debug mode and don't change any files")

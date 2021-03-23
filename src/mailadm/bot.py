@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-from simplebot import hookimpl
-from simplebot import DeltaBot
+from simplebot import hookimpl, DeltaBot, command
 from simplebot.bot import Replies
 from simplebot.commands import IncomingCommand
 from .db import DB
 from .conn import DBError
 from deltachat import Chat, Contact, Message
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from timeloop import Timeloop
+import time
 import matplotlib.pyplot as plt
 import socket
 import re
@@ -31,6 +31,7 @@ def deltabot_init(bot: DeltaBot) -> None:
     db = get_mailadm_db()
 
     bot.commands.register(name="/show", func=cmd_show)
+    bot.commands.register(name="/notify-expiration", func=notify_expiration)
 
 
 @hookimpl
@@ -97,15 +98,44 @@ def cmd_show(command: IncomingCommand, replies: Replies) -> None:
         replies.add("You are not authorzied!")
         
 
-# ======== Utilities ===============
-
+@command
 @tl.job(interval=timedelta(hours=24))
-def expire_notices(bot: DeltaBot):
-    users = ["tmp.example@example.org"]
-    for user in users:
-        chat = bot.get_chat(user)
-        chat.send_text("Your account exprires")
+def notify_expiration(bot: DeltaBot):
+    """Send notifications to accounts which will expire soon.
+    """
+    sysdate = int(time.time())
+    with db.read_connection() as conn:
+        # get all users which will be expired in a week:
+        expiring_users = conn.get_expired_users(sysdate + 604800)
+    if not expiring_users:
+        bot.logger.info("no one to notify")
+        return
+    for user_info in expiring_users:
+        daysleft = int((user_info.date + user_info.ttl - sysdate) / 86400)
+        chat = bot.get_chat(user_info.addr)
+        if daysleft == 0:
+            chat.send_text("""
+                Your account will expire tomorrow - you should create
+                a new account and tell your contacts your future
+                address.
+                """)
+        elif daysleft == 6:
+            d = date.fromtimestamp(sysdate + 604800).strftime("%B %d")
+            chat.send_text("""
+                Your account will expire on %s - you should create
+                a new account and tell your contacts your future
+                address.
+                """ % d)
+        elif daysleft > 0 and daysleft < 6:
+            # Don't notify if daysleft is between 1 and 5
+            continue
+        bot.logger.info("Notified {} [{}]: {} days left".format(
+                user_info.addr,
+                user_info.token_name,
+                str(daysleft)))
 
+
+# ======== Utilities ===============
 
 def get_mailadm_db():
     try:
