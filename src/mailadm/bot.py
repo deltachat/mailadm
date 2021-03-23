@@ -7,8 +7,8 @@ from .db import DB
 from .conn import DBError
 from deltachat import Chat, Contact, Message
 from datetime import datetime, timezone, timedelta
+from timeloop import Timeloop
 import matplotlib.pyplot as plt
-from matplotlib.dates import drange
 import socket
 import re
 import os
@@ -19,6 +19,7 @@ import mailadm.db
 version = '1.0.0'
 db: DB
 dbot: DeltaBot
+tl = Timeloop()
 
 
 # ======== Hooks ===============
@@ -43,7 +44,7 @@ def deltabot_start(chat: Chat) -> None:
         qr = segno.make(chat.get_join_qr())
         print("\nPlease scan this qr code to join a verified admin group chat:\n\n")
         qr.terminal()
-
+    
 
 # ======== Commands ===============
 
@@ -98,6 +99,14 @@ def cmd_show(command: IncomingCommand, replies: Replies) -> None:
 
 # ======== Utilities ===============
 
+@tl.job(interval=timedelta(hours=24))
+def expire_notices(bot: DeltaBot):
+    users = ["tmp.example@example.org"]
+    for user in users:
+        chat = bot.get_chat(user)
+        chat.send_text("Your account exprires")
+
+
 def get_mailadm_db():
     try:
         db_path = mailadm.db.get_db_path()
@@ -117,6 +126,10 @@ def check_priv(bot: DeltaBot, chat: Chat) -> None:
     dbot.logger.error("recieved message from wrong or not protected chat.")
     dbot.logger.error("Sender: {}".format(chat.get_sender_contact().addr))
     dbot.logger.error("Chat: {}".format(chat.get_name()))
+    dbot.logger.error("Message: {}".format(chat.message.text))
+
+
+
     return False
 
 
