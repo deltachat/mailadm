@@ -4,6 +4,7 @@ from simplebot import DeltaBot
 from simplebot.bot import Replies
 from simplebot.commands import IncomingCommand
 from .db import DB
+from .conn import DBError
 from deltachat import Chat, Contact, Message
 from datetime import datetime, timezone, timedelta
 import matplotlib.pyplot as plt
@@ -52,7 +53,10 @@ def cmd_show(command: IncomingCommand, replies: Replies) -> None:
     """
     if check_priv(dbot, command.message.chat):
         usercount = 0
-        textlist = "❌ Wrong syntax!\n/show <all|active|inactive> <hours default=24>"
+        textlist = """
+            ❌ Wrong syntax!\n
+            /show <all|active|inactive> <hours default=24>
+            """
         text = command.payload
         args = command.payload.split(maxsplit=1)
         if len(args) == 1:
@@ -64,19 +68,27 @@ def cmd_show(command: IncomingCommand, replies: Replies) -> None:
             if parameter:
                 try:
                     parameter = int(parameter)
-                except ValueError as e:
-                    replies.add(text="❌ Wrong Syntax!\nParameter must be a number\n/show <all|active|inactive> <hours default=24>")
+                except ValueError:
+                    replies.add(text=textlist)
                     return
                 startdate = now - timedelta(hours=parameter)
             if subcommand == "all":
                 usercount, outfile = writetofile(2, startdate, now)
-                textlist = "Sending a List of all users\n Users counted: {}".format(usercount)
+                textlist = """
+                    Sending a List of all users\n Users counted: {}
+                    """.format(usercount)
             if subcommand == "active":
                 usercount, outfile = writetofile(1, startdate, now)
-                textlist = "Sending a List of users who have been seen since {} \n Users counted: {}".format(startdate, usercount)
+                textlist = """
+                    Sending a List of users who have been seen since {} \n
+                    Users counted: {}
+                    """.format(startdate, usercount)
             if subcommand == "inactive":
                 usercount, outfile = writetofile(0, startdate, now)
-                textlist = "Sending a List of users who have NOT been seen since {}\n Users counted: {}".format(startdate,  usercount)
+                textlist = """
+                    Sending a List of users who have NOT been seen since {}\n
+                    Users counted: {}
+                    """.format(startdate,  usercount)
             replies.add(filename=outfile)
         replies.add(text=textlist)
         replies.add(filename=create_graph())
@@ -103,14 +115,15 @@ def check_priv(bot: DeltaBot, chat: Chat) -> None:
             if chat.is_protected() and int(chat.num_contacts) >= 2:
                 return True
     dbot.logger.error("recieved message from wrong or not protected chat.")
-    dbot.logger.error("Sender: {} Chat: {}".format(chat.get_sender_contact().addr, chat.get_name()))
+    dbot.logger.error("Sender: {}".format(chat.get_sender_contact().addr))
+    dbot.logger.error("Chat: {}".format(chat.get_name()))
     return False
 
 
 def create_graph():
-    path = os.path.join(os.path.dirname(dbot.account.db_path), __name__) # Will this work?
+    # Will this work?
+    path = os.path.join(os.path.dirname(dbot.account.db_path), __name__)
     filename = os.path.join(path, 'plot.png') 
-    dates, users = []
     dates, users = db.get_usercount()
 
     plt.plot(dates, users)
