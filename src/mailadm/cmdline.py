@@ -330,9 +330,11 @@ def notify_expiration(ctx, dryrun):
         if not expiring_users:
             click.secho("no one to notify")
             return
+
+        dbot = deltabot_init(DeltaBot)
+
         for user_info in expiring_users:
             daysleft = int((user_info.date + user_info.ttl - sysdate) / 86400)
-            deltabot_init(DeltaBot)
             chat = dbot.get_chat(user_info.addr)
             if daysleft == 0 and not dryrun:
                 chat.send_text("""
