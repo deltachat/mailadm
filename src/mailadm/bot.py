@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-from deltabot import deltabot_hookimpl, DeltaBot, command
-from deltabot.bot import Replies
-from deltabot.commands import IncomingCommand
+from deltabot import deltabot_hookimpl, DeltaBot
 from .db import DB
 from .conn import DBError
 from deltachat import Chat, Contact, Message
@@ -25,7 +23,7 @@ tl = Timeloop()
 # ======== Hooks ===============
 
 @deltabot_hookimpl
-def deltabot_init(bot: DeltaBot) -> None:
+def deltabot_init(bot) -> None:
     global db, dbot
     dbot = bot
     db = get_mailadm_db()
@@ -35,7 +33,7 @@ def deltabot_init(bot: DeltaBot) -> None:
 
 
 @deltabot_hookimpl
-def deltabot_start(chat: Chat) -> None:
+def deltabot_start(chat) -> None:
     if  check_priv(dbot, chat):
         dbot.logger.warn("Found Admingroup")
     else:
@@ -49,7 +47,7 @@ def deltabot_start(chat: Chat) -> None:
 
 # ======== Commands ===============
 
-def cmd_show(command: IncomingCommand, replies: Replies) -> None:
+def cmd_show(command, replies) -> None:
     """Shows last login dates for every user seen in the parsed log files
     Show active or inactive users in the last n hours
     """
@@ -98,7 +96,6 @@ def cmd_show(command: IncomingCommand, replies: Replies) -> None:
         replies.add("You are not authorzied!")
         
 
-@command
 @tl.job(interval=timedelta(hours=24))
 def notify_expiration(bot: DeltaBot):
     """Send notifications to accounts which will expire soon.
@@ -138,6 +135,7 @@ def notify_expiration(bot: DeltaBot):
 # ======== Utilities ===============
 
 def get_mailadm_db():
+    #db_path = None
     try:
         db_path = mailadm.db.get_db_path()
     except RuntimeError as e:
@@ -149,7 +147,7 @@ def get_mailadm_db():
         print(str(e))
 
 
-def check_priv(bot: DeltaBot, chat: Chat) -> None:
+def check_priv(bot, chat) -> None:
     if chat.is_group() and int(dbot.get('admgrpid')) == chat.id:
             if chat.is_protected() and int(chat.num_contacts) >= 2:
                 return True
