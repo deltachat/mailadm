@@ -80,3 +80,6 @@ systemctl restart mailadm-web  mailadm-prune mailadm-last_seen
 # ask user whether they want to use the admin group
 # if yes, show an invite QR code for the admin group
 
+# allow g+w for virtual_mailboxes
+# create /usr/bin/mailadm caller script, so other users in the vmail & mailadm groups can run this as well
+
