@@ -16,14 +16,18 @@ import mailadm.db
 from .conn import DBError, UserInfo
 from .mailcow import MailcowError
 import mailadm.util
+import argparse
+import socket
+import time
+
+import segno
+import os
+
+from deltachat import Account
+from db import DB
 
 
-option_dryrun = click.option(
-    "-n", "--dryrun", is_flag=True,
-    help="don't change any files, only show what would be changed.")
-
-
-@click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
+k.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option()
 @click.pass_context
 def mailadm_main(context):
@@ -48,6 +52,52 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
             if not conn.is_initialized():
                 ctx.fail("database not initialized, use 'init' subcommand to do so")
     return db
+
+
+@click.command()
+@click.option("--email", type=str, default=None, help="name of email")
+@click.option("--password", type=str, default=None, help="name of password")
+@click.pass_context
+@account_hookimpl
+def setup_bot(ctx, email):
+    parser = argparse.ArgumentParser(prog=ctx[0] if ctx else None)
+    parser.add_argument("db", action="store", help="database file")
+    parser.add_argument("--show-ffi", action="store_true", help="show low level ffi events")
+    parser.add_argument("--email", action="store", help="email address")
+    parser.add_argument("--password", action="store", help="password")
+
+    args = parser.parse_args(ctx[1:])
+
+    ac = Account(args.db)
+
+    if not ac.is_configured():
+        assert args.email and args.password, (
+            "you must specify --email and --password once to configure this database/account"
+        )
+        ac.set_config("addr", args.email)
+        ac.set_config("mail_pw", args.password)
+        ac.set_config("mvbox_move", "0")
+        ac.set_config("mvbox_watch", "0")
+        ac.set_config("sentbox_watch", "0")
+        ac.set_config("bot", "1")
+        configtracker = ac.configure()
+        configtracker.wait_finish()
+
+    chat = ac.create_group_chat("Admin group on {}".format(socket.gethostname()), contacts=[], verified=True)
+
+    qr = segno.make(chat.get_join_qr())
+    print("\nPlease scan this qr code to join a verified admin group chat:\n\n")
+    qr.terminal()
+
+
+    print("looping until more than one group member")
+    while chat.num_contacts() < 2:
+        time.sleep(1)
+
+    db = DB(os.getenv("MAILADM_DB"))
+    with db.read_connection() as conn:
+        conn.set_config("admingrpid", chat.id)
+
 
 
 @click.command()
