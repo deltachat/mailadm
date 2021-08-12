@@ -277,12 +277,13 @@ class UserInfo:
 
 
 class Config:
-    def __init__(self, mail_domain, web_endpoint, path_virtual_mailboxes, vmail_user, dbversion):
+    def __init__(self, mail_domain, web_endpoint, path_virtual_mailboxes, vmail_user, dbversion, admingrpid=None):
         self.mail_domain = mail_domain
         self.web_endpoint = web_endpoint
         self.path_virtual_mailboxes = Path(path_virtual_mailboxes)
         self.vmail_user = vmail_user
         self.dbversion = dbversion
+        self.admingrpid = admingrpid
 
     @property
     def path_vmaildir(self):
