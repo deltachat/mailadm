@@ -9,6 +9,13 @@ playground/
 # C extensions
 *.so
 
+.idea/.gitignore
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/mailadm.iml
+.idea/modules.xml
+.idea/vcs.xml
+
+
 # Distribution / packaging
 .Python
 build/
