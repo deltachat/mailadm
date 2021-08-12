@@ -27,6 +27,9 @@ export MAILADM_HOME=/var/lib/mailadm
 export WEB_ENDPOINT=https://example.org/new_email
 export LOCALHOST_WEB_PORT=3691
 
+export BOT_EMAIL=bot@example.org
+export BOT_PASSWORD=p4ssw0rd
+
 # check if vmail user exists
 if ! getent passwd $VMAIL_USER > /dev/null 2>&1; then
     echo "user $VMAIL_USER does not exist, do you have a doveocot virtual user setup?"
@@ -65,6 +68,10 @@ $MAILADM_HOME/venv/bin/mailadm gen-sysconfig \
     --localhost-web-port=$LOCALHOST_WEB_PORT \
     --mailadm-user $MAILADM_USER
 
+$MAILADM_HOME/venv/bin/mailadm setup-bot \
+    --email $BOT_EMAIL \
+    --password $BOT_PASSWORD \
+    $MAILADM_HOME/admbot.sqlite
 
 systemctl daemon-reload 
 systemctl enable mailadm-web mailadm-prune
