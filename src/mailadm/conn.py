@@ -292,11 +292,13 @@ class Config:
     :param dbversion: the version of the mailadm database schema
     :param mailcow_endpoint: the URL to the mailcow API
     :param mailcow_token: the token to authenticate with the mailcow API
+    :param admingrpid: the ID of the admin group
     """
     def __init__(self, mail_domain, web_endpoint, dbversion, mailcow_endpoint,
-                 mailcow_token):
+                 mailcow_token, admingrpid=None):
         self.mail_domain = mail_domain
         self.web_endpoint = web_endpoint
         self.dbversion = dbversion
         self.mailcow_endpoint = mailcow_endpoint
         self.mailcow_token = mailcow_token
+        self.admingrpid = admingrpid
