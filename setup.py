@@ -37,6 +37,7 @@ def main():
             "pillow",
             "segno",
             "gunicorn",
+            "deltachat",
         ],
         zip_safe=False,
     )
