@@ -1,30 +1,43 @@
 # content of echo_and_quit.py
 
 from deltachat import account_hookimpl, run_cmdline
+from db import DB
 import mailadm.db
-from mailadm import cmdline
+import cmdline
+import os
 
 
 class AdmBot:
+    def __init__(self):
+        self.db = DB(os.getenv("MAILADM_DB"))
+        with self.db.read_connection() as conn:
+            config = conn.config()
+            self.admingrpid = config.admingrpid
+
     @account_hookimpl
     def ac_incoming_message(self, command):
         print("process_incoming message", command)
         if command.text.strip() == "/help":
-            pass
+            command.create_chat()
+            text = "/add_token name expiry prefix token maxuse\n/add_user addr password token"
+            command.chat.send_text(text)
+
         elif command.text.strip() == "/add-token":
             chat = command.message.chat
-            if chat.is_group() and int(dbot.get('admgrpid')) == chat.id:
+            if chat.is_group() and int(self.admingrpid) == chat.id:
                 if chat.is_protected() and int(chat.num_contacts) >= 2:
                     command.create_chat()
-                    text = ''  #TODO add Token
+                    arguments = command.text.split(" ")
+                    text = cmdline.add_token(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4])
                     command.chat.send_text(text)
 
         elif command.text.strip() == "/add-user":
             chat = command.message.chat
-            if chat.is_group() and int(dbot.get('admgrpid')) == chat.id:
+            if chat.is_group() and int(self.admingrpid) == chat.id:
                 if chat.is_protected() and int(chat.num_contacts) >= 2:
                     command.create_chat()
-                    text = ''  # TODO add User
+                    arguments = command.text.split(" ")
+                    text = cmdline.add_token(arguments[0], arguments[1], arguments[2])
                     command.chat.send_text(text)
         else:
             # unconditionally accept the chat
