@@ -1,8 +1,5 @@
-# content of echo_and_quit.py
-
 from deltachat import account_hookimpl, run_cmdline
 from db import DB
-import mailadm.db
 import cmdline
 import os
 

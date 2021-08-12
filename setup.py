@@ -37,6 +37,7 @@ def main():
             "pillow",
             "qrcode",
             "gunicorn",
+            "deltachat",
         ],
         zip_safe=False,
     )
