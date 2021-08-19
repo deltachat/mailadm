@@ -71,7 +71,7 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
 @click.option("--password", type=str, default=None, help="name of password")
 @click.pass_context
 @account_hookimpl
-def setup_bot(ctx, email):
+def setup_bot(ctx, email, password):
     parser = argparse.ArgumentParser(prog=ctx[0] if ctx else None)
     parser.add_argument("db", action="store", help="database file")
     parser.add_argument("--show-ffi", action="store_true", help="show low level ffi events")
@@ -106,7 +106,7 @@ def setup_bot(ctx, email):
     while chat.num_contacts() < 2:
         time.sleep(1)
 
-    db = mailadm.db.DB(os.getenv("MAILADM_DB"))
+    db = get_mailadm_db(ctx)
     with db.read_connection() as conn:
         conn.set_config("admingrpid", chat.id)
 
