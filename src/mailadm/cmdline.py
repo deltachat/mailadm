@@ -24,7 +24,7 @@ import segno
 import os
 
 from deltachat import Account
-from db import DB
+from .db import DB
 
 
 k.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
