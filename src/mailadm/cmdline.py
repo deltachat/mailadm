@@ -1,15 +1,27 @@
+import os
 import argparse
 import socket
 import time
-
+import pwd
+import grp
+import sys
+import click
+from click import style
 import segno
-import os
+
+import mailadm.db
+import mailadm.commands
+import mailadm.util
+from .conn import DBError
 
 from deltachat import Account
-from .db import DB
 
 
-k.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
+option_dryrun = click.option(
+    "-n", "--dryrun", is_flag=True,
+    help="don't change any files, only show what would be changed.")
+
+@click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option()
 @click.pass_context
 def mailadm_main(context):
@@ -137,19 +149,13 @@ def dump_token_info(token_info):
               help="prefix for all e-mail addresses for this token")
 @click.option("--token", type=str, default=None, help="name of token to be used")
 @click.pass_context
-def add_token(ctx, name, expiry, prefix, token, maxuse):
+def add_token(ctx, name, expiry, maxuse, prefix, token):
     """add new token for generating new e-mail addresses
     """
     from mailadm.util import get_human_readable_id
 
     db = get_mailadm_db(ctx)
-    if token is None:
-        token = expiry + "_" + get_human_readable_id(len=15)
-    with db.write_transaction() as conn:
-        info = conn.add_token(name=name, token=token, expiry=expiry,
-                              maxuse=maxuse, prefix=prefix)
-        tc = conn.get_tokeninfo_by_name(info.name)
-        dump_token_info(tc)
+    commands.add_token(name, expiry, maxuse, prefix, token, db)
 
 
 @click.command()
