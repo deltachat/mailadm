@@ -14,7 +14,7 @@ import mailadm.commands
 import mailadm.util
 from .conn import DBError
 
-from deltachat import Account
+from deltachat import Account, account_hookimpl
 
 
 option_dryrun = click.option(
@@ -53,7 +53,7 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
 @click.option("--password", type=str, default=None, help="name of password")
 @click.pass_context
 @account_hookimpl
-def setup_bot(ctx, email):
+def setup_bot(ctx, email, password):
     parser = argparse.ArgumentParser(prog=ctx[0] if ctx else None)
     parser.add_argument("db", action="store", help="database file")
     parser.add_argument("--show-ffi", action="store_true", help="show low level ffi events")
@@ -88,7 +88,7 @@ def setup_bot(ctx, email):
     while chat.num_contacts() < 2:
         time.sleep(1)
 
-    db = DB(os.getenv("MAILADM_DB"))
+    db = get_mailadm_db(ctx)
     with db.read_connection() as conn:
         conn.set_config("admingrpid", chat.id)
 
@@ -155,7 +155,7 @@ def add_token(ctx, name, expiry, maxuse, prefix, token):
     from mailadm.util import get_human_readable_id
 
     db = get_mailadm_db(ctx)
-    commands.add_token(name, expiry, maxuse, prefix, token, db)
+    mailadm.commands.add_token(name, expiry, maxuse, prefix, token, db)
 
 
 @click.command()
