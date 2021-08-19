@@ -14,10 +14,10 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-set -xe
-
-# modify the following variables 
-export MAIL_DOMAIN=example.org
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+# load variables from config file
+if [ ! -f $SCRIPTPATH/.env ]; then
+    echo "export MAIL_DOMAIN=example.org
 
 export VMAIL_USER=vmail 
 export VMAIL_HOME=/home/vmail 
@@ -28,7 +28,14 @@ export WEB_ENDPOINT=https://example.org/new_email
 export LOCALHOST_WEB_PORT=3691
 
 export BOT_EMAIL=bot@example.org
-export BOT_PASSWORD=p4ssw0rd
+export BOT_PASSWORD=p4ssw0rd" > $SCRIPTPATH/.env
+    echo "Can't get settings from $SCRIPTPATH/.env, please set environment variables there."
+    exit 1
+else
+    . ./.env
+fi
+
+set -xe
 
 # check if vmail user exists
 if ! getent passwd $VMAIL_USER > /dev/null 2>&1; then
