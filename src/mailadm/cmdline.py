@@ -27,7 +27,7 @@ import click
 from click import style
 import segno
 
-import mailadm.db
+from mailadm.db import write_connection, read_connection, get_db_path
 import mailadm.commands
 import mailadm.util
 from .conn import DBError
@@ -38,6 +38,7 @@ from deltachat import Account, account_hookimpl
 option_dryrun = click.option(
     "-n", "--dryrun", is_flag=True,
     help="don't change any files, only show what would be changed.")
+
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option()
@@ -60,7 +61,7 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
     if show:
         click.secho("using db: {}".format(db_path), file=sys.stderr)
     if fail_missing_config:
-        with db.read_connection() as conn:
+        with read_connection() as conn:
             if not conn.is_initialized():
                 ctx.fail("database not initialized, use 'init' subcommand to do so")
     return db
@@ -101,35 +102,29 @@ def setup_bot(ctx, email, password):
     print("\nPlease scan this qr code to join a verified admin group chat:\n\n")
     qr.terminal()
 
-
     print("looping until more than one group member")
     while chat.num_contacts() < 2:
         time.sleep(1)
 
-    db = get_mailadm_db(ctx)
-    with db.read_connection() as conn:
+    with read_connection() as conn:
         conn.set_config("admingrpid", chat.id)
 
 
 
 @click.command()
-@click.pass_context
-def config(ctx):
+def config():
     """show and manipulate config settings. """
-    db = get_mailadm_db(ctx)
-    with db.read_connection() as conn:
+    with read_connection() as conn:
         click.secho("** mailadm version: {}".format(mailadm.__version__))
-        click.secho("** mailadm database path: {}".format(db.path))
+        click.secho("** mailadm database path: {}".format(get_db_path()))
         for name, val in conn.get_config_items():
             click.secho("{:22s} {}".format(name, val))
 
 
 @click.command()
-@click.pass_context
-def list_tokens(ctx):
+def list_tokens():
     """list available tokens """
-    db = get_mailadm_db(ctx)
-    with db.read_connection() as conn:
+    with read_connection() as conn:
         for name in conn.get_token_list():
             token_info = conn.get_tokeninfo_by_name(name)
             dump_token_info(token_info)
@@ -137,11 +132,9 @@ def list_tokens(ctx):
 
 @click.command()
 @click.option("--token", type=str, default=None, help="name of token")
-@click.pass_context
-def list_users(ctx, token):
+def list_users(token):
     """list users """
-    db = get_mailadm_db(ctx)
-    with db.read_connection() as conn:
+    with read_connection() as conn:
         for user_info in conn.get_user_list(token=token):
             click.secho("{} [token={}]".format(user_info.addr, user_info.token_name))
 
@@ -166,14 +159,10 @@ def dump_token_info(token_info):
 @click.option("--prefix", type=str, default="tmp.",
               help="prefix for all e-mail addresses for this token")
 @click.option("--token", type=str, default=None, help="name of token to be used")
-@click.pass_context
-def add_token(ctx, name, expiry, maxuse, prefix, token):
+def add_token(name, expiry, maxuse, prefix, token):
     """add new token for generating new e-mail addresses
     """
-    from mailadm.util import get_human_readable_id
-
-    db = get_mailadm_db(ctx)
-    mailadm.commands.add_token(name, expiry, maxuse, prefix, token, db)
+    click.secho(mailadm.commands.add_token(name, expiry, maxuse, prefix, token))
 
 
 @click.command()
@@ -184,13 +173,10 @@ def add_token(ctx, name, expiry, maxuse, prefix, token):
               help="maximum number of accounts this token can create, default is not to change")
 @click.option("--prefix", type=str, default=None,
               help="prefix for all e-mail addresses for this token, default is not to change")
-@click.pass_context
-def mod_token(ctx, name, expiry, prefix, maxuse):
+def mod_token(name, expiry, prefix, maxuse):
     """modify a token selectively
     """
-    db = get_mailadm_db(ctx)
-
-    with db.write_transaction() as conn:
+    with write_connection() as conn:
         conn.mod_token(name=name, expiry=expiry, maxuse=maxuse, prefix=prefix)
         tc = conn.get_tokeninfo_by_name(name)
         dump_token_info(tc)
@@ -198,11 +184,9 @@ def mod_token(ctx, name, expiry, prefix, maxuse):
 
 @click.command()
 @click.argument("name", type=str, required=True)
-@click.pass_context
-def del_token(ctx, name):
+def del_token(name):
     """remove named token"""
-    db = get_mailadm_db(ctx)
-    with db.write_transaction() as conn:
+    with write_connection() as conn:
         conn.del_token(name=name)
 
 
@@ -213,8 +197,7 @@ def gen_qr(ctx, tokenname):
     """generate qr code image for a token. """
     from .gen_qr import gen_qr
 
-    db = get_mailadm_db(ctx)
-    with db.read_connection() as conn:
+    with read_connection() as conn:
         token_info = conn.get_tokeninfo_by_name(tokenname)
         config = conn.config
 
@@ -266,7 +249,7 @@ def init(ctx, web_endpoint, mail_domain, mailcow_endpoint, mailcow_token):
 def add_user(ctx, addr, password, token):
     """add user as a mailadm managed account.
     """
-    with get_mailadm_db(ctx).write_transaction() as conn:
+    with write_connection() as conn:
         if token is None:
             if "@" not in addr:
                 ctx.fail("invalid email address: {}".format(addr))
@@ -286,23 +269,18 @@ def add_user(ctx, addr, password, token):
 
 @click.command()
 @click.argument("addr", type=str, required=True)
-@click.pass_context
-def del_user(ctx, addr):
+def del_user(addr):
     """remove e-mail address"""
-    with get_mailadm_db(ctx).write_transaction() as conn:
-        try:
-            conn.delete_email_account(addr)
-        except (DBError, MailcowError) as e:
-            ctx.fail("failed to delete e-mail account {}: {}".format(addr, e))
+    with write_connection() as conn:
+        conn.del_user(addr=addr)
 
 
 @click.command()
 @option_dryrun
-@click.pass_context
 def prune(ctx, dryrun):
     """prune expired users from postfix and dovecot configurations """
     sysdate = int(time.time())
-    with get_mailadm_db(ctx).write_transaction() as conn:
+    with write_connection() as conn:
         expired_users = conn.get_expired_users(sysdate)
         if not expired_users:
             click.secho("nothing to prune")
