@@ -1,8 +1,11 @@
 from mailadm.util import get_human_readable_id
 from mailadm.db import write_connection
+from mailadm.conn import DBError
 
 
 def add_token(name, expiry, maxuse, prefix, token):
+    """Adds a token to create users
+    """
     if token is None:
         token = expiry + "_" + get_human_readable_id(len=15)
     with write_connection() as conn:
@@ -10,6 +13,36 @@ def add_token(name, expiry, maxuse, prefix, token):
                               maxuse=maxuse, prefix=prefix)
         tc = conn.get_tokeninfo_by_name(info.name)
         return dump_token_info(tc)
+
+
+def add_user(token=None, addr=None, password=None):
+    """Adds a new user to be managed by mailadm
+    """
+    with write_connection() as conn:
+        if token is None:
+            if "@" not in addr:
+                # there is probably a more pythonic solution to this.
+                # the goal is to display the error, whether the command came via CLI or delta bot.
+                return {"status": "error",
+                        "message": "invalid email address: {}".format(addr)}
+
+            token_info = conn.get_tokeninfo_by_addr(addr)
+            if token_info is None:
+                return {"status": "error",
+                        "message": "could not determine token for addr: {!r}".format(addr)}
+        else:
+            token_info = conn.get_tokeninfo_by_name(token)
+            if token_info is None:
+                return {"status": "error",
+                        "message": "token does not exist: {!r}".format(token)}
+        try:
+            user_info = conn.add_email_account(token_info, addr=addr, password=password)
+        except DBError as e:
+            return {"status": "error",
+                    "message": "failed to add e-mail account {}: {}".format(addr, e)}
+        conn.gen_sysfiles()
+        return {"status": "success",
+                "message": user_info}
 
 
 def dump_token_info(token_info):

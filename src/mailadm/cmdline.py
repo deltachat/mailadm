@@ -110,7 +110,6 @@ def setup_bot(ctx, email, password):
         conn.set_config("admingrpid", chat.id)
 
 
-
 @click.command()
 def config():
     """show and manipulate config settings. """
@@ -249,22 +248,11 @@ def init(ctx, web_endpoint, mail_domain, mailcow_endpoint, mailcow_token):
 def add_user(ctx, addr, password, token):
     """add user as a mailadm managed account.
     """
-    with write_connection() as conn:
-        if token is None:
-            if "@" not in addr:
-                ctx.fail("invalid email address: {}".format(addr))
-
-            token_info = conn.get_tokeninfo_by_addr(addr)
-            if token_info is None:
-                ctx.fail("could not determine token for addr: {!r}".format(addr))
-        else:
-            token_info = conn.get_tokeninfo_by_name(token)
-            if token_info is None:
-                ctx.fail("token does not exist: {!r}".format(token))
-        try:
-            conn.add_email_account_tries(token_info, addr=addr, password=password, tries=1)
-        except (DBError, MailcowError) as e:
-            ctx.fail("failed to add e-mail account %s: %s" % (addr, e))
+    result = mailadm.commands.add_user(token, addr, password)
+    if result["status"] == "error":
+        ctx.fail(result["message"])
+    elif result["status"] == "success":
+        click.secho("Created {} with password: {}".format(result["message"].addr, result["message"].clear_pw))
 
 
 @click.command()
