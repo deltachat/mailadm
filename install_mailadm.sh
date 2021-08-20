@@ -78,7 +78,7 @@ $MAILADM_HOME/venv/bin/mailadm gen-sysconfig \
 $MAILADM_HOME/venv/bin/mailadm setup-bot \
     --email $BOT_EMAIL \
     --password $BOT_PASSWORD \
-    $MAILADM_HOME/admbot.sqlite
+    --db $MAILADM_HOME/admbot.sqlite
 
 systemctl daemon-reload 
 systemctl enable mailadm-web mailadm-prune
