@@ -1,5 +1,4 @@
 import os
-import argparse
 import socket
 import time
 import pwd
@@ -52,25 +51,19 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
 @click.command()
 @click.option("--email", type=str, default=None, help="name of email")
 @click.option("--password", type=str, default=None, help="name of password")
+@click.option("db", type=str, default=os.getenv("MAILADM_HOME") + "/admbot.sqlite",
+              help="Delta Chat database for admbot account")
 @click.pass_context
 @account_hookimpl
-def setup_bot(ctx, email, password):
-    parser = argparse.ArgumentParser(prog=ctx[0] if ctx else None)
-    parser.add_argument("db", action="store", help="database file")
-    parser.add_argument("--show-ffi", action="store_true", help="show low level ffi events")
-    parser.add_argument("--email", action="store", help="email address")
-    parser.add_argument("--password", action="store", help="password")
-
-    args = parser.parse_args(ctx[1:])
-
-    ac = Account(args.db)
+def setup_bot(ctx, email, password, db):
+    ac = Account(db)
 
     if not ac.is_configured():
-        assert args.email and args.password, (
+        assert email and password, (
             "you must specify --email and --password once to configure this database/account"
         )
-        ac.set_config("addr", args.email)
-        ac.set_config("mail_pw", args.password)
+        ac.set_config("addr", email)
+        ac.set_config("mail_pw", password)
         ac.set_config("mvbox_move", "0")
         ac.set_config("mvbox_watch", "0")
         ac.set_config("sentbox_watch", "0")
