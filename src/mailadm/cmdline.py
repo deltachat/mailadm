@@ -331,6 +331,7 @@ def migrate_db(ctx):
         conn.execute(q, ("path_virtual_mailboxes",))
 
 
+mailadm_main.add_command(setup_bot)
 mailadm_main.add_command(init)
 mailadm_main.add_command(config)
 mailadm_main.add_command(list_tokens)
