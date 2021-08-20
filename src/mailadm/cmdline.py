@@ -74,11 +74,13 @@ def setup_bot(ctx, email, password, db):
 
     chat = ac.create_group_chat("Admin group on {}".format(socket.gethostname()), contacts=[], verified=True)
 
-    qr = segno.make(chat.get_join_qr())
+    chatinvite = chat.get_join_qr()
+    qr = segno.make(chatinvite)
     print("\nPlease scan this qr code to join a verified admin group chat:\n\n")
     qr.terminal()
+    print("\nAlternatively, copy-paste this invite to your Delta Chat desktop client:", chatinvite)
 
-    print("looping until more than one group member")
+    print("\n\nWaiting until you join the chat")
     while chat.num_contacts() < 2:
         time.sleep(1)
 
