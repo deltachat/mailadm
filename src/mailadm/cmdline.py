@@ -329,6 +329,7 @@ def web(ctx, debug):
     app.run(debug=debug, host="localhost", port=3961)
 
 
+mailadm_main.add_command(setup_bot)
 mailadm_main.add_command(init)
 mailadm_main.add_command(config)
 mailadm_main.add_command(list_tokens)
