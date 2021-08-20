@@ -81,6 +81,7 @@ def setup_bot(ctx, email, password, db):
         ac.set_config("bot", "1")
         configtracker = ac.configure()
         configtracker.wait_finish()
+        ac.start_io()
 
     chat = ac.create_group_chat("Admin group on {}".format(socket.gethostname()), contacts=[], verified=True)
 
@@ -92,6 +93,7 @@ def setup_bot(ctx, email, password, db):
     while chat.num_contacts() < 2:
         time.sleep(1)
 
+    ac.wait_shutdown()
     with read_connection() as conn:
         conn.set_config("admingrpid", chat.id)
 
