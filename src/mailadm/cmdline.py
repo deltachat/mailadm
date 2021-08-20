@@ -91,11 +91,11 @@ def setup_bot(ctx, email, password, db):
     qr.terminal()
     print("\nAlternatively, copy-paste this invite to your Delta Chat desktop client:", chatinvite)
 
-    print("\n\nWaiting until you join the chat")
+    print("\nWaiting until you join the chat")
     while chat.num_contacts() < 2:
         time.sleep(1)
 
-    ac.wait_shutdown()
+    ac.shutdown()
     with read_connection() as conn:
         conn.set_config("admingrpid", chat.id)
 
