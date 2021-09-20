@@ -82,7 +82,7 @@ class Connection:
             return None
 
     def set_config(self, name, value):
-        ok = ["dbversion", "mail_domain", "web_endpoint", "vmail_user", "path_virtual_mailboxes"]
+        ok = ["dbversion", "mail_domain", "web_endpoint", "vmail_user", "path_virtual_mailboxes", "admingrpid"]
         assert name in ok, name
         q = "INSERT OR REPLACE INTO config (name, value) VALUES (?, ?)"
         self.cursor().execute(q, (name, value)).fetchone()
