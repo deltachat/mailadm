@@ -36,7 +36,8 @@ Get a git copy of the mailadm repository and change into it.
     $ cd mailadm
 
 
-Now **review and then run** this install script:
+Now **review and then run** this install script. You can configure the
+necessary variables in `.env`.
 
     $ sudo bash install_mailadm.sh
 
@@ -48,6 +49,10 @@ to play around. By default this script:
 
 - creates config files at approprirate system locations
   for integrating with systemd, dovecot, postfix and nginx.
+
+- creates a Delta Chat bot to execute mailadm commands. During the script
+  execution, it prompts you with a QR code; scan it to join the Admin group. In
+  the admin group you can give mailadm commands.
 
 - creates a `~mailadm/README.txt` file with further instructions
   how to do 2-3 line changes to your existing nginx and dovecot
