@@ -71,7 +71,6 @@ def setup_bot(ctx, email, password, db):
         configtracker = ac.configure()
         configtracker.wait_finish()
 
-    ac.enable_logging()
     ac.start_io()
 
     chat = ac.create_group_chat("Admin group on {}".format(socket.gethostname()), contacts=[], verified=True)
