@@ -98,7 +98,7 @@ def setup_bot(ctx, email, password, db):
         time.sleep(1)
 
     ac.shutdown()
-    with read_connection() as conn:
+    with write_connection() as conn:
         conn.set_config("admingrpid", chat.id)
 
 
