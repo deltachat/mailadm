@@ -85,7 +85,8 @@ class Connection:
             return None
 
     def set_config(self, name, value):
-        ok = ["dbversion", "mail_domain", "web_endpoint", "mailcow_endpoint", "mailcow_token"]
+        ok = ["dbversion", "mail_domain", "web_endpoint", "mailcow_endpoint", "mailcow_token",
+              "admingrpid"]
         assert name in ok, name
         q = "INSERT OR REPLACE INTO config (name, value) VALUES (?, ?)"
         self.cursor().execute(q, (name, value)).fetchone()
