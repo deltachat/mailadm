@@ -70,7 +70,9 @@ def setup_bot(ctx, email, password, db):
         ac.set_config("bot", "1")
         configtracker = ac.configure()
         configtracker.wait_finish()
-        ac.start_io()
+
+    ac.enable_logging()
+    ac.start_io()
 
     chat = ac.create_group_chat("Admin group on {}".format(socket.gethostname()), contacts=[], verified=True)
 
