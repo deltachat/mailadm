@@ -1,5 +1,5 @@
 from mailadm.util import get_human_readable_id
-from mailadm.db import write_connection
+from mailadm.db import write_connection, read_connection
 from mailadm.conn import DBError
 
 
@@ -43,6 +43,17 @@ def add_user(token=None, addr=None, password=None, dryrun=False):
         conn.gen_sysfiles(dryrun)
         return {"status": "success",
                 "message": user_info}
+
+
+def list_tokens():
+    """Print token info for all tokens
+    """
+    output = []
+    with read_connection() as conn:
+        for name in conn.get_token_list():
+            token_info = conn.get_tokeninfo_by_name(name)
+            output.append(dump_token_info(token_info))
+    return '\n'.join(output)
 
 
 def dump_token_info(token_info):
