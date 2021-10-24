@@ -79,12 +79,11 @@ class TestTokens:
             *DCACCOUNT*&n=test1
         """)
         out = mycmd.run_ok(["list-tokens"], """
-            *maxuse*50*
-            *usecount*
+            *of 50 times*
             *DCACCOUNT*&n=test1
         """)
         for line in out.splitlines():
-            parts = line.split("=")
+            parts = line.split(":")
             if len(parts) >= 2 and parts[0].strip() == "token":
                 token = parts[1].strip().replace("_", "")
                 assert token.isalnum()
@@ -100,16 +99,16 @@ class TestTokens:
 
     def test_tokens_add_maxuse(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--maxuse=10"], """
-            *maxuse*10
+            *of 10 times*
             *DCACCOUNT*&n=test1
         """)
         mycmd.run_ok(["list-tokens"], """
-            *maxuse*10*
+            *of 10 times*
             *DCACCOUNT*&n=test1
         """)
         mycmd.run_ok(["mod-token", "--maxuse=1000", "test1"])
         mycmd.run_ok(["list-tokens"], """
-            *maxuse*1000*
+            *of 1000 times*
             *DCACCOUNT*&n=test1
         """)
 
