@@ -15,7 +15,7 @@ def add_token(name, expiry, maxuse, prefix, token):
         return dump_token_info(tc)
 
 
-def add_user(token=None, addr=None, password=None):
+def add_user(token=None, addr=None, password=None, dryrun=False):
     """Adds a new user to be managed by mailadm
     """
     with write_connection() as conn:
@@ -40,7 +40,7 @@ def add_user(token=None, addr=None, password=None):
         except DBError as e:
             return {"status": "error",
                     "message": "failed to add e-mail account {}: {}".format(addr, e)}
-        conn.gen_sysfiles()
+        conn.gen_sysfiles(dryrun)
         return {"status": "success",
                 "message": user_info}
 
