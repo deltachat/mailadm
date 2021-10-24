@@ -99,7 +99,7 @@ class Connection:
                             for user_info in self.get_user_list())
 
         if dryrun:
-            self.log("would write", self.path_virtual_mailboxes)
+            self.log("would write " + str(self.config.path_virtual_mailboxes))
             return
 
         mapfn = self.config.path_virtual_mailboxes

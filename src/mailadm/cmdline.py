@@ -214,6 +214,7 @@ def init(ctx, web_endpoint, mail_domain, vmail_user, path_virtual_mailboxes):
         mail_domain=mail_domain,
         web_endpoint=web_endpoint,
         vmail_user=vmail_user,
+        path_virtual_mailboxes=path_virtual_mailboxes
     )
 
 
