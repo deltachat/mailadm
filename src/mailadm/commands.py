@@ -53,7 +53,7 @@ def dump_token_info(token_info):
   accounts expire after: {}
   token was used {} of {} times
   token: {}
-    - url: 
-    - 
+    - url: {}
+    - QR data: {}
     """.format(token_info.name, token_info.prefix, token_info.expiry, token_info.usecount, token_info.maxuse,
-               token_info.token, token_info.get_web_url(), token_info.get_qr_url())
+               token_info.token, token_info.get_web_url(), token_info.get_qr_uri())
