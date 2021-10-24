@@ -104,10 +104,7 @@ def config():
 @click.command()
 def list_tokens():
     """list available tokens """
-    with read_connection() as conn:
-        for name in conn.get_token_list():
-            token_info = conn.get_tokeninfo_by_name(name)
-            dump_token_info(token_info)
+    click.secho(mailadm.commands.list_tokens())
 
 
 @click.command()
