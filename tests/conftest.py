@@ -72,6 +72,8 @@ def _perform_match(output, fnl):
 @pytest.fixture
 def cmd():
     """ invoke a command line subcommand. """
+    import os
+    os.environ["MAILADM_HOME"] = "/tmp"
     from mailadm.cmdline import mailadm_main
 
     return ClickRunner(mailadm_main)
@@ -94,6 +96,7 @@ def make_db(monkeypatch):
                 mail_domain="example.org",
                 web_endpoint="https://example.org/new_email",
                 vmail_user="vmail",
+                path_virtual_mailboxes=None
             )
 
         # re-route all queries for sysfiles to the tmpdir
