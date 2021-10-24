@@ -35,7 +35,7 @@ def main():
             "click>=6.0",
             "flask",
             "pillow",
-            "segno",
+            "qrcode",
             "gunicorn",
             "deltachat",
         ],
