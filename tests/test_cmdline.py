@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import datetime
 import pytest
@@ -63,9 +64,11 @@ class TestQR:
 
 class TestTokens:
     def test_uninitialized(self, cmd):
-        cmd.run_fail(["list-tokens"], """
-            *MAILADM_DB not set*
-        """)
+        try:
+            cmd.run_ok(["list-tokens"])
+        except RuntimeError:
+            if "MAILADM_DB not set" not in sys.exc_info()[1].__str__():
+                assert 0
 
     def test_tokens(self, mycmd):
         mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
