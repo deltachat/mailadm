@@ -60,7 +60,7 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
 
 
 @click.command()
-@click.option("--db", type=str, default=os.getenv("MAILADM_HOME") + "/admbot.sqlite",
+@click.option("--db", type=str, default=str(os.getenv("MAILADM_HOME")) + "/admbot.sqlite",
               help="Delta Chat database for admbot account", required=True)
 @click.option("--email", type=str, default=None, help="name of email")
 @click.option("--password", type=str, default=None, help="name of password")
