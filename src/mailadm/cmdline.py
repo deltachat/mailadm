@@ -235,11 +235,12 @@ def init(ctx, web_endpoint, mail_domain, mailcow_endpoint, mailcow_token):
               help="if not specified, generate a random password")
 @click.option("--token", type=str, default=None,
               help="name of token. if not specified, automatically use first token matching addr")
+@option_dryrun
 @click.pass_context
-def add_user(ctx, addr, password, token):
+def add_user(ctx, addr, password, token, dryrun):
     """add user as a mailadm managed account.
     """
-    result = mailadm.commands.add_user(token, addr, password)
+    result = mailadm.commands.add_user(token, addr, password, dryrun)
     if result["status"] == "error":
         ctx.fail(result["message"])
     elif result["status"] == "success":
