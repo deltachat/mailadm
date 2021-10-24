@@ -6,7 +6,7 @@ import grp
 import sys
 import click
 from click import style
-import segno
+import qrcode
 
 from mailadm.db import write_connection, read_connection, get_db_path
 import mailadm.commands
@@ -76,9 +76,10 @@ def setup_bot(ctx, email, password, db):
     chat = ac.create_group_chat("Admin group on {}".format(socket.gethostname()), contacts=[], verified=True)
 
     chatinvite = chat.get_join_qr()
-    qr = segno.make(chatinvite)
+    qr = qrcode.QRCode()
+    qr.add_data(chatinvite)
     print("\nPlease scan this qr code to join a verified admin group chat:\n\n")
-    qr.terminal()
+    qr.print_ascii(invert=True)
     print("\nAlternatively, copy-paste this invite to your Delta Chat desktop client:", chatinvite)
 
     print("\nWaiting until you join the chat")
