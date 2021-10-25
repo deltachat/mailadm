@@ -86,6 +86,8 @@ def setup_bot(ctx, email, password, db):
     while chat.num_contacts() < 2:
         time.sleep(1)
 
+    time.sleep(5)
+
     ac.shutdown()
     with write_connection() as conn:
         conn.set_config("admingrpid", chat.id)
