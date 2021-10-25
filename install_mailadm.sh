@@ -80,6 +80,10 @@ $MAILADM_HOME/venv/bin/mailadm setup-bot \
     --password $BOT_PASSWORD \
     --db $MAILADM_HOME/admbot.sqlite
 
-systemctl daemon-reload 
-systemctl enable mailadm-web mailadm-prune
-systemctl restart mailadm-web  mailadm-prune 
+# don't enable services if running in docker
+if [ $(cat /proc/1/comm) = "systemd" ]
+then
+  systemctl daemon-reload 
+  systemctl enable mailadm-web mailadm-prune
+  systemctl restart mailadm-web  mailadm-prune 
+fi
