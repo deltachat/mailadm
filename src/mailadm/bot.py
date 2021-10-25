@@ -1,6 +1,6 @@
 from deltachat import account_hookimpl, run_cmdline
 from mailadm.db import DB
-from mailadm.commands import add_user, add_token
+from mailadm.commands import add_user, add_token, list_tokens
 import os
 
 
@@ -24,6 +24,12 @@ class AdmBot:
                 arguments = command.text.split(" ")
                 text = add_user(arguments[0], arguments[1], arguments[2])
                 command.chat.send_text(text)
+
+        elif command.text.strip() == "/list-tokens":
+            if self.check_privileges(chat):
+                command.create_chat()
+                command.chat.send_text(list_tokens())
+
         else:
             # unconditionally accept the chat
             command.create_chat()
