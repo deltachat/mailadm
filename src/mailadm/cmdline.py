@@ -94,6 +94,7 @@ def setup_bot(ctx, email, password, db):
     print("\nAlternatively, copy-paste this invite to your Delta Chat desktop client:", chatinvite)
 
     print("\nWaiting until you join the chat")
+    sys.stdout.flush()  # flush stdout to actually show the messages above
     while chat.num_contacts() < 2:
         time.sleep(1)
 
