@@ -7,7 +7,6 @@ import sys
 import click
 from click import style
 import qrcode
-from asyncio import Queue
 
 from mailadm.db import write_connection, read_connection, get_db_path
 import mailadm.commands
@@ -56,10 +55,8 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
 @click.option("--password", type=str, default=None, help="name of password")
 @click.pass_context
 @account_hookimpl
-async def setup_bot(ctx, email, password, db):
+def setup_bot(ctx, email, password, db):
     ac = Account(db)
-    q = Queue()
-    ac.add_account_plugin(EventWaiter(ac, q))
 
     if not ac.is_configured():
         assert email and password, (
@@ -86,15 +83,17 @@ async def setup_bot(ctx, email, password, db):
     print("\nAlternatively, copy-paste this invite to your Delta Chat desktop client:", chatinvite)
 
     print("\nWaiting until you join the chat")
-    contact = await q.get()
+    while chat.num_contacts() < 2:
+        time.sleep(1)
 
+    time.sleep(5)
+
+    ac.shutdown()
     with read_connection() as conn:
-        admingrpid_old = conn.config.admingrpid
+        admingrpid_old = conn.config().admingrpid
         if admingrpid_old:
             oldgroup = ac.get_chat_by_id(admingrpid_old)
-            oldgroup.send_text("%s created a new admin group on the command line. This one is not valid anymore.",
-                               (contact.addr,))
-    ac.shutdown()
+            oldgroup.send_text("Someone created a new admin group on the command line. This one is not valid anymore.")
     with write_connection() as conn:
         conn.set_config("admingrpid", chat.id)
 
@@ -333,21 +332,6 @@ def web(ctx, debug):
     db = get_mailadm_db(ctx)
     app = create_app_from_db(db)
     app.run(debug=debug, host="localhost", port=3961)
-
-
-class EventWaiter:
-    def __init__(self, account, queue=Queue(), timeout=None):
-        self.account = account
-        self._event_queue = queue
-        self._timeout = timeout
-
-    @account_hookimpl
-    def ac_member_added(self, chat, contact, actor, message):
-        print("ac_member_added {} to chat {} from {}".format(
-            contact.addr, chat.id, actor or message.get_sender_contact().addr))
-        for member in chat.get_contacts():
-            print("chat member: {}".format(member.addr))
-        self._event_queue.put(contact)
 
 
 mailadm_main.add_command(setup_bot)
