@@ -103,7 +103,7 @@ def setup_bot(ctx, email, password, db):
 
     ac.shutdown()
     with read_connection() as conn:
-        admingrpid_old = conn.config().admingrpid
+        admingrpid_old = conn.config.admingrpid
         if admingrpid_old:
             oldgroup = ac.get_chat_by_id(admingrpid_old)
             oldgroup.send_text("Someone created a new admin group on the command line. This one is not valid anymore.")
