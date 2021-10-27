@@ -70,10 +70,9 @@ def _perform_match(output, fnl):
 
 
 @pytest.fixture
-def cmd():
+def cmd(tmpdir):
     """ invoke a command line subcommand. """
-    import os
-    os.environ["MAILADM_HOME"] = "/tmp"
+    os.environ["MAILADM_HOME"] = str(tmpdir)
     from mailadm.cmdline import mailadm_main
 
     return ClickRunner(mailadm_main)
