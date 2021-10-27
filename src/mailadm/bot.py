@@ -51,10 +51,6 @@ class AdmBot:
                 text = command.text
                 command.chat.send_text("echoing from {}:\n{}".format(addr, text))
 
-    @account_hookimpl
-    def ac_message_delivered(self, message):
-        print("ac_message_delivered:", message)
-
     def check_privileges(self, chat):
         """
         Checks whether the incoming message was in the admin group.
