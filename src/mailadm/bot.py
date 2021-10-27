@@ -10,7 +10,12 @@ class AdmBot:
         print("process_incoming message:", command)
         chat = command.message.chat
         if command.text.strip() == "/help":
-            pass
+            command.create_chat()
+            text = ("/add-token name expiry prefix token maxuse"
+                    "/add-user addr password token"
+                    "/list-tokens")
+            command.chat.send_text(text)
+
         elif command.text.strip() == "/add-token":
             if self.check_privileges(chat):
                 command.create_chat()
