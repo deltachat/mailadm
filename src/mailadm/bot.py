@@ -14,7 +14,6 @@ class AdmBot:
     @account_hookimpl
     def ac_incoming_message(self, command):
         print("process_incoming message:", command)
-        chat = command.message.chat
         if command.text.strip() == "/help":
             command.create_chat()
             text = ("/add-token name expiry prefix token maxuse"
@@ -23,21 +22,21 @@ class AdmBot:
             command.chat.send_text(text)
 
         elif command.text.strip() == "/add-token":
-            if self.check_privileges(chat):
+            if self.check_privileges(command):
                 command.create_chat()
                 arguments = command.text.split(" ")
                 text = add_token(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4])
                 command.chat.send_text(text)
 
         elif command.text.strip() == "/add-user":
-            if self.check_privileges(chat):
+            if self.check_privileges(command):
                 command.create_chat()
                 arguments = command.text.split(" ")
                 text = add_user(arguments[0], arguments[1], arguments[2])
                 command.chat.send_text(text)
 
         elif command.text.strip() == "/list-tokens":
-            if self.check_privileges(chat):
+            if self.check_privileges(command):
                 command.create_chat()
                 command.chat.send_text(list_tokens())
 
@@ -51,13 +50,16 @@ class AdmBot:
                 text = command.text
                 command.chat.send_text("echoing from {}:\n{}".format(addr, text))
 
-    def check_privileges(self, chat):
+    def check_privileges(self, command):
         """
         Checks whether the incoming message was in the admin group.
         """
-        if chat.is_group() and self.admingrpid == chat.id:
-            if chat.is_protected() and int(chat.num_contacts) >= 2:
-                return True
+        if command.chat.is_group() and self.admingrpid == command.chat.id:
+            if command.chat.is_protected() and command.chat.is_encrypted() and int(command.chat.num_contacts) >= 2:
+                if command.message.get_sender_contact() in command.chat.get_contacts():
+                    return True
+                else:
+                    print("%s is not allowed to give commands to mailadm." % (command.message.get_sender_contact(),))
             else:
                 print("admin chat is broken. Group ID:" + self.admingrpid)
                 raise Exception
