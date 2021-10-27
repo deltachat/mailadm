@@ -86,6 +86,7 @@ def setup_bot(ctx, email, password, db):
     while chat.num_contacts() < 2:
         time.sleep(1)
 
+    # it would be nicer to properly wait for the member_added event, but this function isn't async, so it doesn't work.
     time.sleep(5)
 
     ac.shutdown()
