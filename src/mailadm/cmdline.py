@@ -56,7 +56,7 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
 @click.option("--password", type=str, default=None, help="name of password")
 @click.pass_context
 @account_hookimpl
-def setup_bot(ctx, email, password, db):
+async def setup_bot(ctx, email, password, db):
     ac = Account(db)
     q = Queue()
     ac.add_account_plugin(EventWaiter(ac, q))
@@ -86,7 +86,7 @@ def setup_bot(ctx, email, password, db):
     print("\nAlternatively, copy-paste this invite to your Delta Chat desktop client:", chatinvite)
 
     print("\nWaiting until you join the chat")
-    contact = q.get()
+    contact = await q.get()
 
     with read_connection() as conn:
         admingrpid_old = conn.config.admingrpid
