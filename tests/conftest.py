@@ -1,4 +1,5 @@
 
+import os
 import pwd
 import grp
 import collections
@@ -81,6 +82,20 @@ def cmd():
 def db(tmpdir, make_db):
     path = tmpdir.ensure("base", dir=1)
     return make_db(path)
+
+
+@pytest.fixture
+def mailcow_url():
+    baseurl = "https://dc.develcow.de/api/v1/"
+    return baseurl
+
+
+@pytest.fixture
+def mailcow_auth():
+    if not os.environ.get("MAILCOW_TOKEN"):
+        raise KeyError("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
+    return {"X-API-Key": os.environ.get("MAILCOW_TOKEN")}
+
 
 
 @pytest.fixture
