@@ -94,6 +94,7 @@ def make_db(monkeypatch):
                 mail_domain="example.org",
                 web_endpoint="https://example.org/new_email",
                 vmail_user="vmail",
+                mailcow_api_token=None,
             )
 
         # re-route all queries for sysfiles to the tmpdir
