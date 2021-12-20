@@ -19,7 +19,7 @@ import click
 from click import style
 import qrcode
 
-from mailadm.db import write_connection, read_connection, get_db_path
+import mailadm.db
 import mailadm.commands
 import mailadm.util
 from .conn import DBError
@@ -30,7 +30,6 @@ from deltachat import Account, account_hookimpl
 option_dryrun = click.option(
     "-n", "--dryrun", is_flag=True,
     help="don't change any files, only show what would be changed.")
-
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option()
@@ -53,7 +52,7 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
     if show:
         click.secho("using db: {}".format(db_path), file=sys.stderr)
     if fail_missing_config:
-        with read_connection() as conn:
+        with db.read_connection() as conn:
             if not conn.is_initialized():
                 ctx.fail("database not initialized, use 'init' subcommand to do so")
     return db
@@ -98,40 +97,47 @@ def setup_bot(ctx, email, password, db):
     while chat.num_contacts() < 2:
         time.sleep(1)
 
-    # it would be nicer to properly wait for the member_added event, but this function isn't async, so it doesn't work.
-    time.sleep(5)
-
-    ac.shutdown()
-    with read_connection() as conn:
-        admingrpid_old = conn.config.admingrpid
+    with db.read_connection() as rconn:
+        admingrpid_old = rconn.config.admingrpid
         if admingrpid_old:
             oldgroup = ac.get_chat_by_id(admingrpid_old)
             oldgroup.send_text("Someone created a new admin group on the command line. This one is not valid anymore.")
-    with write_connection() as conn:
-        conn.set_config("admingrpid", chat.id)
+
+    # it would be nicer to properly wait for the member_added event, but this function isn't async, so it doesn't work.
+    time.sleep(5)
+    ac.shutdown()
+
+    db = get_mailadm_db(ctx)
+    with db.write_transaction() as wconn:
+        wconn.set_config("admingrpid", chat.id)
 
 
 @click.command()
-def config():
+@click.pass_context
+def config(ctx):
     """show and manipulate config settings. """
-    with read_connection() as conn:
+    db = get_mailadm_db(ctx)
+    with db.read_connection() as rconn:
         click.secho("** mailadm version: {}".format(mailadm.__version__))
-        click.secho("** mailadm database path: {}".format(get_db_path()))
-        for name, val in conn.get_config_items():
+        click.secho("** mailadm database path: {}".format(db.path))
+        for name, val in rconn.get_config_items():
             click.secho("{:22s} {}".format(name, val))
 
 
 @click.command()
-def list_tokens():
+@click.pass_context
+def list_tokens(ctx):
     """list available tokens """
     click.secho(mailadm.commands.list_tokens())
 
 
 @click.command()
 @click.option("--token", type=str, default=None, help="name of token")
-def list_users(token):
+@click.pass_context
+def list_users(ctx, token):
     """list users """
-    with read_connection() as conn:
+    db = get_mailadm_db(ctx)
+    with db.read_connection() as conn:
         for user_info in conn.get_user_list(token=token):
             click.secho("{} [token={}]".format(user_info.addr, user_info.token_name))
 
@@ -156,10 +162,14 @@ def dump_token_info(token_info):
 @click.option("--prefix", type=str, default="tmp.",
               help="prefix for all e-mail addresses for this token")
 @click.option("--token", type=str, default=None, help="name of token to be used")
-def add_token(name, expiry, maxuse, prefix, token):
+@click.pass_context
+def add_token(ctx, name, expiry, maxuse, prefix, token):
     """add new token for generating new e-mail addresses
     """
-    click.secho(mailadm.commands.add_token(name, expiry, maxuse, prefix, token))
+    from mailadm.util import get_human_readable_id
+
+    db = get_mailadm_db(ctx)
+    mailadm.commands.add_token(name, expiry, maxuse, prefix, token, db)
 
 
 @click.command()
@@ -170,10 +180,13 @@ def add_token(name, expiry, maxuse, prefix, token):
               help="maximum number of accounts this token can create, default is not to change")
 @click.option("--prefix", type=str, default=None,
               help="prefix for all e-mail addresses for this token, default is not to change")
-def mod_token(name, expiry, prefix, maxuse):
+@click.pass_context
+def mod_token(ctx, name, expiry, prefix, maxuse):
     """modify a token selectively
     """
-    with write_connection() as conn:
+    db = get_mailadm_db(ctx)
+
+    with db.write_transaction() as conn:
         conn.mod_token(name=name, expiry=expiry, maxuse=maxuse, prefix=prefix)
         tc = conn.get_tokeninfo_by_name(name)
         dump_token_info(tc)
@@ -181,9 +194,11 @@ def mod_token(name, expiry, prefix, maxuse):
 
 @click.command()
 @click.argument("name", type=str, required=True)
-def del_token(name):
+@click.pass_context
+def del_token(ctx, name):
     """remove named token"""
-    with write_connection() as conn:
+    db = get_mailadm_db(ctx)
+    with db.write_transaction() as conn:
         conn.del_token(name=name)
 
 
@@ -194,7 +209,8 @@ def gen_qr(ctx, tokenname):
     """generate qr code image for a token. """
     from .gen_qr import gen_qr
 
-    with read_connection() as conn:
+    db = get_mailadm_db(ctx)
+    with db.read_connection() as conn:
         token_info = conn.get_tokeninfo_by_name(tokenname)
         config = conn.config
 
@@ -256,18 +272,20 @@ def add_user(ctx, addr, password, token, dryrun):
 
 @click.command()
 @click.argument("addr", type=str, required=True)
-def del_user(addr):
+@click.pass_context
+def del_user(ctx, addr):
     """remove e-mail address"""
-    with write_connection() as conn:
+    with get_mailadm_db(ctx).write_transaction() as conn:
         conn.del_user(addr=addr)
 
 
 @click.command()
 @option_dryrun
+@click.pass_context
 def prune(ctx, dryrun):
     """prune expired users from postfix and dovecot configurations """
     sysdate = int(time.time())
-    with write_connection() as conn:
+    with get_mailadm_db(ctx).write_transaction() as conn:
         expired_users = conn.get_expired_users(sysdate)
         if not expired_users:
             click.secho("nothing to prune")
