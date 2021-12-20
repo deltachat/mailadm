@@ -3,8 +3,6 @@ import pwd
 import grp
 import collections
 from pathlib import Path
-from tempfile import TemporaryDirectory
-import os
 
 import pytest
 from _pytest.pytester import LineMatcher
@@ -96,7 +94,6 @@ def make_db(monkeypatch):
                 mail_domain="example.org",
                 web_endpoint="https://example.org/new_email",
                 vmail_user="vmail",
-                path_virtual_mailboxes=TemporaryDirectory().name,
             )
 
         # re-route all queries for sysfiles to the tmpdir
