@@ -36,7 +36,8 @@ Get a git copy of the mailadm repository and change into it.
     $ cd mailadm
 
 
-Now **review and then run** this install script:
+Now **review and then run** this install script. You can configure the
+necessary variables in `.env`.
 
     $ sudo bash install_mailadm.sh
 

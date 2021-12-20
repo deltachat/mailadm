@@ -14,18 +14,28 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+# load variables from config file
+if [ ! -f $SCRIPTPATH/.env ]; then
+    echo "export MAIL_DOMAIN=example.org" > $SCRIPTPATH/.env
+    echo "" >> $SCRIPTPATH/.env
+    echo "export VMAIL_USER=vmail" >> $SCRIPTPATH/.env
+    echo "export VMAIL_HOME=/home/vmail" >> $SCRIPTPATH/.env
+    echo "export MAILADM_USER=mailadm" >> $SCRIPTPATH/.env
+    echo "export MAILADM_HOME=/var/lib/mailadm" >> $SCRIPTPATH/.env
+    echo "" >> $SCRIPTPATH/.env
+    echo "export WEB_ENDPOINT=https://example.org/new_email" >> $SCRIPTPATH/.env
+    echo "export LOCALHOST_WEB_PORT=3691" >> $SCRIPTPATH/.env
+    echo "" >> $SCRIPTPATH/.env
+
+    echo "Can't get settings from $SCRIPTPATH/.env, please set environment variables there."
+    exit 1
+else
+    . ./.env
+fi
+
 set -xe
-
-# modify the following variables 
-export MAIL_DOMAIN=example.org
-
-export VMAIL_USER=vmail 
-export VMAIL_HOME=/home/vmail 
-
-export MAILADM_USER=mailadm 
-export MAILADM_HOME=/var/lib/mailadm
-export WEB_ENDPOINT=https://example.org/new_email
-export LOCALHOST_WEB_PORT=3691
 
 # check if vmail user exists
 if ! getent passwd $VMAIL_USER > /dev/null 2>&1; then
