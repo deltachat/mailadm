@@ -48,8 +48,8 @@ class AdmBot:
                 else:
                     print("%s is not allowed to give commands to mailadm." % (command.message.get_sender_contact(),))
             else:
-                print("admin chat is broken. Group ID:" + self.admingrpid)
-                raise Exception
+                print("admin chat is broken. Try `mailadm setup-bot`. Group ID:" + self.admingrpid)
+                raise ValueError
         else:
             # reply "This command needs to be sent to the admin group"
             return False
