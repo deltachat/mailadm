@@ -23,6 +23,7 @@ import mailadm.db
 import mailadm.commands
 import mailadm.util
 from .conn import DBError
+from .bot import SetupPlugin
 
 from deltachat import Account, account_hookimpl
 
@@ -85,6 +86,9 @@ def setup_bot(ctx, email, password, db):
 
     chat = ac.create_group_chat("Admin group on {}".format(socket.gethostname()), contacts=[], verified=True)
 
+    setupplugin = SetupPlugin(chat.id)
+    ac.add_account_plugin(setupplugin)
+
     chatinvite = chat.get_join_qr()
     qr = qrcode.QRCode()
     qr.add_data(chatinvite)
@@ -94,8 +98,7 @@ def setup_bot(ctx, email, password, db):
 
     print("\nWaiting until you join the chat")
     sys.stdout.flush()  # flush stdout to actually show the messages above
-    while chat.num_contacts() < 2:
-        time.sleep(1)
+    setupplugin.member_added.wait()
 
     with db.read_connection() as rconn:
         admingrpid_old = rconn.config.admingrpid
