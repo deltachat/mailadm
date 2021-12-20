@@ -117,7 +117,8 @@ def config(ctx):
 @click.pass_context
 def list_tokens(ctx):
     """list available tokens """
-    click.secho(mailadm.commands.list_tokens())
+    db = get_mailadm_db(ctx)
+    click.secho(mailadm.commands.list_tokens(db))
 
 
 @click.command()
@@ -158,7 +159,7 @@ def add_token(ctx, name, expiry, maxuse, prefix, token):
     from mailadm.util import get_human_readable_id
 
     db = get_mailadm_db(ctx)
-    mailadm.commands.add_token(name, expiry, maxuse, prefix, token, db)
+    click.secho(mailadm.commands.add_token(db, name, expiry, maxuse, prefix, token))
 
 
 @click.command()
@@ -304,7 +305,8 @@ def get_pwinfo(ctx, description, username):
 def add_user(ctx, addr, password, token, dryrun):
     """add user as a mailadm managed account.
     """
-    result = mailadm.commands.add_user(token, addr, password, dryrun)
+    db = get_mailadm_db(ctx)
+    result = mailadm.commands.add_user(db, token, addr, password, dryrun)
     if result["status"] == "error":
         ctx.fail(result["message"])
     elif result["status"] == "success":

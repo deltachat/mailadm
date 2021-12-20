@@ -8,16 +8,6 @@ from pathlib import Path
 from .conn import Connection
 
 
-def read_connection():
-    mailadm_db = DB(get_db_path())
-    return mailadm_db.read_connection()
-
-
-def write_connection():
-    mailadm_db = DB(get_db_path())
-    return mailadm_db.write_transaction()
-
-
 def get_db_path():
     db_path = os.environ.get("MAILADM_DB")
     if db_path is None:
