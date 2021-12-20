@@ -3,6 +3,20 @@ from deltachat import account_hookimpl, run_cmdline
 from mailadm.db import DB
 from mailadm.commands import add_user, add_token, list_tokens
 import os
+from threading import Event
+
+
+class SetupPlugin:
+    def __init__(self, admingrpid):
+        self.member_added = Event()
+        self.admingrpid = admingrpid
+
+    @account_hookimpl
+    def ac_member_added(self, chat: deltachat.Chat, contact, actor, message):
+        assert chat.num_contacts() == 2
+        if chat.id == self.admingrpid:
+            self.member_added.set()
+
 
 class AdmBot:
     def __init__(self, db):
