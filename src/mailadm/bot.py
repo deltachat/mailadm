@@ -3,8 +3,13 @@ from mailadm.db import DB
 from mailadm.commands import add_user, add_token, list_tokens
 import os
 
-
 class AdmBot:
+    def __init__(self, db):
+        self.db = db
+        with self.db.read_connection() as conn:
+            config = conn.config()
+            self.admingrpid = config.admingrpid
+
     @account_hookimpl
     def ac_incoming_message(self, command):
         print("process_incoming message:", command)
@@ -62,9 +67,10 @@ class AdmBot:
             return False
 
 
-def main(argv=None):
-    run_cmdline(argv=argv, account_plugins=[AdmBot()])
+def main(db, argv=None):
+    run_cmdline(argv=argv, account_plugins=[AdmBot(db)])
 
 
 if __name__ == "__main__":
-    main()
+    db = DB(os.getenv("MAILADM_DB"))
+    main(db)
