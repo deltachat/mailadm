@@ -26,16 +26,16 @@ class AdmBot:
 
         elif command.text.strip() == "/add-token":
             arguments = command.text.split(" ")
-            text = add_token(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4])
+            text = add_token(self.db, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4])
             command.chat.send_text(text)
 
         elif command.text.strip() == "/add-user":
             arguments = command.text.split(" ")
-            text = add_user(arguments[0], arguments[1], arguments[2])
+            text = add_user(self.db, arguments[0], arguments[1], arguments[2])
             command.chat.send_text(text)
 
         elif command.text.strip() == "/list-tokens":
-            command.chat.send_text(list_tokens())
+            command.chat.send_text(list_tokens(self.db))
 
     def check_privileges(self, command):
         """
