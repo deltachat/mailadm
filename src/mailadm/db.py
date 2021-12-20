@@ -64,11 +64,12 @@ class DB:
     def read_connection(self, closing=True):
         return self.get_connection(closing=closing, write=False)
 
-    def init_config(self, mail_domain, web_endpoint, vmail_user):
+    def init_config(self, mail_domain, web_endpoint, vmail_user, path_virtual_mailboxes):
         with self.write_transaction() as conn:
             conn.set_config("mail_domain", mail_domain)
             conn.set_config("web_endpoint", web_endpoint)
             conn.set_config("vmail_user", vmail_user)
+            conn.set_config("path_virtual_mailboxes", path_virtual_mailboxes)
 
     def is_initialized(self):
         with self.read_connection() as conn:
