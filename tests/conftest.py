@@ -99,7 +99,7 @@ def mailcow_auth():
 
 
 @pytest.fixture
-def make_db(monkeypatch):
+def make_db(monkeypatch, mailcow_auth):
     def make_db(basedir, init=True):
         basedir = Path(str(basedir))
         db_path = basedir.joinpath("mailadm.db")
@@ -109,7 +109,7 @@ def make_db(monkeypatch):
                 mail_domain="example.org",
                 web_endpoint="https://example.org/new_email",
                 vmail_user="vmail",
-                mailcow_api_token=None,
+                mailcow_api_token=mailcow_auth.get("X-API-KEY"),
             )
 
         # re-route all queries for sysfiles to the tmpdir
