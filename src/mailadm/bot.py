@@ -1,3 +1,4 @@
+import deltachat
 from deltachat import account_hookimpl, run_cmdline
 from mailadm.db import DB
 from mailadm.commands import add_user, add_token, list_tokens
@@ -11,43 +12,30 @@ class AdmBot:
             self.admingrpid = config.admingrpid
 
     @account_hookimpl
-    def ac_incoming_message(self, command):
+    def ac_incoming_message(self, command: deltachat.Message):
         print("process_incoming message:", command)
+        command.create_chat()
+        if not self.check_privileges(command):
+            command.chat.send_text("Sorry, I only take commands from the admin group.")
+
         if command.text.strip() == "/help":
-            command.create_chat()
             text = ("/add-token name expiry prefix token maxuse"
                     "/add-user addr password token"
                     "/list-tokens")
             command.chat.send_text(text)
 
         elif command.text.strip() == "/add-token":
-            if self.check_privileges(command):
-                command.create_chat()
-                arguments = command.text.split(" ")
-                text = add_token(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4])
-                command.chat.send_text(text)
+            arguments = command.text.split(" ")
+            text = add_token(arguments[0], arguments[1], arguments[2], arguments[3], arguments[4])
+            command.chat.send_text(text)
 
         elif command.text.strip() == "/add-user":
-            if self.check_privileges(command):
-                command.create_chat()
-                arguments = command.text.split(" ")
-                text = add_user(arguments[0], arguments[1], arguments[2])
-                command.chat.send_text(text)
+            arguments = command.text.split(" ")
+            text = add_user(arguments[0], arguments[1], arguments[2])
+            command.chat.send_text(text)
 
         elif command.text.strip() == "/list-tokens":
-            if self.check_privileges(command):
-                command.create_chat()
-                command.chat.send_text(list_tokens())
-
-        else:
-            # unconditionally accept the chat
-            command.create_chat()
-            addr = command.get_sender_contact().addr
-            if command.is_system_message():
-                command.chat.send_text("echoing system message from {}:\n{}".format(addr, command))
-            else:
-                text = command.text
-                command.chat.send_text("echoing from {}:\n{}".format(addr, text))
+            command.chat.send_text(list_tokens())
 
     def check_privileges(self, command):
         """
