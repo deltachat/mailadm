@@ -1,5 +1,4 @@
 import os
-import socket
 import time
 import pwd
 import grp
@@ -20,6 +19,7 @@ from deltachat import Account, account_hookimpl
 option_dryrun = click.option(
     "-n", "--dryrun", is_flag=True,
     help="don't change any files, only show what would be changed.")
+
 
 @click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option()
@@ -169,8 +169,6 @@ def dump_token_info(token_info):
 def add_token(ctx, name, expiry, maxuse, prefix, token):
     """add new token for generating new e-mail addresses
     """
-    from mailadm.util import get_human_readable_id
-
     db = get_mailadm_db(ctx)
     click.secho(mailadm.commands.add_token(db, name, expiry, maxuse, prefix, token))
 
