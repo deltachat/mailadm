@@ -18,6 +18,7 @@ Setup Development Environment
 
 ```
 git clone https://github.com/deltachat/mailadm
+cd mailadm
 python3 -m venv venv
 . venv/bin/activate
 pip install pytest tox
