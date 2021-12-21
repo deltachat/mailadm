@@ -19,7 +19,7 @@ class SetupPlugin:
             self.member_added.set()
 
     @account_hookimpl
-    def ac_outgoing_message(self, message: deltachat.Message):
+    def ac_message_delivered(self, message: deltachat.Message):
         if not message.is_system_message():
             self.message_sent.set()
 
