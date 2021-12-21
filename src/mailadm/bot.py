@@ -10,12 +10,18 @@ class SetupPlugin:
     def __init__(self, admingrpid):
         self.member_added = Event()
         self.admingrpid = admingrpid
+        self.message_sent = Event()
 
     @account_hookimpl
     def ac_member_added(self, chat: deltachat.Chat, contact, actor, message):
         assert chat.num_contacts() == 2
         if chat.id == self.admingrpid:
             self.member_added.set()
+
+    @account_hookimpl
+    def ac_outgoing_message(self, message: deltachat.Message):
+        if not message.is_system_message():
+            self.message_sent.set()
 
 
 class AdmBot:
