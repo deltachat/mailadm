@@ -56,6 +56,13 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
 @click.pass_context
 @account_hookimpl
 def setup_bot(ctx, email, password, db):
+    """initialize the deltachat bot as an alternative command interface.
+
+    :param ctx: the click object passing the CLI environment
+    :param email: the email account the deltachat bot will use for receiving commands
+    :param password: the password to the bot's email account
+    :param db: the path to the deltachat database of the bot - NOT the path to the mailadm database!
+    """
     ac = Account(db)
 
     if not ac.is_configured():
@@ -89,7 +96,8 @@ def setup_bot(ctx, email, password, db):
     sys.stdout.flush()  # flush stdout to actually show the messages above
     setupplugin.member_added.wait()
 
-    with db.read_connection() as rconn:
+    mailadmdb = get_mailadm_db(ctx)
+    with mailadmdb.read_connection() as rconn:
         admingrpid_old = rconn.config.admingrpid
         if admingrpid_old:
             oldgroup = ac.get_chat_by_id(admingrpid_old)
@@ -99,8 +107,7 @@ def setup_bot(ctx, email, password, db):
     time.sleep(5)
     ac.shutdown()
 
-    db = get_mailadm_db(ctx)
-    with db.write_transaction() as wconn:
+    with mailadmdb.write_transaction() as wconn:
         wconn.set_config("admingrpid", chat.id)
 
 
