@@ -102,7 +102,7 @@ def setup_bot(ctx, email, password, db):
     with mailadmdb.read_connection() as rconn:
         admingrpid_old = rconn.config.admingrpid
         if admingrpid_old:
-            oldgroup = ac.get_chat_by_id(admingrpid_old)
+            oldgroup = ac.get_chat_by_id(int(admingrpid_old))
             oldgroup.send_text("Someone created a new admin group on the command line. This one is not valid anymore.")
 
     # it would be nicer to properly wait for the member_added event, but this function isn't async, so it doesn't work.
