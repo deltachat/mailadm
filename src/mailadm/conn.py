@@ -80,7 +80,8 @@ class Connection:
             return None
 
     def set_config(self, name, value):
-        ok = ["dbversion", "mail_domain", "web_endpoint", "vmail_user", "mailcow_endpoint", "mailcow_token"]
+        ok = ["dbversion", "mail_domain", "web_endpoint", "vmail_user", "mailcow_endpoint",
+              "mailcow_token"]
         assert name in ok, name
         q = "INSERT OR REPLACE INTO config (name, value) VALUES (?, ?)"
         self.cursor().execute(q, (name, value)).fetchone()
@@ -263,7 +264,8 @@ class Config:
     :param mailcow_endpoint: the URL to the mailcow API
     :param mailcow_token: the token to authenticate with the mailcow API
     """
-    def __init__(self, mail_domain, web_endpoint, vmail_user, dbversion, mailcow_endpoint, mailcow_token):
+    def __init__(self, mail_domain, web_endpoint, vmail_user, dbversion, mailcow_endpoint,
+                 mailcow_token):
         self.mail_domain = mail_domain
         self.web_endpoint = web_endpoint
         self.vmail_user = vmail_user

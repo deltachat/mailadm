@@ -181,8 +181,10 @@ def gen_qr(ctx, tokenname):
               default="example.org", show_default="example.org")
 @click.option("--vmail-user", type=str, default="vmail",
               help="dovecot virtual mail delivery user")
-@click.option("--mailcow-endpoint", type=str, default=None, help="the API endpoint of the mailcow instance")
-@click.option("--mailcow-api-token", type=str, default=None, help="get API token in the mailcow web interface")
+@click.option("--mailcow-endpoint", type=str, default=None,
+              help="the API endpoint of the mailcow instance")
+@click.option("--mailcow-api-token", type=str, default=None,
+              help="get API token in the mailcow web interface")
 @click.pass_context
 def init(ctx, web_endpoint, mail_domain, vmail_user, mailcow_endpoint, mailcow_api_token):
     """(re-)initialize configuration in mailadm database.
