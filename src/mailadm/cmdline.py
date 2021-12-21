@@ -91,7 +91,7 @@ def setup_bot(ctx, email, password, db):
 
     ac.start_io()
 
-    chat = ac.create_group_chat("Admin group on {}".format(socket.gethostname()), contacts=[], verified=True)
+    chat = ac.create_group_chat("Admin group on {}".format(os.environ["MAIL_DOMAIN"]), contacts=[], verified=True)
 
     setupplugin = SetupPlugin(chat.id)
     ac.add_account_plugin(setupplugin)
@@ -106,6 +106,8 @@ def setup_bot(ctx, email, password, db):
     print("\nWaiting until you join the chat")
     sys.stdout.flush()  # flush stdout to actually show the messages above
     setupplugin.member_added.wait()
+    chat.send_text("Welcome to the Admin group on %s! Type /help to get an overview over existing commands." %
+                   (os.environ["MAIL_DOMAIN"],))
 
     mailadmdb = get_mailadm_db(ctx)
     with mailadmdb.read_connection() as rconn:
