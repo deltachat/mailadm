@@ -41,28 +41,6 @@ def test_new_user_random(db, monkeypatch):
     assert r3.status_code == 409
 
 
-def test_gensysfiles(db):
-    token = "12319831923123"
-    with db.write_transaction() as conn:
-        conn.add_token(name="test123", token=token, prefix="tmp.", expiry="1w")
-        config = conn.config
-    app = create_app_from_db_path(db.path)
-    app.debug = True
-
-    app = app.test_client()
-
-    r = app.post('/?t=' + token)
-    assert r.status_code == 200
-
-    email = r.json["email"]
-    assert email.endswith("@example.org")
-    password = r.json["password"]
-    assert password
-
-    postfix_map = config.path_virtual_mailboxes.read_text()
-    assert email in postfix_map
-
-
 def test_env(db, monkeypatch):
     monkeypatch.setenv("MAILADM_DB", str(db.path))
     from mailadm.app import app

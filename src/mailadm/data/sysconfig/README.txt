@@ -24,40 +24,6 @@ Processes and permissions
 - the `{path_mailadm_db}` database is writeable by the group `{vmail_user}`
 
 
-Integration with dovecot
-------------------------------
-
-Default location: `{dovecot_conf_d}/10-auth.conf`
-
-To enable mailadm-controlled authentication and mail delivery services,
-add the following line to the `{dovecot_conf_d}/10-auth.conf` file:
-
-    !include auth-mailadm.conf.ext
-
-
-With all dovecot related integration files in place
-you can test the mailadm integration (as root)::
-
-    # systemctl reload dovecot
-    # systemctl status dovecot
-
-
-Integration with postfix
-------------------------
-
-Perequisite: You need to already have configured a working "virtual mailbox" setup with postfix.
-
-To let postfix know about mailadm-managed virtual users, add the
-mailadm-generated `postfix-users` file to postfix configuration::
-
-    # add these lines into your existing `{postfix_maincf}`
-    virtual_mailbox_maps =
-        hash:{path_virtual_mailboxes}
-
-Note that mailadm will regenerate `{path_virtual_mailboxes}` when
-users are added or deleted through the command line or web API.
-
-
 Integration with nginx
 ----------------------
 

@@ -73,7 +73,6 @@ def gen_sysconfig(db, mailadm_info, vmail_info, localhost_web_port):
             localhost_web_port=localhost_web_port,
             mailadm_user=mailadm_info.pw_name,
             path_mailadm_db=db.path,
-            path_virtual_mailboxes=config.path_virtual_mailboxes,
             mail_domain=config.mail_domain,
             vmail_user=vmail_info.pw_name,
             vmail_homedir=vmail_info.pw_dir,

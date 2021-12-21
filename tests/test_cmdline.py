@@ -123,14 +123,6 @@ class TestUsers:
             *add*user*
         """)
 
-    def test_add_user_sysfiles(self, mycmd):
-        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
-        mycmd.run_ok(["add-user", "x@example.org"], """
-            *added*x@example.org*
-        """)
-        path = mycmd.db.get_connection().config.path_virtual_mailboxes
-        assert "x@example.org" in path.read_text()
-
     def test_add_del_user(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
         mycmd.run_ok(["add-user", "x@example.org"], """

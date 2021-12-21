@@ -28,7 +28,6 @@ def create_app_from_db(db):
 
             try:
                 user_info = conn.add_email_account(token_info, tries=10)
-                conn.gen_sysfiles()
             except DBError as e:
                 return str(e), 409
             return jsonify(email=user_info.addr, password=user_info.clear_pw,

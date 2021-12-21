@@ -66,7 +66,6 @@ class Connection:
         items = self.get_config_items()
         if items:
             d = dict(items)
-            d["path_virtual_mailboxes"] = self.path_mailadm_db.parent.joinpath("virtual_mailboxes")
             return Config(**d)
 
     def is_initialized(self):
@@ -82,31 +81,11 @@ class Connection:
             return None
 
     def set_config(self, name, value):
-        ok = ["dbversion", "mail_domain", "web_endpoint", "vmail_user", "path_virtual_mailboxes", "mailcow_api_token"]
+        ok = ["dbversion", "mail_domain", "web_endpoint", "vmail_user", "mailcow_endpoint", "mailcow_token"]
         assert name in ok, name
         q = "INSERT OR REPLACE INTO config (name, value) VALUES (?, ?)"
         self.cursor().execute(q, (name, value)).fetchone()
         return value
-
-    def gen_sysfiles(self, dryrun=False):
-        """ generate system files needed by postfix/dovecot for
-        recognizing the current users."""
-        import subprocess
-
-        if not self._write or self._sqlconn.total_changes == 0:
-            raise ValueError("need to be part of write-transaction for proper locking")
-        pf_data = "\n".join((user_info.addr + "    " + user_info.addr)
-                            for user_info in self.get_user_list())
-
-        if dryrun:
-            self.log("would write", self.path_virtual_mailboxes)
-            return
-
-        mapfn = self.config.path_virtual_mailboxes
-        mapfn.write_text(pf_data)
-
-        subprocess.check_call(["postmap", str(mapfn)])
-        self.log("wrote {} len={} bytes".format(mapfn, len(pf_data)))
 
     #
     # token management
@@ -277,13 +256,22 @@ class UserInfo:
 
 
 class Config:
-    def __init__(self, mail_domain, web_endpoint, path_virtual_mailboxes, vmail_user, dbversion, mailcow_api_token):
+    """The mailadm config.
+
+    :param mail_domain: the domain of the mailserver
+    :param web_endpoint: the web endpoint of mailadm's web interface
+    :param vmail_user: the UNIX user which owns the vmail directories
+    :param dbversion: the version of the mailadm database schema
+    :param mailcow_endpoint: the URL to the mailcow API
+    :param mailcow_token: the token to authenticate with the mailcow API
+    """
+    def __init__(self, mail_domain, web_endpoint, vmail_user, dbversion, mailcow_endpoint, mailcow_token):
         self.mail_domain = mail_domain
         self.web_endpoint = web_endpoint
-        self.path_virtual_mailboxes = Path(path_virtual_mailboxes)
         self.vmail_user = vmail_user
         self.dbversion = dbversion
-        self.mailcow_api_token = mailcow_api_token
+        self.mailcow_endpoint = mailcow_endpoint
+        self.mailcow_token = mailcow_token
 
     @property
     def path_vmaildir(self):
