@@ -5,11 +5,16 @@ import pytest
 
 
 @pytest.fixture
-def mycmd(request, cmd, make_db, tmpdir, monkeypatch):
+def mycmd(cmd, make_db, tmpdir, monkeypatch):
     db = make_db(tmpdir.mkdir("mycmd"), init=False)
     monkeypatch.setenv("MAILADM_DB", str(db.path))
     cmd.db = db
-    cmd.run_ok(["init"])
+    if os.environ["MAILCOW_TOKEN"] == "":
+        raise KeyError("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
+    cmd.run_ok(["init", "--mailcow-endpoint", "https://dc.develcow.de/api/v1/",
+                "--mailcow-token", os.environ["MAILCOW_TOKEN"],
+                "--mail-domain", "x.testrun.org",
+                "--web-endpoint", "https://example.org/new_email"])
     return cmd
 
 
@@ -50,9 +55,9 @@ class TestQR:
         """)
         monkeypatch.chdir(tmpdir)
         mycmd.run_ok(["gen-qr", "oneweek"], """
-            *dcaccount-example.org-oneweek.png*
+            *dcaccount-x.testrun.org-oneweek.png*
         """)
-        p = tmpdir.join("dcaccount-example.org-oneweek.png")
+        p = tmpdir.join("dcaccount-x.testrun.org-oneweek.png")
         assert p.exists()
 
     def test_gen_qr_no_token(self, mycmd, tmpdir, monkeypatch):
@@ -125,23 +130,23 @@ class TestUsers:
 
     def test_add_del_user(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
-        mycmd.run_ok(["add-user", "x@example.org"], """
-            *added*x@example.org*
+        mycmd.run_ok(["add-user", "x@x.testrun.org"], """
+            *added*x@x.testrun.org*
         """)
         mycmd.run_ok(["list-users"], """
-            *x@example.org*test1*
+            *x@x.testrun.org*test1*
         """)
-        mycmd.run_fail(["add-user", "x@example.org"], """
-            *failed to add*x@example.org*
+        mycmd.run_fail(["add-user", "x@x.testrun.org"], """
+            *failed to add*x@x.testrun.org*
         """)
-        mycmd.run_ok(["del-user", "x@example.org"], """
-            *deleted*x@example.org*
+        mycmd.run_ok(["del-user", "x@x.testrun.org"], """
+            *deleted*x@x.testrun.org*
         """)
 
     def test_adduser_and_expire(self, mycmd, monkeypatch):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
-        mycmd.run_ok(["add-user", "x@example.org"], """
-            *added*x@example.org*
+        mycmd.run_ok(["add-user", "x@x.testrun.org"], """
+            *added*x@x.testrun.org*
         """)
 
         to_expire = time.time() - datetime.timedelta(weeks=1).total_seconds() - 1
@@ -149,32 +154,33 @@ class TestUsers:
         # create an old account that should expire
         with monkeypatch.context() as m:
             m.setattr(time, "time", lambda: to_expire)
-            mycmd.run_ok(["add-user", "y@example.org"], """
-                *added*y@example.org*
+            mycmd.run_ok(["add-user", "y@x.testrun.org"], """
+                *added*y@x.testrun.org*
             """)
 
         config = mycmd.db.get_config()
-        user_path = config.get_vmail_user_dir("y@example.org")
+        user_path = config.get_vmail_user_dir("y@x.testrun.org")
         os.makedirs(str(user_path))
         user_path.joinpath("something").write_text("hello")
 
         out = mycmd.run_ok(["list-users"])
-        assert "y@example.org" in out
+        assert "y@x.testrun.org" in out
 
         mycmd.run_ok(["prune"])
 
         out = mycmd.run_ok(["list-users"])
-        assert "x@example.org" in out
-        assert "y@example.org" not in out
+        assert "x@x.testrun.org" in out
+        assert "y@x.testrun.org" not in out
 
         assert not user_path.exists()
+        mycmd.run_ok(["del-user", "x@x.testrun.org"])
 
     def test_two_tokens_users(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."])
         mycmd.run_ok(["add-token", "test2", "--expiry=1d", "--prefix=tmpx."])
-        mycmd.run_fail(["add-user", "x@example.org"])
-        mycmd.run_ok(["add-user", "tmpy.123@example.org"])
-        mycmd.run_ok(["add-user", "tmpx.456@example.org"])
+        mycmd.run_fail(["add-user", "x@x.testrun.org"])
+        mycmd.run_ok(["add-user", "tmpy.123@x.testrun.org"])
+        mycmd.run_ok(["add-user", "tmpx.456@x.testrun.org"])
         mycmd.run_ok(["list-users"], """
             tmpy.123*test1*
             tmpx.456*test2*
@@ -185,3 +191,5 @@ class TestUsers:
         out = mycmd.run_ok(["list-users", "--token", "test2"])
         assert "tmpy.123" not in out
         assert "tmpx.456" in out
+        mycmd.run_ok(["del-user", "tmpy.123@x.testrun.org"])
+        mycmd.run_ok(["del-user", "tmpx.456@x.testrun.org"])

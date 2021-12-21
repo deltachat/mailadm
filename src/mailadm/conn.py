@@ -198,7 +198,8 @@ class Connection:
                                  addr, self.config.mail_domain))
 
         mailcow = MailcowConnection(self.config)
-        mailcow.add_user_mailcow(addr, password)
+        r = mailcow.add_user_mailcow(addr, password)
+        assert r.json()[0]["type"] == "success", "mailcow API request failed"
 
         self.add_user(addr=addr, date=int(time.time()),
                       ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
@@ -206,7 +207,7 @@ class Connection:
         self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
 
         user_info = self.get_user_by_addr(addr)
-        user_info.clear_pw = password
+        user_info.password = password
         return user_info
 
 

@@ -1,6 +1,7 @@
 import pytest
 
 from mailadm.conn import DBError
+from mailadm.mailcow import MailcowConnection
 
 
 @pytest.fixture
@@ -43,3 +44,6 @@ def test_email_tmp_gen(conn):
     assert len(username) == 5
     for c in username:
         assert c in "2345789acdefghjkmnpqrstuvwxyz"
+
+    mailcow = MailcowConnection(conn.config)
+    mailcow.del_user_mailcow(user_info.addr)

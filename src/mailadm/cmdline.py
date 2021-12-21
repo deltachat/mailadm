@@ -17,6 +17,7 @@ from click import style
 import mailadm
 import mailadm.db
 from .conn import DBError
+from .mailcow import MailcowConnection
 import mailadm.util
 
 
@@ -183,10 +184,10 @@ def gen_qr(ctx, tokenname):
               help="dovecot virtual mail delivery user")
 @click.option("--mailcow-endpoint", type=str, default=None,
               help="the API endpoint of the mailcow instance")
-@click.option("--mailcow-api-token", type=str, default=None,
-              help="get API token in the mailcow web interface")
+@click.option("--mailcow-token", type=str, default=None,
+              help="you can get an API token in the mailcow web interface")
 @click.pass_context
-def init(ctx, web_endpoint, mail_domain, vmail_user, mailcow_endpoint, mailcow_api_token):
+def init(ctx, web_endpoint, mail_domain, vmail_user, mailcow_endpoint, mailcow_token):
     """(re-)initialize configuration in mailadm database.
 
     Warnings: init can be called multiple times but if you are doing this to a
@@ -194,7 +195,7 @@ def init(ctx, web_endpoint, mail_domain, vmail_user, mailcow_endpoint, mailcow_a
     depending on what you changed.
     """
     if not mailcow_endpoint:
-        mailcow_endpoint = "https://%s/api/" % (mail_domain,)
+        mailcow_endpoint = "https://%s/api/v1/" % (mail_domain,)
 
     db = get_mailadm_db(ctx, fail_missing_config=False)
     click.secho("initializing database {}".format(db.path))
@@ -204,7 +205,7 @@ def init(ctx, web_endpoint, mail_domain, vmail_user, mailcow_endpoint, mailcow_a
         web_endpoint=web_endpoint,
         vmail_user=vmail_user,
         mailcow_endpoint=mailcow_endpoint,
-        mailcow_token=mailcow_api_token
+        mailcow_token=mailcow_token
     )
 
 
@@ -284,7 +285,7 @@ def add_user(ctx, addr, password, token):
                 ctx.fail("token does not exist: {!r}".format(token))
         try:
             conn.add_email_account(token_info, addr=addr, password=password)
-        except DBError as e:
+        except (DBError, AssertionError) as e:
             ctx.fail("failed to add e-mail account {}: {}".format(addr, e))
 
 
@@ -294,7 +295,13 @@ def add_user(ctx, addr, password, token):
 def del_user(ctx, addr):
     """remove e-mail address"""
     with get_mailadm_db(ctx).write_transaction() as conn:
-        conn.del_user(addr=addr)
+        try:
+            mailcow = MailcowConnection(conn.config)
+            r = mailcow.del_user_mailcow(addr)
+            assert r.json()[0]["type"] == "success", "mailcow API request failed"
+            conn.del_user(addr=addr)
+        except (DBError, AssertionError) as e:
+            ctx.fail("failed to delete e-mail account {}: {}".format(addr, e))
 
 
 @click.command()
@@ -314,6 +321,12 @@ def prune(ctx, dryrun):
                 click.secho("{} [{}]".format(user_info.addr, user_info.token_name), fg="red")
         else:
             for user_info in expired_users:
+                mailcow = MailcowConnection(conn.config)
+                r = mailcow.del_user_mailcow(user_info.addr)
+                if r.json()[0]["type"] != "success":
+                    click.secho("failed to delete e-mail account %s: mailcow API request failed" %
+                                (user_info.addr,))
+                    continue
                 conn.del_user(user_info.addr)
                 click.secho("{} (token {!r})".format(user_info.addr, user_info.token_name))
 
