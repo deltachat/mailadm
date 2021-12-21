@@ -57,25 +57,9 @@ class TestTokenAccounts:
             addr = "tmp.{}@example.org".format(i)
             conn.add_user(addr=addr, hash_pw=hash_pw, date=now, ttl=60 * 60, token_name="onehour")
 
+        token_info = conn.get_tokeninfo_by_name("onehour")
         with pytest.raises(TokenExhausted):
-            conn.add_user(addr="tmp.xx@example.org", hash_pw=hash_pw,
-                          date=now, ttl=60 * 60, token_name="onehour")
-
-    def test_homedirs(self, conn):
-        clear_pw, hash_pw = get_doveadm_pw()
-
-        conn.add_user(
-            addr="tmp.1@example.org", hash_pw=hash_pw,
-            date=10, ttl=60 * 60, token_name="onehour")
-        conn.add_user(
-            addr="tmp.2@example.org", hash_pw=hash_pw,
-            date=11, ttl=60 * 60, token_name="onehour")
-        known = set()
-        for user_info in conn.get_user_list():
-            if user_info.homedir in known:
-                pytest.fail("duplicate homedir" + str(user_info.homedir))
-            assert user_info.homedir.relative_to(conn.config.path_vmaildir)
-            known.add(user_info.homedir)
+            conn.add_email_account(token_info, addr="tmp.xx@example.org", password=clear_pw)
 
     def test_add_expire_del(self, conn):
         now = 10000

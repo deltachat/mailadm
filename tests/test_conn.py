@@ -33,9 +33,6 @@ def test_email_tmp_gen(conn):
     conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
     token_info = conn.get_tokeninfo_by_name("burner1")
     user_info = conn.add_email_account(token_info=token_info)
-    dn = user_info.homedir
-    assert dn.name == user_info.addr
-    assert dn.parent.name == "example.org"
 
     assert user_info.token_name == "burner1"
     localpart, domain = user_info.addr.split("@")

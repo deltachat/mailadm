@@ -1,12 +1,10 @@
-from .conn import Config
-
 
 class MailcowConnection:
     """Class to manage requests to the mailcow instance.
 
     :param config: the mailadm config
     """
-    def __init__(self, config: Config):
+    def __init__(self, config):
         self.config = config
 
     def add_user_mailcow(self, addr, password):
