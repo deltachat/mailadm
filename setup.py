@@ -37,6 +37,7 @@ def main():
             "pillow",
             "qrcode",
             "gunicorn",
+            "requests",
         ],
         zip_safe=False,
     )

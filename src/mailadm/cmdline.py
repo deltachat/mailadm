@@ -202,7 +202,7 @@ def init(ctx, web_endpoint, mail_domain, vmail_user, mailcow_endpoint, mailcow_a
         web_endpoint=web_endpoint,
         vmail_user=vmail_user,
         mailcow_endpoint=mailcow_endpoint,
-        mailcow_api_token=mailcow_api_token
+        mailcow_token=mailcow_api_token
     )
 
 
