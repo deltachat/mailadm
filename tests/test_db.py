@@ -45,17 +45,15 @@ class TestTokenAccounts:
     def test_add_with_wrong_token(self, conn):
         now = 10000
         addr = "tmp.123@example.org"
-        clear_pw, hash_pw = get_doveadm_pw()
         with pytest.raises(DBError):
-            conn.add_user(addr=addr, hash_pw=hash_pw,
-                          date=now, ttl=60 * 60, token_name="112l3kj123123")
+            conn.add_user(addr=addr, date=now, ttl=60 * 60, token_name="112l3kj123123")
 
     def test_add_maxuse(self, conn):
         now = 10000
         clear_pw, hash_pw = get_doveadm_pw()
         for i in range(self.MAXUSE):
             addr = "tmp.{}@example.org".format(i)
-            conn.add_user(addr=addr, hash_pw=hash_pw, date=now, ttl=60 * 60, token_name="onehour")
+            conn.add_user(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
 
         token_info = conn.get_tokeninfo_by_name("onehour")
         with pytest.raises(TokenExhausted):
@@ -66,12 +64,11 @@ class TestTokenAccounts:
         addr = "tmp.123@example.org"
         addr2 = "tmp.456@example.org"
         addr3 = "tmp.789@example.org"
-        clear_pw, hash_pw = get_doveadm_pw()
-        conn.add_user(addr=addr, hash_pw=hash_pw, date=now, ttl=60 * 60, token_name="onehour")
+        conn.add_user(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
         with pytest.raises(DBError):
-            conn.add_user(addr=addr, hash_pw=hash_pw, date=now, ttl=60 * 60, token_name="onehour")
-        conn.add_user(addr=addr2, hash_pw=hash_pw, date=now, ttl=30 * 60, token_name="onehour")
-        conn.add_user(addr=addr3, hash_pw=hash_pw, date=now, ttl=32 * 60, token_name="onehour")
+            conn.add_user(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
+        conn.add_user(addr=addr2, date=now, ttl=30 * 60, token_name="onehour")
+        conn.add_user(addr=addr3, date=now, ttl=32 * 60, token_name="onehour")
         conn.commit()
         expired = conn.get_expired_users(sysdate=now + 31 * 60)
         assert len(expired) == 1

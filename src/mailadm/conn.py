@@ -144,12 +144,12 @@ class Connection:
     # user management
     #
 
-    def add_user(self, addr, hash_pw, date, ttl, token_name):
+    def add_user(self, addr, date, ttl, token_name):
         self.execute("PRAGMA foreign_keys=on;")
 
         q = """INSERT INTO users (addr, hash_pw, homedir, date, ttl, token_name)
                VALUES (?, ?, ?, ?, ?, ?)"""
-        self.execute(q, (addr, hash_pw, "mailcow", date, ttl, token_name))
+        self.execute(q, (addr, "mailcow", "mailcow", date, ttl, token_name))
         self.execute("UPDATE tokens SET usecount = usecount + 1"
                      "  WHERE name=?", (token_name,))
 
@@ -199,7 +199,7 @@ class Connection:
         mailcow = MailcowConnection(self.config)
         mailcow.add_user_mailcow(addr, password)
 
-        self.add_user(addr=addr, hash_pw="mailcow", date=int(time.time()),
+        self.add_user(addr=addr, date=int(time.time()),
                       ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
 
         self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
@@ -244,11 +244,10 @@ class TokenInfo:
 
 
 class UserInfo:
-    _select_user_columns = "SELECT addr, hash_pw, date, ttl, token_name from users\n"
+    _select_user_columns = "SELECT addr, date, ttl, token_name from users\n"
 
-    def __init__(self, addr, hash_pw, date, ttl, token_name):
+    def __init__(self, addr, date, ttl, token_name):
         self.addr = addr
-        self.hash_pw = hash_pw
         self.date = date
         self.ttl = ttl
         self.token_name = token_name
