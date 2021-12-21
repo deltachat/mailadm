@@ -1,6 +1,5 @@
 import os
 from random import randint
-import sys
 import time
 import datetime
 import pytest
@@ -61,7 +60,7 @@ class TestQR:
 
 class TestTokens:
     def test_uninitialized(self, cmd):
-        cmd.run_fail(["list-tokens"],"""
+        cmd.run_fail(["list-tokens"], """
             *MAILADM_DB not set*
         """)
 
