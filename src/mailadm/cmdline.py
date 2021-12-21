@@ -106,6 +106,7 @@ def setup_bot(ctx, email, password, db):
     print("\nWaiting until you join the chat")
     sys.stdout.flush()  # flush stdout to actually show the messages above
     setupplugin.member_added.wait()
+    setupplugin.message_sent.unset()
     chat.send_text("Welcome to the Admin group on %s! Type /help to get an overview over existing commands." %
                    (os.environ["MAIL_DOMAIN"],))
 
@@ -113,11 +114,11 @@ def setup_bot(ctx, email, password, db):
     with mailadmdb.read_connection() as rconn:
         admingrpid_old = rconn.config.admingrpid
         if admingrpid_old:
+            setupplugin.message_sent.wait()
+            setupplugin.message_sent.unset()
             oldgroup = ac.get_chat_by_id(int(admingrpid_old))
             oldgroup.send_text("Someone created a new admin group on the command line. This one is not valid anymore.")
-
-    # it would be nicer to properly wait for the member_added event, but this function isn't async, so it doesn't work.
-    time.sleep(5)
+    setupplugin.message_sent.wait()
     ac.shutdown()
 
     with mailadmdb.write_transaction() as wconn:
