@@ -3,7 +3,7 @@
 import pytest
 
 from mailadm.conn import DBError, TokenExhausted, UserNotFound
-from mailadm.util import get_doveadm_pw
+from mailadm.util import gen_password
 
 
 def test_token(tmpdir, make_db):
@@ -51,14 +51,14 @@ class TestTokenAccounts:
 
     def test_add_maxuse(self, conn):
         now = 10000
-        clear_pw, hash_pw = get_doveadm_pw()
+        password = gen_password()
         for i in range(self.MAXUSE):
             addr = "tmp.{}@x.testrun.org".format(i)
             conn.add_user(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
 
         token_info = conn.get_tokeninfo_by_name("onehour")
         with pytest.raises(TokenExhausted):
-            conn.add_email_account(token_info, addr="tmp.xx@x.testrun.org", password=clear_pw)
+            conn.add_email_account(token_info, addr="tmp.xx@x.testrun.org", password=password)
 
     def test_add_expire_del(self, conn):
         now = 10000
