@@ -29,7 +29,10 @@ class MailcowConnection:
             "tls_enforce_in": True,
             "tls_enforce_out": True,
         }
-        return r.post(url, json=payload, headers=self.auth)
+        result = r.post(url, json=payload, headers=self.auth)
+        if result.json()[0]["type"] != "success":
+            print(result.json())  # debug
+        return result
 
     def del_user_mailcow(self, addr):
         """HTTP Request to delete a user from the mailcow instance.
