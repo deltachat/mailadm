@@ -159,9 +159,6 @@ class Connection:
         c = self.execute(q, (addr, ))
         if c.rowcount == 0:
             raise UserNotFound("addr {!r} does not exist".format(addr))
-        path = self.config.get_vmail_user_dir(addr)
-        if path.exists():
-            shutil.rmtree(str(path))
         self.log("deleted user {!r}".format(addr))
 
     def get_user_by_addr(self, addr):
