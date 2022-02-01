@@ -16,25 +16,64 @@ Mailadm keeps all configuration, token and user state in a single
 sqlite database.  It comes with an example install script that
 can be modified for distributions.
 
+
+For Mailcow Admins
+------------------
+
 .. note::
 
-    At this point installation is only well supported/documented for particular
-    Dovecot/Postfix/Systemd/Nginx configurations. The mailadm python software does
-    not depend on it much but you will have to figure the use of other server software
-    yourselve. It might still make sense to use part of the install script.
-    As we are advocating working from a git checkout you may keep your own
-    branch in your local git and update with remote master from time to time.
-    Please report bugs and improvements as issues or PR requests.
+    To use mailadm, you need admin access to a `Mailcow
+    <https://mailcow.email/>`_ instance. You can run mailadm as a docker
+    container, either on the same machine as mailcow or somewhere else.
 
-
-Quickstart
-----------
-
-Get a git copy of the mailadm repository and change into it.
+First get a git copy of the mailadm repository and change into it.
 
     $ git clone https://github.com/deltachat/mailadm
     $ cd mailadm
 
+Now you need to configure some environment variables in a file called ``.env``:
+
+* ``MAIL_DOMAIN``: the server name of the email addresses your users will have.
+* ``WEB_ENDPOINT``: the web endpoint of mailadm; make sure mailadm receives
+  POST requests at this address.
+* ``MAILCOW_ENDPOINT``: the API endpoint of your mailcow instance.
+* ``MAILCOW_TOKEN``: the access token for the mailcow API; you can generate it
+  in the mailcow admin interface.
+
+In the end, your ``.env`` file will probably look like this:
+
+.. code:: bash
+
+    export MAIL_DOMAIN=mail.example.org
+    export WEB_ENDPOINT=http://mailadm.example.org:3691/new_email
+    export MAILCOW_ENDPOINT=https://mailcow-web.example.org/api/v1/
+    export MAILCOW_TOKEN=932848-324B2E-787E98-FCA29D-89789A
+    
+Now you can build and run the docker container:
+
+    $ sudo docker build . -t mailadm-mailcow
+    $ touch mailadm.db
+    $ . .env && sudo docker run --mount type=bind,source=$PWD/mailadm.db,target=/mailadm.db --mount type=bind,source=$PWD/.env,target=/mailadm/.env --rm mailadm-mailcow /usr/bin/mailadm init --web-endpoint $WEB_ENDPOINT --mail-domain $MAIL_DOMAIN --mailcow-endpoint $MAILCOW_ENDPOINT --mailcow-token $MAILCOW_TOKEN
+    $ sudo docker run -d -p 3691:3691 --mount type=bind,source=$PWD/mailadm.db,target=/mailadm.db --name mailadm mailadm-mailcow gunicorn -b :3691 -w 1 mailadm.app:app
+
+
+For Postfix/Dovecot Admins
+--------------------------
+
+.. note::
+
+    For Dovecot/Postfix/Systemd/Nginx mail setups, we are advocating working
+    from the `postfix` git branch. You may keep your own branch in your local
+    git and update with remote master from time to time. Please report bugs
+    and improvements as issues or PR requests.
+
+If you have a postfix/dovecot mail setup, you can add mailadm like this:
+
+First get a git copy of the mailadm repository and change into it.
+
+    $ git clone https://github.com/deltachat/mailadm
+    $ cd mailadm
+    $ git checkout postfix
 
 Now **review and then run** this install script:
 
@@ -76,8 +115,8 @@ You can then add a first token::
       maxuse = 50
       usecount = 0
       token  = 1d_r84EW3N8hEKk
-      http://localhost:3961/new_email?t=1d_r84EW3N8hEKk&n=oneday
-      DCACCOUNT:http://localhost:3961/new_email?t=1d_r84EW3N8hEKk&n=oneday
+      http://localhost:3691/new_email?t=1d_r84EW3N8hEKk&n=oneday
+      DCACCOUNT:http://localhost:3691/new_email?t=1d_r84EW3N8hEKk&n=oneday
 
 and then we can add a user (which will automatically use the token
 because the email addresses matches the prefix)::
@@ -103,12 +142,12 @@ Let's find out the URL again for creating new users::
       maxuse = 50
       usecount = 1
       token  = 1d_r84EW3N8hEKk
-      http://localhost:3961/?t=1d_r84EW3N8hEKk&n=oneday
-      DCACCOUNT:http://localhost:3961/new_email?t=1d_r84EW3N8hEKk&n=oneday
+      http://localhost:3691/?t=1d_r84EW3N8hEKk&n=oneday
+      DCACCOUNT:http://localhost:3691/new_email?t=1d_r84EW3N8hEKk&n=oneday
 
 The second last line is the one we can use with curl::
 
-   $ curl -X POST 'http://localhost:3961/?t=1d_r84EW3N8hEKk&n=oneday'
+   $ curl -X POST 'http://localhost:3691/?t=1d_r84EW3N8hEKk&n=oneday'
    {"email":"tmp.km5y5@example.org","expiry":"1d","password":"cg8VL5f0jH2U","ttl":86400}
 
 We got an e-mail account through the web API, nice.
