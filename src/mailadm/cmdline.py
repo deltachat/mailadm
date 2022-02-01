@@ -210,7 +210,7 @@ def init(ctx, web_endpoint, mail_domain, vmail_user, mailcow_endpoint, mailcow_t
 
 
 @click.command()
-@click.option("--localhost-web-port", type=int, default=3961,
+@click.option("--localhost-web-port", type=int, default=3691,
               help="localhost port the web app will run on")
 @click.option("--mailadm-user", type=str, default="mailadm",
               help="mailadm user which runs mailadm web and purge services")
@@ -341,7 +341,7 @@ def web(ctx, debug):
 
     db = get_mailadm_db(ctx)
     app = create_app_from_db(db)
-    app.run(debug=debug, host="localhost", port=3961)
+    app.run(debug=debug, host="localhost", port=3691)
 
 
 mailadm_main.add_command(init)
