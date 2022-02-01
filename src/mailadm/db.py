@@ -9,8 +9,10 @@ from .conn import Connection
 
 
 def get_db_path():
-    db_path = os.environ.get("MAILADM_DB")
-    if db_path is None:
+    db_path = os.environ.get("MAILADM_DB", "/mailadm.db")
+    try:
+        sqlite3.connect(db_path)
+    except sqlite3.OperationalError:
         raise RuntimeError("mailadm.db not found: MAILADM_DB not set")
     return Path(db_path)
 
