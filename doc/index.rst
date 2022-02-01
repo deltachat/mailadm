@@ -45,7 +45,7 @@ In the end, your ``.env`` file will probably look like this:
 .. code:: bash
 
     export MAIL_DOMAIN=mail.example.org
-    export WEB_ENDPOINT=http://mailadm.example.org:3691/new_email
+    export WEB_ENDPOINT=http://mailadm.example.org:3691/
     export MAILCOW_ENDPOINT=https://mailcow-web.example.org/api/v1/
     export MAILCOW_TOKEN=932848-324B2E-787E98-FCA29D-89789A
     
