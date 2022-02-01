@@ -6,10 +6,7 @@ https://github.com/codespeaknet/sysadmin/blob/master/docs/postfix-virtual-domain
 
 from __future__ import print_function
 
-import os
 import time
-import pwd
-import grp
 import sys
 import click
 from click import style
@@ -180,14 +177,12 @@ def gen_qr(ctx, tokenname):
               default="https://example.org/new_email", show_default="https://example.org/new_email")
 @click.option("--mail-domain", type=str, prompt="mail domain for which we create new users",
               default="example.org", show_default="example.org")
-@click.option("--vmail-user", type=str, default="vmail",
-              help="dovecot virtual mail delivery user")
 @click.option("--mailcow-endpoint", type=str, default=None,
               help="the API endpoint of the mailcow instance")
 @click.option("--mailcow-token", type=str, default=None,
               help="you can get an API token in the mailcow web interface")
 @click.pass_context
-def init(ctx, web_endpoint, mail_domain, vmail_user, mailcow_endpoint, mailcow_token):
+def init(ctx, web_endpoint, mail_domain, mailcow_endpoint, mailcow_token):
     """(re-)initialize configuration in mailadm database.
 
     Warnings: init can be called multiple times but if you are doing this to a
@@ -203,62 +198,9 @@ def init(ctx, web_endpoint, mail_domain, vmail_user, mailcow_endpoint, mailcow_t
     db.init_config(
         mail_domain=mail_domain,
         web_endpoint=web_endpoint,
-        vmail_user=vmail_user,
         mailcow_endpoint=mailcow_endpoint,
         mailcow_token=mailcow_token
     )
-
-
-@click.command()
-@click.option("--localhost-web-port", type=int, default=3691,
-              help="localhost port the web app will run on")
-@click.option("--mailadm-user", type=str, default="mailadm",
-              help="mailadm user which runs mailadm web and purge services")
-@option_dryrun
-@click.pass_context
-def gen_sysconfig(ctx, dryrun, localhost_web_port, mailadm_user):
-    """generate pre-configured system configuration files (config/dovecot/postfix/systemd). """
-
-    db = get_mailadm_db(ctx)
-    config = db.get_config()
-
-    mailadm_info = get_pwinfo(ctx, "mailadm", mailadm_user)
-    vmail_info = get_pwinfo(ctx, "vmail", config.vmail_user)
-    group_info = grp.getgrnam(config.vmail_user)
-
-    if mailadm_user not in group_info.gr_mem:
-        ctx.fail("vmail group {!r} does not have mailadm user "
-                 "{!r} as member".format(config.vmail_user, mailadm_user))
-
-    for fn, data, mode in mailadm.util.gen_sysconfig(
-            db, mailadm_info=mailadm_info, vmail_info=vmail_info,
-            localhost_web_port=localhost_web_port):
-        if dryrun:
-            click.secho("")
-            click.secho("")
-            click.secho("DRY-WRITE: {}".format(str(fn)))
-            click.secho("")
-            for line in data.strip().splitlines():
-                click.secho("    " + line)
-        else:
-            fn.write_text(data)
-            fn.chmod(mode)
-            os.chown(str(fn), 0, 0)  # uid root, gid root
-            dirfn = fn.parent
-            if str(dirfn) == mailadm_info.pw_dir:
-                dirmode = 0o775
-                dirfn.chmod(dirmode)
-                os.chown(str(dirfn), mailadm_info.pw_uid, mailadm_info.pw_gid)
-                click.secho("change-perm {} [owner={}, mode={:03o}]".format(
-                            dirfn, mailadm_user, dirmode))
-            click.secho("wrote {} [mode={:03o}]".format(fn, mode))
-
-
-def get_pwinfo(ctx, description, username):
-    try:
-        return pwd.getpwnam(username)
-    except KeyError:
-        ctx.fail("{} user {!r} does not exist".format(description, username))
 
 
 @click.command()
@@ -355,7 +297,6 @@ mailadm_main.add_command(add_user)
 mailadm_main.add_command(del_user)
 mailadm_main.add_command(list_users)
 mailadm_main.add_command(prune)
-mailadm_main.add_command(gen_sysconfig)
 mailadm_main.add_command(web)
 
 

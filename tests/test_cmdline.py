@@ -29,15 +29,6 @@ class TestInitAndInstall:
         monkeypatch.setenv("MAILADM_DB", tmpdir.join("mailadm.db").strpath)
         cmd.run_ok(["init"])
 
-    def test_gen_sysconfig(self, mycmd):
-        mycmd.run_ok(["gen-sysconfig", "--dryrun"], "")
-
-    def test_gen_sysconfig_no_vmail(self, mycmd):
-        mycmd.run_fail(["gen-sysconfig", "--vmail-user", "l1kj23l"])
-
-    def test_gen_sysconfig_no_mailadm(self, mycmd):
-        mycmd.run_fail(["gen-sysconfig", "--mailadm-user", "l1kj23l"])
-
 
 class TestConfig:
     def test_config_simple(self, mycmd):
@@ -157,11 +148,6 @@ class TestUsers:
             mycmd.run_ok(["add-user", "y@x.testrun.org"], """
                 *added*y@x.testrun.org*
             """)
-
-        config = mycmd.db.get_config()
-        user_path = config.get_vmail_user_dir("y@x.testrun.org")
-        os.makedirs(str(user_path))
-        user_path.joinpath("something").write_text("hello")
 
         out = mycmd.run_ok(["list-users"])
         assert "y@x.testrun.org" in out

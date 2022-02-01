@@ -1,7 +1,3 @@
-
-import pathlib
-import shutil
-import pwd
 import time
 import sqlite3
 import mailadm.util
@@ -80,8 +76,7 @@ class Connection:
             return None
 
     def set_config(self, name, value):
-        ok = ["dbversion", "mail_domain", "web_endpoint", "vmail_user", "mailcow_endpoint",
-              "mailcow_token"]
+        ok = ["dbversion", "mail_domain", "web_endpoint", "mailcow_endpoint", "mailcow_token"]
         assert name in ok, name
         q = "INSERT OR REPLACE INTO config (name, value) VALUES (?, ?)"
         self.cursor().execute(q, (name, value)).fetchone()
@@ -232,13 +227,10 @@ class TokenInfo:
                 web=self.config.web_endpoint, token=self.token, name=self.name))
 
     def get_qr_uri(self):
-        return ("DCACCOUNT:" + self.get_web_url())
+        return "DCACCOUNT:" + self.get_web_url()
 
     def check_exhausted(self):
-        """Check if a token can still create email accouts.
-
-        :param tokeninfo: the database row of the token
-        """
+        """Check if a token can still create email accounts."""
         if self.usecount >= self.maxuse:
             raise TokenExhausted
 
@@ -258,24 +250,14 @@ class Config:
 
     :param mail_domain: the domain of the mailserver
     :param web_endpoint: the web endpoint of mailadm's web interface
-    :param vmail_user: the UNIX user which owns the vmail directories
     :param dbversion: the version of the mailadm database schema
     :param mailcow_endpoint: the URL to the mailcow API
     :param mailcow_token: the token to authenticate with the mailcow API
     """
-    def __init__(self, mail_domain, web_endpoint, vmail_user, dbversion, mailcow_endpoint,
+    def __init__(self, mail_domain, web_endpoint, dbversion, mailcow_endpoint,
                  mailcow_token):
         self.mail_domain = mail_domain
         self.web_endpoint = web_endpoint
-        self.vmail_user = vmail_user
         self.dbversion = dbversion
         self.mailcow_endpoint = mailcow_endpoint
         self.mailcow_token = mailcow_token
-
-    @property
-    def path_vmaildir(self):
-        entry = pwd.getpwnam(self.vmail_user)
-        return pathlib.Path(entry.pw_dir)
-
-    def get_vmail_user_dir(self, user):
-        return self.path_vmaildir.joinpath(self.mail_domain, user)

@@ -107,7 +107,6 @@ def make_db(monkeypatch, mailcow_auth, mailcow_endpoint):
             db.init_config(
                 mail_domain="x.testrun.org",
                 web_endpoint="https://example.org/new_email",
-                vmail_user="vmail",
                 mailcow_endpoint=mailcow_endpoint,
                 mailcow_token=mailcow_auth.get("X-API-Key"),
             )
