@@ -17,7 +17,7 @@ from click import style
 import mailadm
 import mailadm.db
 from .conn import DBError
-from .mailcow import MailcowConnection
+from .mailcow import MailcowConnection, MailcowError
 import mailadm.util
 
 
@@ -285,7 +285,7 @@ def add_user(ctx, addr, password, token):
                 ctx.fail("token does not exist: {!r}".format(token))
         try:
             conn.add_email_account(token_info, addr=addr, password=password)
-        except (DBError, AssertionError) as e:
+        except (DBError, MailcowError) as e:
             ctx.fail("failed to add e-mail account {}: {}".format(addr, e))
 
 
@@ -297,10 +297,9 @@ def del_user(ctx, addr):
     with get_mailadm_db(ctx).write_transaction() as conn:
         try:
             mailcow = MailcowConnection(conn.config)
-            r = mailcow.del_user_mailcow(addr)
-            assert r.json()[0]["type"] == "success", "mailcow API request failed"
+            mailcow.del_user_mailcow(addr)
             conn.del_user(addr=addr)
-        except (DBError, AssertionError) as e:
+        except (DBError, MailcowError) as e:
             ctx.fail("failed to delete e-mail account {}: {}".format(addr, e))
 
 
@@ -322,8 +321,9 @@ def prune(ctx, dryrun):
         else:
             for user_info in expired_users:
                 mailcow = MailcowConnection(conn.config)
-                r = mailcow.del_user_mailcow(user_info.addr)
-                if r.json()[0]["type"] != "success":
+                try:
+                    mailcow.del_user_mailcow(user_info.addr)
+                except MailcowError:
                     click.secho("failed to delete e-mail account %s: mailcow API request failed" %
                                 (user_info.addr,))
                     continue

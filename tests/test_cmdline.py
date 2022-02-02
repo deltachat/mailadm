@@ -172,7 +172,6 @@ class TestUsers:
         assert "x@x.testrun.org" in out
         assert "y@x.testrun.org" not in out
 
-        assert not user_path.exists()
         mycmd.run_ok(["del-user", "x@x.testrun.org"])
 
     def test_two_tokens_users(self, mycmd):

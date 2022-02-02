@@ -31,8 +31,7 @@ class MailcowConnection:
         }
         result = r.post(url, json=payload, headers=self.auth)
         if result.json()[0]["type"] != "success":
-            print(result.json())  # debug
-        return result
+            raise MailcowError(result.json())
 
     def del_user_mailcow(self, addr):
         """HTTP Request to delete a user from the mailcow instance.
@@ -40,9 +39,18 @@ class MailcowConnection:
         :param addr: the email account to be deleted
         """
         url = self.config.mailcow_endpoint + "delete/mailbox"
-        return r.post(url, json=[addr], headers=self.auth)
+        result = r.post(url, json=[addr], headers=self.auth)
+        if result.json()[0]["type"] != "success":
+            raise MailcowError(result.json())
 
-    def get_users(self):
-        """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
-        url = self.config.mailcow_endpoint + "get/mailbox/all"
-        return r.get(url, headers=self.auth)
+#   def get_users(self):
+#       """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
+#       url = self.config.mailcow_endpoint + "get/mailbox/all"
+#       result = r.get(url, headers=self.auth)
+#       if result.json()[0]["type"] != "success":
+#           raise MailcowError(result.json())
+#       return result
+
+
+class MailcowError(Exception):
+    """This is thrown if a Mailcow operation fails."""

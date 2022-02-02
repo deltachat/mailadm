@@ -194,10 +194,6 @@ class Connection:
                 raise ValueError("email {!r} is not on domain {!r}".format(
                                  addr, self.config.mail_domain))
 
-        mailcow = MailcowConnection(self.config)
-        r = mailcow.add_user_mailcow(addr, password)
-        assert r.json()[0]["type"] == "success", "mailcow API request failed"
-
         self.add_user(addr=addr, date=int(time.time()),
                       ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
 
@@ -205,6 +201,11 @@ class Connection:
 
         user_info = self.get_user_by_addr(addr)
         user_info.password = password
+
+        # seems that everything is fine so far, so let's invoke mailcow:
+        mailcow = MailcowConnection(self.config)
+        mailcow.add_user_mailcow(addr, password)
+
         return user_info
 
 
