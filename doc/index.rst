@@ -17,8 +17,8 @@ sqlite database.  It comes with an example install script that
 can be modified for distributions.
 
 
-For Mailcow Admins
-------------------
+Quick Start
+-----------
 
 .. note::
 
@@ -51,47 +51,25 @@ In the end, your ``.env`` file will probably look like this:
     
 Now you can build and run the docker container:
 
+.. code:: bash
+
     $ sudo docker build . -t mailadm-mailcow
     $ touch mailadm.db
     $ . .env && sudo docker run --mount type=bind,source=$PWD/mailadm.db,target=/mailadm.db --mount type=bind,source=$PWD/.env,target=/mailadm/.env --rm mailadm-mailcow /usr/bin/mailadm init --web-endpoint $WEB_ENDPOINT --mail-domain $MAIL_DOMAIN --mailcow-endpoint $MAILCOW_ENDPOINT --mailcow-token $MAILCOW_TOKEN
     $ sudo docker run -d -p 3691:3691 --mount type=bind,source=$PWD/mailadm.db,target=/mailadm.db --name mailadm mailadm-mailcow gunicorn -b :3691 -w 1 mailadm.app:app
 
-
-For Postfix/Dovecot Admins
---------------------------
-
 .. note::
 
-    For Dovecot/Postfix/Systemd/Nginx mail setups, we are advocating working
-    from the `postfix` git branch. You may keep your own branch in your local
-    git and update with remote master from time to time. Please report bugs
-    and improvements as issues or PR requests.
-
-If you have a postfix/dovecot mail setup, you can add mailadm like this:
-
-First get a git copy of the mailadm repository and change into it.
-
-    $ git clone https://github.com/deltachat/mailadm
-    $ cd mailadm
-    $ git checkout postfix
-
-Now **review and then run** this install script:
-
-    $ sudo bash install_mailadm.sh
-
-Note that you can call this command repetetively if you want
-to play around. By default this script:
-
-- creates a `mailadm` user and install the mailadm software into it (from
-  the checkout, not via the Python package index)
-
-- creates config files at approprirate system locations
-  for integrating with systemd, dovecot, postfix and nginx.
-
-- creates a `~mailadm/README.txt` file with further instructions
-  how to do 2-3 line changes to your existing nginx and dovecot
-  config files.
-
+    As the web endpoint also transmits passwords, it is highly recommended to
+    protect the WEB_ENDPOINT with HTTPS, for example through an nginx reverse
+    proxy. In this case, WEB_ENDPOINT needs to be the outward facing address,
+    in this example maybe something like
+    `https://mailadm.example.org/new_email/`.
+    
+    If you want to use the same TLS certificates as for mailcow, it might be
+    necessary to run them on the same machine or use some other mechanism to
+    synchronize them. Take this into account when you plan your production
+    setup.
 
 Adding a first token and user
 ++++++++++++++++++++++++++++++
