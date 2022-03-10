@@ -1,4 +1,5 @@
 import os
+from random import randint
 import time
 import datetime
 import pytest
@@ -120,24 +121,26 @@ class TestUsers:
         """)
 
     def test_add_del_user(self, mycmd):
-        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
-        mycmd.run_ok(["add-user", "x@x.testrun.org"], """
-            *added*x@x.testrun.org*
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", "pytest."])
+        addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+        mycmd.run_ok(["add-user", addr], """
+            *added*pytest*@x.testrun.org*
         """)
         mycmd.run_ok(["list-users"], """
-            *x@x.testrun.org*test1*
+            *pytest*@x.testrun.org*test1*
         """)
-        mycmd.run_fail(["add-user", "x@x.testrun.org"], """
-            *failed to add*x@x.testrun.org*
+        mycmd.run_fail(["add-user", addr], """
+            *failed to add*pytest*@x.testrun.org*
         """)
-        mycmd.run_ok(["del-user", "x@x.testrun.org"], """
-            *deleted*x@x.testrun.org*
+        mycmd.run_ok(["del-user", addr], """
+            *deleted*pytest*@x.testrun.org*
         """)
 
     def test_adduser_and_expire(self, mycmd, monkeypatch):
-        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", ""])
-        mycmd.run_ok(["add-user", "x@x.testrun.org"], """
-            *added*x@x.testrun.org*
+        mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", "pytest."])
+        addr = "pytest.%s@x.testrun.org" % (randint(0, 499),)
+        mycmd.run_ok(["add-user", addr], """
+            *added*pytest*@x.testrun.org*
         """)
 
         to_expire = time.time() - datetime.timedelta(weeks=1).total_seconds() - 1
@@ -145,36 +148,39 @@ class TestUsers:
         # create an old account that should expire
         with monkeypatch.context() as m:
             m.setattr(time, "time", lambda: to_expire)
-            mycmd.run_ok(["add-user", "y@x.testrun.org"], """
-                *added*y@x.testrun.org*
+            addr2 = "pytest.%s@x.testrun.org" % (randint(500, 999),)
+            mycmd.run_ok(["add-user", addr2], """
+                *added*pytest*@x.testrun.org*
             """)
 
         out = mycmd.run_ok(["list-users"])
-        assert "y@x.testrun.org" in out
+        assert addr2 in out
 
         mycmd.run_ok(["prune"])
 
         out = mycmd.run_ok(["list-users"])
-        assert "x@x.testrun.org" in out
-        assert "y@x.testrun.org" not in out
+        assert addr in out
+        assert addr2 not in out
 
-        mycmd.run_ok(["del-user", "x@x.testrun.org"])
+        mycmd.run_ok(["del-user", addr])
 
     def test_two_tokens_users(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."])
         mycmd.run_ok(["add-token", "test2", "--expiry=1d", "--prefix=tmpx."])
         mycmd.run_fail(["add-user", "x@x.testrun.org"])
-        mycmd.run_ok(["add-user", "tmpy.123@x.testrun.org"])
-        mycmd.run_ok(["add-user", "tmpx.456@x.testrun.org"])
+        addr = "tmpy.%s@x.testrun.org" % (randint(0, 499),)
+        addr2 = "tmpx.%s@x.testrun.org" % (randint(500, 999),)
+        mycmd.run_ok(["add-user", addr])
+        mycmd.run_ok(["add-user", addr2])
         mycmd.run_ok(["list-users"], """
-            tmpy.123*test1*
-            tmpx.456*test2*
+            tmpy.*test1*
+            tmpx.*test2*
         """)
         out = mycmd.run_ok(["list-users", "--token", "test1"])
-        assert "tmpy.123" in out
-        assert "tmpx.456" not in out
+        assert addr in out
+        assert addr2 not in out
         out = mycmd.run_ok(["list-users", "--token", "test2"])
-        assert "tmpy.123" not in out
-        assert "tmpx.456" in out
-        mycmd.run_ok(["del-user", "tmpy.123@x.testrun.org"])
-        mycmd.run_ok(["del-user", "tmpx.456@x.testrun.org"])
+        assert addr not in out
+        assert addr2 in out
+        mycmd.run_ok(["del-user", addr])
+        mycmd.run_ok(["del-user", addr2])

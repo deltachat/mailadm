@@ -8,7 +8,7 @@ import random
 def test_new_user_random(db, monkeypatch):
     token = "12319831923123"
     with db.write_transaction() as conn:
-        conn.add_token(name="test123", token=token, prefix="tmp.", expiry="1w")
+        conn.add_token(name="test123", token=token, prefix="pytest.", expiry="1w")
 
     app = create_app_from_db_path(db.path)
     app.debug = True
@@ -31,12 +31,12 @@ def test_new_user_random(db, monkeypatch):
     assert r.json["email"].endswith("@x.testrun.org")
     assert r.json["password"]
     email = r.json["email"]
-    assert email in ["tmp.a@x.testrun.org", "tmp.b@x.testrun.org"]
+    assert email in ["pytest.a@x.testrun.org", "pytest.b@x.testrun.org"]
 
     r2 = app.post('/?t=' + token)
     assert r2.status_code == 200
     assert r2.json["email"] != email
-    assert r2.json["email"] in ["tmp.a@x.testrun.org", "tmp.b@x.testrun.org"]
+    assert r2.json["email"] in ["pytest.a@x.testrun.org", "pytest.b@x.testrun.org"]
 
     r3 = app.post('/?t=' + token)
     assert r3.status_code == 409
