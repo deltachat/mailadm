@@ -30,7 +30,7 @@ class MailcowConnection:
             "tls_enforce_out": True,
         }
         result = r.post(url, json=payload, headers=self.auth)
-        if result.json()[0]["type"] != "success":
+        if type(result.json()) != list or result.json()[0].get("type") != "success":
             raise MailcowError(result.json())
 
     def del_user_mailcow(self, addr):
@@ -40,7 +40,7 @@ class MailcowConnection:
         """
         url = self.config.mailcow_endpoint + "delete/mailbox"
         result = r.post(url, json=[addr], headers=self.auth)
-        if result.json()[0]["type"] != "success":
+        if type(result.json()) != list or result.json()[0].get("type") != "success":
             raise MailcowError(result.json())
 
 #   def get_users(self):

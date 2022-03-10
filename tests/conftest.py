@@ -93,7 +93,7 @@ def mailcow_endpoint():
 @pytest.fixture
 def mailcow_auth():
     if not os.environ.get("MAILCOW_TOKEN"):
-        raise KeyError("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
+        pytest.skip("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
     return {"X-API-Key": os.environ.get("MAILCOW_TOKEN")}
 
 

@@ -1,7 +1,7 @@
 import time
 import sqlite3
 import mailadm.util
-from .mailcow import MailcowConnection
+from .mailcow import MailcowConnection, MailcowError
 
 
 class DBError(Exception):
@@ -199,7 +199,12 @@ class Connection:
 
         # seems that everything is fine so far, so let's invoke mailcow:
         mailcow = MailcowConnection(self.config)
-        mailcow.add_user_mailcow(addr, password)
+        try:
+            mailcow.add_user_mailcow(addr, password)
+        except MailcowError:
+            self.del_user(addr)
+            self.mod_token(token_info.name, maxuse=token_info.maxuse + 1)
+            raise
 
         return user_info
 

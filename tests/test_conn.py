@@ -1,7 +1,10 @@
 import pytest
+from random import randint
+import requests
 
+import mailadm
 from mailadm.conn import DBError
-from mailadm.mailcow import MailcowConnection
+from mailadm.mailcow import MailcowConnection, MailcowError
 
 
 @pytest.fixture
@@ -47,3 +50,36 @@ def test_email_tmp_gen(conn):
 
     mailcow = MailcowConnection(conn.config)
     mailcow.del_user_mailcow(user_info.addr)
+
+
+def test_adduser_mailcow_error(conn):
+    """Test that DB doesn't change if mailcow doesn't work"""
+    conn.set_config("mailcow_token", "wrong")
+    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.",
+                                maxuse=1)
+    with pytest.raises(MailcowError):
+        conn.add_email_account(token_info)
+
+    token_info = conn.get_tokeninfo_by_name(token_info.name)
+    token_info.check_exhausted()
+
+    assert conn.get_user_list(token=token_info.name) == []
+
+
+def test_adduser_db_error(conn, monkeypatch):
+    """Test that no mailcow user is created if there is a DB error"""
+    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
+    addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+
+    def add_user(*args, **kwargs):
+        raise DBError
+    monkeypatch.setattr(mailadm.conn.Connection, "add_user", add_user)
+
+    with pytest.raises(DBError):
+        conn.add_email_account(token_info, addr=addr)
+
+    url = "%sget/mailbox/%s" % (conn.config.mailcow_endpoint, addr)
+    auth = {"X-API-Key": conn.config.mailcow_token}
+    result = requests.get(url, headers=auth)
+    assert result.status_code == 200
+    assert result.json() == {}

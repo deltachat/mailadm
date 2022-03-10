@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import mailadm.db
 from mailadm.conn import DBError
+from mailadm.mailcow import MailcowError
 
 
 def create_app_from_db_path(db_path=None):
@@ -31,7 +32,7 @@ def create_app_from_db(db):
                     user_info = conn.add_email_account(token_info)
                     return jsonify(email=user_info.addr, password=user_info.password,
                                    expiry=token_info.expiry, ttl=user_info.ttl)
-                except (DBError, AssertionError) as e:
+                except (DBError, MailcowError) as e:
                     if i + 1 >= tries:
                         return str(e), 409
     return app
