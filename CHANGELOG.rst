@@ -1,3 +1,9 @@
+Unreleased
+-------------
+
+- support mailcow as a mailserver
+- deprecate dovecot/postfix support
+- provider instructions for docker setup
 
 0.10.5
 -------------
