@@ -61,6 +61,15 @@ class Connection:
         items = self.get_config_items()
         if items:
             d = dict(items)
+            # remove deprecated config keys
+            try:
+                del d["vmail_user"]
+            except KeyError:
+                pass
+            try:
+                del d["path_virtual_mailboxes"]
+            except KeyError:
+                pass
             return Config(**d)
 
     def is_initialized(self):
