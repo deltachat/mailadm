@@ -1,7 +1,7 @@
 Unreleased
 -------------
 
-- support mailcow as a mailserver
+- breaking change: mailadm now uses mailcow REST API for creating/manipulating e-mail accounts instead of fiddling with postfix/dovecot config
 - deprecate dovecot/postfix support
 - provider instructions for docker setup
 
