@@ -13,7 +13,6 @@ def mycmd(cmd, make_db, tmpdir, monkeypatch):
     if os.environ["MAILCOW_TOKEN"] == "":
         raise KeyError("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
     cmd.run_ok(["init", "--mailcow-endpoint", "https://dc.develcow.de/api/v1/",
-                "--mailcow-token", os.environ["MAILCOW_TOKEN"],
                 "--mail-domain", "x.testrun.org",
                 "--web-endpoint", "https://example.org/new_email"])
     return cmd

@@ -173,13 +173,13 @@ def gen_qr(ctx, tokenname):
 
 
 @click.command()
-@click.option("--web-endpoint", type=str, prompt="external URL for Web API create-account requests",
-              default="https://example.org/new_email", show_default="https://example.org/new_email")
-@click.option("--mail-domain", type=str, prompt="mail domain for which we create new users",
-              default="example.org", show_default="example.org")
-@click.option("--mailcow-endpoint", type=str, required=True,
+@click.option("--web-endpoint", type=str, help="external URL for Web API create-account requests",
+              envvar="WEB_ENDPOINT", default="https://example.org/new_email", show_default=True)
+@click.option("--mail-domain", type=str, help="mail domain for which we create new users", envvar="MAIL_DOMAIN",
+              default="example.org", show_default=True)
+@click.option("--mailcow-endpoint", type=str, required=True, envvar="MAILCOW_ENDPOINT",
               help="the API endpoint of the mailcow instance")
-@click.option("--mailcow-token", type=str, required=True,
+@click.option("--mailcow-token", type=str, required=True, envvar="MAILCOW_TOKEN",
               help="you can get an API token in the mailcow web interface")
 @click.pass_context
 def init(ctx, web_endpoint, mail_domain, mailcow_endpoint, mailcow_token):

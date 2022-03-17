@@ -30,6 +30,7 @@ First get a git copy of the mailadm repository and change into it.
 
     $ git clone https://github.com/deltachat/mailadm
     $ cd mailadm
+    $ mkdir docker-data
 
 Now you need to configure some environment variables in a file called ``.env``:
 
@@ -40,22 +41,21 @@ Now you need to configure some environment variables in a file called ``.env``:
 * ``MAILCOW_TOKEN``: the access token for the mailcow API; you can generate it
   in the mailcow admin interface.
 
-In the end, your ``.env`` file will probably look like this:
+In the end, your ``.env`` file should look similar to this:
 
 .. code:: bash
 
-    export MAIL_DOMAIN=mail.example.org
-    export WEB_ENDPOINT=http://mailadm.example.org:3691/
-    export MAILCOW_ENDPOINT=https://mailcow-web.example.org/api/v1/
-    export MAILCOW_TOKEN=932848-324B2E-787E98-FCA29D-89789A
+    MAIL_DOMAIN=mail.example.org
+    WEB_ENDPOINT=http://mailadm.example.org:3691/
+    MAILCOW_ENDPOINT=https://mailcow-web.example.org/api/v1/
+    MAILCOW_TOKEN=932848-324B2E-787E98-FCA29D-89789A
     
 Now you can build and run the docker container:
 
 .. code:: bash
 
     $ sudo docker build . -t mailadm-mailcow
-    $ touch mailadm.db
-    $ . .env && sudo docker run --mount type=bind,source=$PWD/mailadm.db,target=/mailadm.db --mount type=bind,source=$PWD/.env,target=/mailadm/.env --rm mailadm-mailcow /usr/bin/mailadm init --web-endpoint $WEB_ENDPOINT --mail-domain $MAIL_DOMAIN --mailcow-endpoint $MAILCOW_ENDPOINT --mailcow-token $MAILCOW_TOKEN
+    $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --env-file .env --rm mailadm-mailcow mailadm init
     $ sudo docker run -d -p 3691:3691 --mount type=bind,source=$PWD/mailadm.db,target=/mailadm.db --name mailadm mailadm-mailcow gunicorn -b :3691 -w 1 mailadm.app:app
 
 .. note::

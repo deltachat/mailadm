@@ -9,7 +9,7 @@ from .conn import Connection
 
 
 def get_db_path():
-    db_path = os.environ.get("MAILADM_DB", "/mailadm.db")
+    db_path = os.environ.get("MAILADM_DB", "/mailadm/docker-data/mailadm.db")
     try:
         sqlite3.connect(db_path)
     except sqlite3.OperationalError:
