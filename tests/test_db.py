@@ -1,4 +1,4 @@
-import os.path
+
 
 import pytest
 
@@ -85,48 +85,3 @@ class TestTokenAccounts:
         with pytest.raises(UserNotFound):
             conn.del_user(addr2)
         assert conn.get_tokeninfo_by_name("onehour").usecount == 3
-
-
-def test_dbmigration_1(db):
-    if not os.path.exists("docker-data/mailadm1.sql"):
-        pytest.skip("store a DB version 1 dump in docker-data/mailadm1.sql to test DB migration")
-    # apply SQL dump
-    with open("docker-data/mailadm1.sql", "r") as dump:
-        statements = dump.read().split(";\n")
-        statements_cleaned = []
-        for s in statements:
-            if s not in ["PRAGMA foreign_keys=OFF", "BEGIN TRANSACTION", "COMMIT"]:
-                statements_cleaned.append(s)
-    with db.write_transaction() as conn:
-            conn.execute("DROP TABLE users")
-            conn.execute("DROP TABLE tokens")
-            conn.execute("DROP TABLE config")
-            for statement in statements_cleaned:
-                conn.execute(statement)
-
-    with db.read_connection() as conn:
-        old_token_info = conn.get_tokeninfo_by_name("täst")
-        old_user_info = conn.get_user_by_addr("tmp.migrdb@x.testrun.org")
-        old_conf = conn.config
-
-    db.ensure_tables()
-
-    with db.read_connection() as conn:
-        token_info = conn.get_tokeninfo_by_name("täst")
-        user_info = conn.get_user_by_addr("tmp.migrdb@x.testrun.org")
-        conf = conn.config
-
-    assert token_info.name == old_token_info.name
-    assert token_info.token == old_token_info.token
-    assert token_info.expiry == old_token_info.expiry
-    assert token_info.prefix == old_token_info.prefix
-    assert token_info.maxuse == old_token_info.maxuse
-    assert token_info.usecount == old_token_info.usecount
-
-    assert user_info.addr == old_user_info.addr
-    assert user_info.date == old_user_info.date
-    assert user_info.ttl == old_user_info.ttl
-    assert user_info.token_name == old_user_info.token_name
-
-    assert conf.mail_domain == old_conf.mail_domain
-    assert conf.web_endpoint == old_conf.web_endpoint
