@@ -5,7 +5,7 @@ import sqlite3
 import time
 from pathlib import Path
 
-from .conn import Connection, UserInfo
+from .conn import Connection
 
 
 def get_db_path():
@@ -81,44 +81,11 @@ class DB:
         with self.read_connection() as conn:
             return conn.config
 
-    def dbmigrate_1to2(self):
-        print("DB: Upgrading from DB scheme version 1 (postfix/dovecot) to 2 (mailcow)")
-        with self.write_transaction() as conn:
-            conn.execute("PRAGMA foreign_keys=on;")
-
-            q = "SELECT addr, date, ttl, token_name from users"
-            users = [UserInfo(*args) for args in conn.execute(q).fetchall()]
-            q = "DROP TABLE users"
-            conn.execute(q)
-
-            conn.execute("""
-                CREATE TABLE users (
-                    addr TEXT PRIMARY KEY,
-                    date INTEGER,
-                    ttl INTEGER,
-                    token_name TEXT NOT NULL,
-                    FOREIGN KEY (token_name) REFERENCES tokens (name)
-                )
-            """)
-            for u in users:
-                q = """INSERT INTO users (addr, date, ttl, token_name)
-                       VALUES (?, ?, ?, ?)"""
-                conn.execute(q, (u.addr, u.date, u.ttl, u.token_name))
-
-            q = "DELETE FROM config WHERE name=?"
-            conn.execute(q, ("vmail_user",))
-            conn.execute(q, ("path_virtual_mailboxes",))
-            self.CURRENT_DBVERSION = 2
-            conn.set_config("dbversion", self.CURRENT_DBVERSION)
-
-    CURRENT_DBVERSION = 2
+    CURRENT_DBVERSION = 1
 
     def ensure_tables(self):
         with self.read_connection() as conn:
-            if conn.get_dbversion() == self.CURRENT_DBVERSION:
-                return
-            elif conn.get_dbversion() == 1:
-                self.dbmigrate_1to2()
+            if conn.get_dbversion():
                 return
         with self.write_transaction() as conn:
             print("DB: Creating tables", self.path)
@@ -136,6 +103,8 @@ class DB:
             conn.execute("""
                 CREATE TABLE users (
                     addr TEXT PRIMARY KEY,
+                    hash_pw TEXT NOT NULL,
+                    homedir TEXT NOT NULL,
                     date INTEGER,
                     ttl INTEGER,
                     token_name TEXT NOT NULL,

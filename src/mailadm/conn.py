@@ -52,7 +52,7 @@ class Connection:
         q = "SELECT value from config WHERE name='dbversion'"
         c = self._sqlconn.cursor()
         try:
-            return int(c.execute(q).fetchone()[0])
+            return c.execute(q).fetchone()
         except sqlite3.OperationalError:
             return None
 
@@ -202,9 +202,9 @@ class Connection:
     def add_user(self, addr, date, ttl, token_name):
         self.execute("PRAGMA foreign_keys=on;")
 
-        q = """INSERT INTO users (addr, date, ttl, token_name)
-               VALUES (?, ?, ?, ?)"""
-        self.execute(q, (addr, date, ttl, token_name))
+        q = """INSERT INTO users (addr, hash_pw, homedir, date, ttl, token_name)
+               VALUES (?, ?, ?, ?, ?, ?)"""
+        self.execute(q, (addr, "mailcow", "mailcow", date, ttl, token_name))
         self.execute("UPDATE tokens SET usecount = usecount + 1"
                      "  WHERE name=?", (token_name,))
 
