@@ -28,7 +28,8 @@ def test_bare(cmd):
 class TestInitAndInstall:
     def test_init(self, cmd, monkeypatch, tmpdir):
         monkeypatch.setenv("MAILADM_DB", tmpdir.join("mailadm.db").strpath)
-        cmd.run_ok(["init"])
+        cmd.run_ok(["init", "--mailcow-endpoint", "unfortunately-required",
+                    "--mailcow-token", "unfortunately-required"])
 
 
 class TestConfig:

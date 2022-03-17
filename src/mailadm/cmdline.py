@@ -177,9 +177,9 @@ def gen_qr(ctx, tokenname):
               default="https://example.org/new_email", show_default="https://example.org/new_email")
 @click.option("--mail-domain", type=str, prompt="mail domain for which we create new users",
               default="example.org", show_default="example.org")
-@click.option("--mailcow-endpoint", type=str, default=None,
+@click.option("--mailcow-endpoint", type=str, required=True,
               help="the API endpoint of the mailcow instance")
-@click.option("--mailcow-token", type=str, default=None,
+@click.option("--mailcow-token", type=str, required=True,
               help="you can get an API token in the mailcow web interface")
 @click.pass_context
 def init(ctx, web_endpoint, mail_domain, mailcow_endpoint, mailcow_token):
@@ -189,9 +189,6 @@ def init(ctx, web_endpoint, mail_domain, mailcow_endpoint, mailcow_token):
     database that already has users and tokens, you might run into trouble,
     depending on what you changed.
     """
-    if not mailcow_endpoint:
-        mailcow_endpoint = "https://%s/api/v1/" % (mail_domain,)
-
     db = get_mailadm_db(ctx, fail_missing_config=False)
     click.secho("initializing database {}".format(db.path))
 
