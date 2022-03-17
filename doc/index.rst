@@ -33,7 +33,7 @@ First get a git copy of the mailadm repository and change into it.
 
 Now you need to configure some environment variables in a file called ``.env``:
 
-* ``MAIL_DOMAIN``: the server name of the email addresses your users will have.
+* ``MAIL_DOMAIN``: the domain part of the email addresses your users will have. 
 * ``WEB_ENDPOINT``: the web endpoint of mailadm; make sure mailadm receives
   POST requests at this address.
 * ``MAILCOW_ENDPOINT``: the API endpoint of your mailcow instance.
