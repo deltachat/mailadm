@@ -211,8 +211,7 @@ class Connection:
         try:
             mailcow.add_user_mailcow(addr, password)
         except MailcowError:
-            self.del_user(addr)
-            self.mod_token(token_info.name, maxuse=token_info.maxuse + 1)
+            self.rollback()
             raise
 
         return user_info

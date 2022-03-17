@@ -52,18 +52,21 @@ def test_email_tmp_gen(conn):
     mailcow.del_user_mailcow(user_info.addr)
 
 
-def test_adduser_mailcow_error(conn):
+def test_adduser_mailcow_error(db):
     """Test that DB doesn't change if mailcow doesn't work"""
-    conn.set_config("mailcow_token", "wrong")
-    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.",
-                                maxuse=1)
-    with pytest.raises(MailcowError):
-        conn.add_email_account(token_info)
+    with db.write_transaction() as conn:
+        token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3",
+                                    prefix="tmp.", maxuse=1)
 
-    token_info = conn.get_tokeninfo_by_name(token_info.name)
-    token_info.check_exhausted()
+    with db.write_transaction() as conn:
+        conn.set_config("mailcow_token", "wrong")
+        with pytest.raises(MailcowError):
+            conn.add_email_account(token_info)
 
-    assert conn.get_user_list(token=token_info.name) == []
+    with db.write_transaction() as conn:
+        token_info = conn.get_tokeninfo_by_name(token_info.name)
+        token_info.check_exhausted()
+        assert conn.get_user_list(token=token_info.name) == []
 
 
 def test_adduser_db_error(conn, monkeypatch):
