@@ -40,8 +40,9 @@ class MailcowConnection:
         """
         url = self.config.mailcow_endpoint + "delete/mailbox"
         result = r.post(url, json=[addr], headers=self.auth)
-        if type(result.json()) != list or result.json()[0].get("type") != "success":
-            raise MailcowError(result.json())
+        json = result.json()
+        if not isinstance(json, list) or json[0].get("type" != "success"): 
+            raise MailcowError(json)
 
 #   def get_users(self):
 #       """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
