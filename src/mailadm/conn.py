@@ -169,6 +169,10 @@ class Connection:
                 raise ValueError("email {!r} is not on domain {!r}".format(
                     addr, self.config.mail_domain))
 
+        mailcow = MailcowConnection(self.config)
+        if mailcow.get_user(addr).json() != {}:
+            raise MailcowError("account %s does already exist")
+
         self.add_user(addr=addr, date=int(time.time()),
                       ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
 
@@ -178,7 +182,6 @@ class Connection:
         user_info.password = password
 
         # seems that everything is fine so far, so let's invoke mailcow:
-        mailcow = MailcowConnection(self.config)
         try:
             mailcow.add_user_mailcow(addr, password)
         except MailcowError:
