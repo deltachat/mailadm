@@ -149,6 +149,53 @@ class Connection:
     # user management
     #
 
+    def add_email_account(self, token_info, addr=None, password=None):
+        """Add an email account to the mailcow server & mailadm
+
+        :param token_info: the token which authorizes the new user creation
+        :param addr: email address for the new account; randomly generated if omitted
+        :param password: password for the new account; randomly generated if omitted
+        :return: a UserInfo object with the database information about the new user, plus password
+        """
+        token_info.check_exhausted()
+        if password is None:
+            password = mailadm.util.gen_password()
+        if addr is None:
+            rand_part = mailadm.util.get_human_readable_id()
+            username = "{}{}".format(token_info.prefix, rand_part)
+            addr = "{}@{}".format(username, self.config.mail_domain)
+        else:
+            if not addr.endswith(self.config.mail_domain):
+                raise ValueError("email {!r} is not on domain {!r}".format(
+                    addr, self.config.mail_domain))
+
+        self.add_user(addr=addr, date=int(time.time()),
+                      ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
+
+        self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
+
+        user_info = self.get_user_by_addr(addr)
+        user_info.password = password
+
+        # seems that everything is fine so far, so let's invoke mailcow:
+        mailcow = MailcowConnection(self.config)
+        try:
+            mailcow.add_user_mailcow(addr, password)
+        except MailcowError:
+            self.rollback()
+            raise
+
+        return user_info
+
+    def delete_email_account(self, addr):
+        """Delete an email account from the mailcow server & mailadm.
+
+        :param addr: the email address of the account which is to be deleted.
+        """
+        mailcow = MailcowConnection(self.config)
+        mailcow.del_user_mailcow(addr)
+        self.del_user(addr)
+
     def add_user(self, addr, date, ttl, token_name):
         self.execute("PRAGMA foreign_keys=on;")
 
@@ -184,42 +231,6 @@ class Connection:
             q += "WHERE token_name=?"
             args.append(token)
         return [UserInfo(*args) for args in self._sqlconn.execute(q, args).fetchall()]
-
-    def add_email_account(self, token_info, addr=None, password=None):
-        token_info.check_exhausted()
-        if password is None:
-            password = mailadm.util.gen_password()
-        if addr is None:
-            rand_part = mailadm.util.get_human_readable_id()
-            username = "{}{}".format(token_info.prefix, rand_part)
-            addr = "{}@{}".format(username, self.config.mail_domain)
-        else:
-            if not addr.endswith(self.config.mail_domain):
-                raise ValueError("email {!r} is not on domain {!r}".format(
-                                 addr, self.config.mail_domain))
-
-        self.add_user(addr=addr, date=int(time.time()),
-                      ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
-
-        self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
-
-        user_info = self.get_user_by_addr(addr)
-        user_info.password = password
-
-        # seems that everything is fine so far, so let's invoke mailcow:
-        mailcow = MailcowConnection(self.config)
-        try:
-            mailcow.add_user_mailcow(addr, password)
-        except MailcowError:
-            self.rollback()
-            raise
-
-        return user_info
-
-    def delete_email_account(self, addr):
-        mailcow = MailcowConnection(self.config)
-        mailcow.del_user_mailcow(addr)
-        self.del_user(addr)
 
 
 class TokenInfo:
