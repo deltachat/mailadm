@@ -66,11 +66,6 @@ Now you can build and run the docker container:
     in this example maybe something like
     `https://mailadm.example.org/new_email/`.
     
-    If you want to use the same TLS certificates as for mailcow, it might be
-    necessary to run them on the same machine or use some other mechanism to
-    synchronize them. Take this into account when you plan your production
-    setup.
-
 Adding a first token and user
 ++++++++++++++++++++++++++++++
 
