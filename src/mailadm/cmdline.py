@@ -14,7 +14,7 @@ from click import style
 import mailadm
 import mailadm.db
 from .conn import DBError
-from .mailcow import MailcowConnection, MailcowError
+from .mailcow import MailcowError
 import mailadm.util
 
 
@@ -235,9 +235,7 @@ def del_user(ctx, addr):
     """remove e-mail address"""
     with get_mailadm_db(ctx).write_transaction() as conn:
         try:
-            mailcow = MailcowConnection(conn.config)
-            mailcow.del_user_mailcow(addr)
-            conn.del_user(addr=addr)
+            conn.delete_email_account(addr)
         except (DBError, MailcowError) as e:
             ctx.fail("failed to delete e-mail account {}: {}".format(addr, e))
 
@@ -259,14 +257,11 @@ def prune(ctx, dryrun):
                 click.secho("{} [{}]".format(user_info.addr, user_info.token_name), fg="red")
         else:
             for user_info in expired_users:
-                mailcow = MailcowConnection(conn.config)
                 try:
-                    mailcow.del_user_mailcow(user_info.addr)
-                except MailcowError:
-                    click.secho("failed to delete e-mail account %s: mailcow API request failed" %
-                                (user_info.addr,))
+                    conn.delete_email_account(user_info.addr)
+                except (DBError, MailcowError) as e:
+                    ctx.fail("failed to delete e-mail account {}: {}".format(user_info.addr, e))
                     continue
-                conn.del_user(user_info.addr)
                 click.secho("{} (token {!r})".format(user_info.addr, user_info.token_name))
 
 

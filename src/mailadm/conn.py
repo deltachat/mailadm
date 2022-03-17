@@ -216,6 +216,11 @@ class Connection:
 
         return user_info
 
+    def delete_email_account(self, addr):
+        mailcow = MailcowConnection(self.config)
+        mailcow.del_user_mailcow(addr)
+        self.del_user(addr)
+
 
 class TokenInfo:
     _select_token_columns = "SELECT name, token, expiry, prefix, maxuse, usecount from tokens\n"
