@@ -41,7 +41,7 @@ class MailcowConnection:
         url = self.config.mailcow_endpoint + "delete/mailbox"
         result = r.post(url, json=[addr], headers=self.auth)
         json = result.json()
-        if not isinstance(json, list) or json[0].get("type" != "success"): 
+        if not isinstance(json, list) or json[0].get("type" != "success"):
             raise MailcowError(json)
 
 #   def get_users(self):
