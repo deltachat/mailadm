@@ -148,3 +148,17 @@ nginx, postfix and dovecot you can generate a QR code:
 You can print or hand out this QR code file and people can scan it with
 their Delta Chat to get a oneday "burner" account.
 
+Migrating from a pre-mailcow setup
+++++++++++++++++++++++++++++++++++
+
+mailadm used to be built on top of a standard postfix/dovecot setup; with
+mailcow many things are simplified. The migration can be a bit tricky though.
+
+What you need to do:
+
+* migrate your dovecot accounts to mailadm
+* create a master password for dovecot
+* do an IMAP sync to migrate all the dovecot accounts to mailcow (see https://mailcow.github.io/mailcow-dockerized-docs/post_installation/firststeps-sync_jobs_migration/)
+* migrate the mailadm database (maybe this script works for you: )
+* re-initialize the mailadm database with your mailcow credentials (see above: Quick Start)
+
