@@ -71,7 +71,6 @@ class MailcowConnection:
 
 class MailcowUser(object):
     def __init__(self, json):
-        print(json)
         self.addr = json.get("username")
         self.quota = json.get("quota")
 

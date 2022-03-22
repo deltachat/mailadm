@@ -149,6 +149,15 @@ class Connection:
     # user management
     #
 
+    def add_email_account_tries(self, token_info, addr=None, password=None, tries=1):
+        """Try to add an email account."""
+        for i in range(tries):
+            try:
+                return self.add_email_account(token_info, addr=addr, password=password)
+            except (MailcowError, DBError):
+                if i + 1 >= tries:
+                    raise
+
     def add_email_account(self, token_info, addr=None, password=None):
         """Add an email account to the mailcow server & mailadm
 
