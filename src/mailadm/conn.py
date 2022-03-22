@@ -182,8 +182,8 @@ class Connection:
         if self.get_mailcow_connection().get_user(addr):
             raise MailcowError("account %s does already exist" % (addr,))
 
-        self.add_user(addr=addr, date=int(time.time()),
-                      ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
+        self.add_user_db(addr=addr, date=int(time.time()),
+                         ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
 
         self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
 
@@ -201,9 +201,9 @@ class Connection:
         :param addr: the email address of the account which is to be deleted.
         """
         self.get_mailcow_connection().del_user_mailcow(addr)
-        self.del_user(addr)
+        self.del_user_db(addr)
 
-    def add_user(self, addr, date, ttl, token_name):
+    def add_user_db(self, addr, date, ttl, token_name):
         self.execute("PRAGMA foreign_keys=on;")
 
         q = """INSERT INTO users (addr, date, ttl, token_name)
@@ -212,7 +212,7 @@ class Connection:
         self.execute("UPDATE tokens SET usecount = usecount + 1"
                      "  WHERE name=?", (token_name,))
 
-    def del_user(self, addr):
+    def del_user_db(self, addr):
         q = "DELETE FROM users WHERE addr=?"
         c = self.execute(q, (addr, ))
         if c.rowcount == 0:

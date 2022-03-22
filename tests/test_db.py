@@ -47,14 +47,14 @@ class TestTokenAccounts:
         now = 10000
         addr = "tmp.123@x.testrun.org"
         with pytest.raises(DBError):
-            conn.add_user(addr=addr, date=now, ttl=60 * 60, token_name="112l3kj123123")
+            conn.add_user_db(addr=addr, date=now, ttl=60 * 60, token_name="112l3kj123123")
 
     def test_add_maxuse(self, conn):
         now = 10000
         password = gen_password()
         for i in range(self.MAXUSE):
             addr = "tmp.{}@x.testrun.org".format(i)
-            conn.add_user(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
+            conn.add_user_db(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
 
         token_info = conn.get_tokeninfo_by_name("onehour")
         with pytest.raises(TokenExhausted):
@@ -65,11 +65,11 @@ class TestTokenAccounts:
         addr = "tmp.123@x.testrun.org"
         addr2 = "tmp.456@x.testrun.org"
         addr3 = "tmp.789@x.testrun.org"
-        conn.add_user(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
+        conn.add_user_db(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
         with pytest.raises(DBError):
-            conn.add_user(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
-        conn.add_user(addr=addr2, date=now, ttl=30 * 60, token_name="onehour")
-        conn.add_user(addr=addr3, date=now, ttl=32 * 60, token_name="onehour")
+            conn.add_user_db(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
+        conn.add_user_db(addr=addr2, date=now, ttl=30 * 60, token_name="onehour")
+        conn.add_user_db(addr=addr3, date=now, ttl=32 * 60, token_name="onehour")
         conn.commit()
         expired = conn.get_expired_users(sysdate=now + 31 * 60)
         assert len(expired) == 1
@@ -77,11 +77,11 @@ class TestTokenAccounts:
 
         users = conn.get_user_list()
         assert len(users) == 3
-        conn.del_user(addr2)
+        conn.del_user_db(addr2)
         conn.commit()
         assert len(conn.get_user_list()) == 2
         addrs = [u.addr for u in conn.get_user_list()]
         assert addrs == [addr, addr3]
         with pytest.raises(UserNotFound):
-            conn.del_user(addr2)
+            conn.del_user_db(addr2)
         assert conn.get_tokeninfo_by_name("onehour").usecount == 3
