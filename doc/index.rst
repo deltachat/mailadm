@@ -158,7 +158,15 @@ What you need to do:
 
 * migrate your dovecot accounts to mailadm
 * create a master password for dovecot
-* do an IMAP sync to migrate all the dovecot accounts to mailcow (see https://mailcow.github.io/mailcow-dockerized-docs/post_installation/firststeps-sync_jobs_migration/)
-* migrate the mailadm database (maybe this script works for you: )
-* re-initialize the mailadm database with your mailcow credentials (see above: Quick Start)
+* do an IMAP sync to migrate all the dovecot accounts to mailcow (see
+  https://mailcow.github.io/mailcow-dockerized-docs/post_installation/firststeps-sync_jobs_migration/)
+* migrate the mailadm database (maybe this script works for you:
+  `scripts/migrate-pre-mailcow-db.py`)
+* re-initialize the mailadm database with your mailcow credentials (see above:
+  Quick Start)
+
+If you get `NOT NULL constraint failed: users.hash_pw` errors when you try to
+create a user, you probably need to migrate your database. You can use
+`scripts/migrate-pre-mailcow-db.py` for this; it's not well tested though, so
+make a backup first and try it out.
 

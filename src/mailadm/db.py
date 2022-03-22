@@ -103,8 +103,6 @@ class DB:
             conn.execute("""
                 CREATE TABLE users (
                     addr TEXT PRIMARY KEY,
-                    hash_pw TEXT NOT NULL,
-                    homedir TEXT NOT NULL,
                     date INTEGER,
                     ttl INTEGER,
                     token_name TEXT NOT NULL,
