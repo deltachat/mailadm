@@ -280,7 +280,7 @@ def web(ctx, debug):
 
 @click.command()
 @click.pass_context
-def migratedb(ctx):
+def migrate_db(ctx):
     db = get_mailadm_db(ctx)
     with db.write_transaction() as conn:
         conn.execute("PRAGMA foreign_keys=on;")
@@ -321,7 +321,7 @@ mailadm_main.add_command(del_user)
 mailadm_main.add_command(list_users)
 mailadm_main.add_command(prune)
 mailadm_main.add_command(web)
-mailadm_main.add_command(migratedb)
+mailadm_main.add_command(migrate_db)
 
 
 if __name__ == "__main__":
