@@ -224,8 +224,10 @@ def add_user(ctx, addr, password, token):
                 ctx.fail("token does not exist: {!r}".format(token))
         try:
             conn.add_email_account(token_info, addr=addr, password=password)
+            return
         except (DBError, MailcowError) as e:
-            ctx.fail("failed to add e-mail account {}: {}".format(addr, e))
+            error_message = "failed to add e-mail account %s: %s" % (addr, e)
+    ctx.fail(error_message)
 
 
 @click.command()

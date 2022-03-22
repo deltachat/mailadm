@@ -181,11 +181,7 @@ class Connection:
         user_info.password = password
 
         # seems that everything is fine so far, so let's invoke mailcow:
-        try:
-            self.get_mailcow_connection().add_user_mailcow(addr, password)
-        except MailcowError:
-            self.rollback()
-            raise
+        self.get_mailcow_connection().add_user_mailcow(addr, password)
 
         return user_info
 
