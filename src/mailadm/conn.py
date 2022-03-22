@@ -170,7 +170,7 @@ class Connection:
                     addr, self.config.mail_domain))
 
         if self.get_mailcow_connection().get_user(addr).json() != {}:
-            raise MailcowError("account %s does already exist")
+            raise MailcowError("account %s does already exist" % (addr,))
 
         self.add_user(addr=addr, date=int(time.time()),
                       ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
