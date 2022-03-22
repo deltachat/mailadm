@@ -1,5 +1,8 @@
 from random import randint
 
+import pytest
+from mailadm.mailcow import MailcowError
+
 
 class TestMailcow:
     def test_get_users(self, mailcow):
@@ -14,3 +17,15 @@ class TestMailcow:
 
         mailcow.del_user_mailcow(addr)
         assert mailcow.get_user(addr) is None
+
+    def test_wrong_token(self, mailcow):
+        mailcow.auth = {"X-API-Key": "asdf"}
+        addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+        with pytest.raises(MailcowError):
+            mailcow.get_user_list()
+        with pytest.raises(MailcowError):
+            mailcow.add_user_mailcow(addr, "asdf1234")
+        with pytest.raises(MailcowError):
+            mailcow.get_user(addr)
+        with pytest.raises(MailcowError):
+            mailcow.del_user_mailcow(addr)
