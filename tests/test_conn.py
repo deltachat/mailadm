@@ -86,3 +86,8 @@ def test_adduser_db_error(conn, monkeypatch):
     result = requests.get(url, headers=auth)
     assert result.status_code == 200
     assert result.json() == {}
+
+
+def test_db_version(conn):
+    version = conn.get_dbversion()
+    assert type(version) == int

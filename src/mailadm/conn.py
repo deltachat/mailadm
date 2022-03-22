@@ -52,7 +52,7 @@ class Connection:
         q = "SELECT value from config WHERE name='dbversion'"
         c = self._sqlconn.cursor()
         try:
-            return c.execute(q).fetchone()
+            return int(c.execute(q).fetchone()[0])
         except sqlite3.OperationalError:
             return None
 
