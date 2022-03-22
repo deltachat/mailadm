@@ -44,14 +44,34 @@ class MailcowConnection:
         if not isinstance(json, list) or json[0].get("type" != "success"):
             raise MailcowError(json)
 
-    def get_user(self, addr="all"):
-        """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
+    def get_user(self, addr):
+        """HTTP Request to get a specific mailcow user (not only mailadm-generated ones)."""
         url = self.config.mailcow_endpoint + "get/mailbox/" + addr
         result = r.get(url, headers=self.auth)
+        if result.json() == {}:
+            return None
         if type(result.json()) == dict:
             if result.json().get("type") == "error":
                 raise MailcowError(result.json())
-        return result
+        return MailcowUser(result.json())
+
+    def get_user_list(self):
+        """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
+        url = self.config.mailcow_endpoint + "get/mailbox/all"
+        result = r.get(url, headers=self.auth)
+        if result.json() == {}:
+            return []
+        if type(result.json()) == dict:
+            if result.json().get("type") == "error":
+                raise MailcowError(result.json())
+        return [MailcowUser(user) for user in result.json()]
+
+
+class MailcowUser(object):
+    def __init__(self, json):
+        print(json)
+        self.addr = json.get("username")
+        self.quota = json.get("quota")
 
 
 class MailcowError(Exception):

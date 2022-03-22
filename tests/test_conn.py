@@ -4,7 +4,7 @@ import requests
 
 import mailadm
 from mailadm.conn import DBError
-from mailadm.mailcow import MailcowConnection, MailcowError
+from mailadm.mailcow import MailcowError
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def test_token_info(conn):
     assert not conn.get_tokeninfo_by_name("burner2")
 
 
-def test_email_tmp_gen(conn):
+def test_email_tmp_gen(conn, mailcow):
     conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
     token_info = conn.get_tokeninfo_by_name("burner1")
     user_info = conn.add_email_account(token_info=token_info)
@@ -48,7 +48,6 @@ def test_email_tmp_gen(conn):
     for c in username:
         assert c in "2345789acdefghjkmnpqrstuvwxyz"
 
-    mailcow = MailcowConnection(conn.config)
     mailcow.del_user_mailcow(user_info.addr)
 
 
@@ -86,6 +85,20 @@ def test_adduser_db_error(conn, monkeypatch):
     result = requests.get(url, headers=auth)
     assert result.status_code == 200
     assert result.json() == {}
+
+
+def test_adduser_mailcow_exists(conn, mailcow):
+    """Test that no user is created if Mailcow user already exists"""
+    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
+    addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+
+    mailcow.add_user_mailcow(addr, "asdf1234")
+    with pytest.raises(MailcowError):
+        conn.add_email_account(token_info, addr=addr)
+    for user in conn.get_user_list():
+        assert user.addr != addr
+
+    mailcow.del_user_mailcow(addr)
 
 
 def test_db_version(conn):

@@ -169,7 +169,7 @@ class Connection:
                 raise ValueError("email {!r} is not on domain {!r}".format(
                     addr, self.config.mail_domain))
 
-        if self.get_mailcow_connection().get_user(addr).json() != {}:
+        if self.get_mailcow_connection().get_user(addr):
             raise MailcowError("account %s does already exist" % (addr,))
 
         self.add_user(addr=addr, date=int(time.time()),

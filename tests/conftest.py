@@ -9,6 +9,7 @@ import pytest
 from _pytest.pytester import LineMatcher
 
 import mailadm.db
+from mailadm.mailcow import MailcowConnection
 
 
 @pytest.fixture(autouse=True)
@@ -95,6 +96,12 @@ def mailcow_auth():
     if not os.environ.get("MAILCOW_TOKEN"):
         pytest.skip("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
     return {"X-API-Key": os.environ.get("MAILCOW_TOKEN")}
+
+
+@pytest.fixture
+def mailcow(db):
+    with db.read_connection() as conn:
+        return MailcowConnection(conn.config)
 
 
 @pytest.fixture
