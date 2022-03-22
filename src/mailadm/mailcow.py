@@ -48,23 +48,25 @@ class MailcowConnection:
         """HTTP Request to get a specific mailcow user (not only mailadm-generated ones)."""
         url = self.config.mailcow_endpoint + "get/mailbox/" + addr
         result = r.get(url, headers=self.auth)
-        if result.json() == {}:
+        json = result.json()
+        if json == {}:
             return None
-        if type(result.json()) == dict:
-            if result.json().get("type") == "error":
-                raise MailcowError(result.json())
-        return MailcowUser(result.json())
+        if type(json) == dict:
+            if json.get("type") == "error":
+                raise MailcowError(json)
+        return MailcowUser(json)
 
     def get_user_list(self):
         """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
         url = self.config.mailcow_endpoint + "get/mailbox/all"
         result = r.get(url, headers=self.auth)
-        if result.json() == {}:
+        json = result.json()
+        if json == {}:
             return []
-        if type(result.json()) == dict:
-            if result.json().get("type") == "error":
-                raise MailcowError(result.json())
-        return [MailcowUser(user) for user in result.json()]
+        if type(json) == dict:
+            if json.get("type") == "error":
+                raise MailcowError(json)
+        return [MailcowUser(user) for user in json]
 
 
 class MailcowUser(object):
