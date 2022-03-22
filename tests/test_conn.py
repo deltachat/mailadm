@@ -73,9 +73,9 @@ def test_adduser_db_error(conn, monkeypatch):
     token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
     addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
 
-    def add_user(*args, **kwargs):
+    def add_user_db(*args, **kwargs):
         raise DBError
-    monkeypatch.setattr(mailadm.conn.Connection, "add_user", add_user)
+    monkeypatch.setattr(mailadm.conn.Connection, "add_user_db", add_user_db)
 
     with pytest.raises(DBError):
         conn.add_email_account(token_info, addr=addr)
@@ -99,6 +99,16 @@ def test_adduser_mailcow_exists(conn, mailcow):
         assert user.addr != addr
 
     mailcow.del_user_mailcow(addr)
+
+
+def test_delete_user_mailcow_missing(conn, mailcow):
+    """Test if a mailadm user is deleted successfully if mailcow user is already missing"""
+    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
+    addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+
+    conn.add_email_account(token_info, addr=addr)
+    mailcow.del_user_mailcow(addr)
+    conn.delete_email_account(addr)
 
 
 def test_db_version(conn):
