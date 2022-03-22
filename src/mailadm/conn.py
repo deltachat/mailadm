@@ -169,8 +169,7 @@ class Connection:
                 raise ValueError("email {!r} is not on domain {!r}".format(
                     addr, self.config.mail_domain))
 
-        mailcow = MailcowConnection(self.config)
-        if mailcow.get_user(addr).json() != {}:
+        if self.get_mailcow_connection().get_user(addr).json() != {}:
             raise MailcowError("account %s does already exist")
 
         self.add_user(addr=addr, date=int(time.time()),
@@ -183,7 +182,7 @@ class Connection:
 
         # seems that everything is fine so far, so let's invoke mailcow:
         try:
-            mailcow.add_user_mailcow(addr, password)
+            self.get_mailcow_connection().add_user_mailcow(addr, password)
         except MailcowError:
             self.rollback()
             raise
@@ -195,8 +194,7 @@ class Connection:
 
         :param addr: the email address of the account which is to be deleted.
         """
-        mailcow = MailcowConnection(self.config)
-        mailcow.del_user_mailcow(addr)
+        self.get_mailcow_connection().del_user_mailcow(addr)
         self.del_user(addr)
 
     def add_user(self, addr, date, ttl, token_name):
@@ -234,6 +232,9 @@ class Connection:
             q += "WHERE token_name=?"
             args.append(token)
         return [UserInfo(*args) for args in self._sqlconn.execute(q, args).fetchall()]
+
+    def get_mailcow_connection(self) -> MailcowConnection:
+        return MailcowConnection(self.config)
 
 
 class TokenInfo:
