@@ -1,6 +1,10 @@
 import pytest
+from random import randint
+import requests
 
+import mailadm
 from mailadm.conn import DBError
+from mailadm.mailcow import MailcowError
 
 
 @pytest.fixture
@@ -29,13 +33,10 @@ def test_token_info(conn):
     assert not conn.get_tokeninfo_by_name("burner2")
 
 
-def test_email_tmp_gen(conn):
+def test_email_tmp_gen(conn, mailcow):
     conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
     token_info = conn.get_tokeninfo_by_name("burner1")
     user_info = conn.add_email_account(token_info=token_info)
-    dn = user_info.homedir
-    assert dn.name == user_info.addr
-    assert dn.parent.name == "example.org"
 
     assert user_info.token_name == "burner1"
     localpart, domain = user_info.addr.split("@")
@@ -47,23 +48,69 @@ def test_email_tmp_gen(conn):
     for c in username:
         assert c in "2345789acdefghjkmnpqrstuvwxyz"
 
+    mailcow.del_user_mailcow(user_info.addr)
 
-def test_gen_sysfiles(db):
+
+def test_adduser_mailcow_error(db):
+    """Test that DB doesn't change if mailcow doesn't work"""
     with db.write_transaction() as conn:
-        conn.add_token(name="burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
+        token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3",
+                                    prefix="tmp.", maxuse=1)
 
     with db.write_transaction() as conn:
-        token_info = conn.get_tokeninfo_by_name("burner1")
+        conn.set_config("mailcow_token", "wrong")
+        with pytest.raises(MailcowError):
+            conn.add_email_account(token_info)
 
-        NUM_USERS = 50
-        users = []
-        for i in range(NUM_USERS):
-            users.append(conn.add_email_account(token_info))
+    with db.write_transaction() as conn:
+        token_info = conn.get_tokeninfo_by_name(token_info.name)
+        token_info.check_exhausted()
+        assert conn.get_user_list(token=token_info.name) == []
 
-        conn.gen_sysfiles()
-        config = conn.config
 
-    # check postfix virtual mailboxes was generated
-    data = config.path_virtual_mailboxes.read_text()
-    for user in users:
-        assert data.count(user.addr) == 2
+def test_adduser_db_error(conn, monkeypatch):
+    """Test that no mailcow user is created if there is a DB error"""
+    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
+    addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+
+    def add_user_db(*args, **kwargs):
+        raise DBError
+    monkeypatch.setattr(mailadm.conn.Connection, "add_user_db", add_user_db)
+
+    with pytest.raises(DBError):
+        conn.add_email_account(token_info, addr=addr)
+
+    url = "%sget/mailbox/%s" % (conn.config.mailcow_endpoint, addr)
+    auth = {"X-API-Key": conn.config.mailcow_token}
+    result = requests.get(url, headers=auth)
+    assert result.status_code == 200
+    assert result.json() == {}
+
+
+def test_adduser_mailcow_exists(conn, mailcow):
+    """Test that no user is created if Mailcow user already exists"""
+    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
+    addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+
+    mailcow.add_user_mailcow(addr, "asdf1234")
+    with pytest.raises(MailcowError):
+        conn.add_email_account(token_info, addr=addr)
+    for user in conn.get_user_list():
+        assert user.addr != addr
+
+    mailcow.del_user_mailcow(addr)
+
+
+def test_delete_user_mailcow_missing(conn, mailcow):
+    """Test if a mailadm user is deleted successfully if mailcow user is already missing"""
+    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
+    addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+
+    conn.add_email_account(token_info, addr=addr)
+    mailcow.del_user_mailcow(addr)
+    conn.delete_email_account(addr)
+
+
+def test_db_version(conn):
+    version = conn.get_dbversion()
+    assert type(version) == int

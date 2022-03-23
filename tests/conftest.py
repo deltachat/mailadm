@@ -1,4 +1,5 @@
 
+import os
 import pwd
 import grp
 import collections
@@ -8,6 +9,7 @@ import pytest
 from _pytest.pytester import LineMatcher
 
 import mailadm.db
+from mailadm.mailcow import MailcowConnection
 
 
 @pytest.fixture(autouse=True)
@@ -84,16 +86,36 @@ def db(tmpdir, make_db):
 
 
 @pytest.fixture
-def make_db(monkeypatch):
+def mailcow_endpoint():
+    baseurl = "https://dc.develcow.de/api/v1/"
+    return baseurl
+
+
+@pytest.fixture
+def mailcow_auth():
+    if not os.environ.get("MAILCOW_TOKEN"):
+        pytest.skip("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
+    return {"X-API-Key": os.environ.get("MAILCOW_TOKEN")}
+
+
+@pytest.fixture
+def mailcow(db):
+    with db.read_connection() as conn:
+        return MailcowConnection(conn.config)
+
+
+@pytest.fixture
+def make_db(monkeypatch, mailcow_auth, mailcow_endpoint):
     def make_db(basedir, init=True):
         basedir = Path(str(basedir))
         db_path = basedir.joinpath("mailadm.db")
         db = mailadm.db.DB(db_path)
         if init:
             db.init_config(
-                mail_domain="example.org",
+                mail_domain="x.testrun.org",
                 web_endpoint="https://example.org/new_email",
-                vmail_user="vmail",
+                mailcow_endpoint=mailcow_endpoint,
+                mailcow_token=mailcow_auth.get("X-API-Key"),
             )
 
         # re-route all queries for sysfiles to the tmpdir

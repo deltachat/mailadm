@@ -1,5 +1,5 @@
-import os
 import setuptools
+
 
 def main():
     with open("README.rst") as f:
@@ -37,9 +37,11 @@ def main():
             "pillow",
             "qrcode",
             "gunicorn",
+            "requests",
         ],
         zip_safe=False,
     )
+
 
 if __name__ == '__main__':
     main()

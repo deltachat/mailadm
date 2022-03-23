@@ -1,5 +1,6 @@
 import time
 from mailadm.web import create_app_from_db_path
+from mailadm.mailcow import MailcowConnection
 import mailadm
 import random
 
@@ -7,7 +8,7 @@ import random
 def test_new_user_random(db, monkeypatch):
     token = "12319831923123"
     with db.write_transaction() as conn:
-        conn.add_token(name="test123", token=token, prefix="tmp.", expiry="1w")
+        conn.add_token(name="test123", token=token, prefix="pytest.", expiry="1w")
 
     app = create_app_from_db_path(db.path)
     app.debug = True
@@ -27,40 +28,23 @@ def test_new_user_random(db, monkeypatch):
 
     r = app.post('/?t=' + token)
     assert r.status_code == 200
-    assert r.json["email"].endswith("@example.org")
+    assert r.json["email"].endswith("@x.testrun.org")
     assert r.json["password"]
     email = r.json["email"]
-    assert email in ["tmp.a@example.org", "tmp.b@example.org"]
+    assert email in ["pytest.a@x.testrun.org", "pytest.b@x.testrun.org"]
 
     r2 = app.post('/?t=' + token)
     assert r2.status_code == 200
     assert r2.json["email"] != email
-    assert r2.json["email"] in ["tmp.a@example.org", "tmp.b@example.org"]
+    assert r2.json["email"] in ["pytest.a@x.testrun.org", "pytest.b@x.testrun.org"]
 
     r3 = app.post('/?t=' + token)
     assert r3.status_code == 409
 
-
-def test_gensysfiles(db):
-    token = "12319831923123"
     with db.write_transaction() as conn:
-        conn.add_token(name="test123", token=token, prefix="tmp.", expiry="1w")
-        config = conn.config
-    app = create_app_from_db_path(db.path)
-    app.debug = True
-
-    app = app.test_client()
-
-    r = app.post('/?t=' + token)
-    assert r.status_code == 200
-
-    email = r.json["email"]
-    assert email.endswith("@example.org")
-    password = r.json["password"]
-    assert password
-
-    postfix_map = config.path_virtual_mailboxes.read_text()
-    assert email in postfix_map
+        mailcow = MailcowConnection(conn.config)
+        mailcow.del_user_mailcow(email)
+        mailcow.del_user_mailcow(r2.json["email"])
 
 
 def test_env(db, monkeypatch):
@@ -82,12 +66,12 @@ def xxxtest_new_user_usermod(db):
     r = app.post('/?t=123123123123123&username=hello')
     assert r.status_code == 200
 
-    assert r.json["email"] == "hello@example.org"
+    assert r.json["email"] == "hello@x.testrun.org"
     assert len(r.json["password"]) >= 12
 
     now = time.time()
     r = app.post('/?t=123123123123123&username=hello2&password=l123123123123')
     assert r.status_code == 200
-    assert r.json["email"] == "hello2@example.org"
+    assert r.json["email"] == "hello2@x.testrun.org"
     assert r.json["password"] == "l123123123123"
     assert int(r.json["expires"]) > (now + 4 * 24 * 60 * 60)

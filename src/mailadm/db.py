@@ -9,8 +9,10 @@ from .conn import Connection
 
 
 def get_db_path():
-    db_path = os.environ.get("MAILADM_DB")
-    if db_path is None:
+    db_path = os.environ.get("MAILADM_DB", "/mailadm/docker-data/mailadm.db")
+    try:
+        sqlite3.connect(db_path)
+    except sqlite3.OperationalError:
         raise RuntimeError("mailadm.db not found: MAILADM_DB not set")
     return Path(db_path)
 
@@ -64,11 +66,12 @@ class DB:
     def read_connection(self, closing=True):
         return self.get_connection(closing=closing, write=False)
 
-    def init_config(self, mail_domain, web_endpoint, vmail_user):
+    def init_config(self, mail_domain, web_endpoint, mailcow_endpoint, mailcow_token):
         with self.write_transaction() as conn:
             conn.set_config("mail_domain", mail_domain)
             conn.set_config("web_endpoint", web_endpoint)
-            conn.set_config("vmail_user", vmail_user)
+            conn.set_config("mailcow_endpoint", mailcow_endpoint)
+            conn.set_config("mailcow_token", mailcow_token)
 
     def is_initialized(self):
         with self.read_connection() as conn:
@@ -100,8 +103,6 @@ class DB:
             conn.execute("""
                 CREATE TABLE users (
                     addr TEXT PRIMARY KEY,
-                    hash_pw TEXT NOT NULL,
-                    homedir TEXT NOT NULL,
                     date INTEGER,
                     ttl INTEGER,
                     token_name TEXT NOT NULL,

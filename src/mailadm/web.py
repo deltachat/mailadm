@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import mailadm.db
 from mailadm.conn import DBError
+from mailadm.mailcow import MailcowError
 
 
 def create_app_from_db_path(db_path=None):
@@ -25,12 +26,10 @@ def create_app_from_db(db):
             token_info = conn.get_tokeninfo_by_token(token)
             if token_info is None:
                 return "token {} is invalid".format(token), 403
-
             try:
-                user_info = conn.add_email_account(token_info, tries=10)
-                conn.gen_sysfiles()
-            except DBError as e:
+                user_info = conn.add_email_account_tries(token_info, tries=10)
+                return jsonify(email=user_info.addr, password=user_info.password,
+                               expiry=token_info.expiry, ttl=user_info.ttl)
+            except (DBError, MailcowError) as e:
                 return str(e), 409
-            return jsonify(email=user_info.addr, password=user_info.clear_pw,
-                           expiry=token_info.expiry, ttl=user_info.ttl)
     return app

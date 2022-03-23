@@ -119,6 +119,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+docker-data/
 
 # Spyder project settings
 .spyderproject
@@ -139,3 +140,4 @@ dmypy.json
 .pyre/
 
 .mailadm.lock
+mailadm.db

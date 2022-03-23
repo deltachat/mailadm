@@ -1,12 +1,7 @@
-
-import pathlib
-import shutil
-import pwd
 import time
 import sqlite3
-from pathlib import Path
-from .util import get_doveadm_pw, parse_expiry_code
 import mailadm.util
+from .mailcow import MailcowConnection, MailcowError
 
 
 class DBError(Exception):
@@ -57,7 +52,7 @@ class Connection:
         q = "SELECT value from config WHERE name='dbversion'"
         c = self._sqlconn.cursor()
         try:
-            return c.execute(q).fetchone()
+            return int(c.execute(q).fetchone()[0])
         except sqlite3.OperationalError:
             return None
 
@@ -66,7 +61,15 @@ class Connection:
         items = self.get_config_items()
         if items:
             d = dict(items)
-            d["path_virtual_mailboxes"] = self.path_mailadm_db.parent.joinpath("virtual_mailboxes")
+            # remove deprecated config keys
+            try:
+                del d["vmail_user"]
+            except KeyError:
+                pass
+            try:
+                del d["path_virtual_mailboxes"]
+            except KeyError:
+                pass
             return Config(**d)
 
     def is_initialized(self):
@@ -82,31 +85,11 @@ class Connection:
             return None
 
     def set_config(self, name, value):
-        ok = ["dbversion", "mail_domain", "web_endpoint", "vmail_user", "path_virtual_mailboxes"]
+        ok = ["dbversion", "mail_domain", "web_endpoint", "mailcow_endpoint", "mailcow_token"]
         assert name in ok, name
         q = "INSERT OR REPLACE INTO config (name, value) VALUES (?, ?)"
         self.cursor().execute(q, (name, value)).fetchone()
         return value
-
-    def gen_sysfiles(self, dryrun=False):
-        """ generate system files needed by postfix/dovecot for
-        recognizing the current users."""
-        import subprocess
-
-        if not self._write or self._sqlconn.total_changes == 0:
-            raise ValueError("need to be part of write-transaction for proper locking")
-        pf_data = "\n".join((user_info.addr + "    " + user_info.addr)
-                            for user_info in self.get_user_list())
-
-        if dryrun:
-            self.log("would write", self.path_virtual_mailboxes)
-            return
-
-        mapfn = self.config.path_virtual_mailboxes
-        mapfn.write_text(pf_data)
-
-        subprocess.check_call(["postmap", str(mapfn)])
-        self.log("wrote {} len={} bytes".format(mapfn, len(pf_data)))
 
     #
     # token management
@@ -166,28 +149,74 @@ class Connection:
     # user management
     #
 
-    def add_user(self, addr, hash_pw, date, ttl, token_name):
+    def add_email_account_tries(self, token_info, addr=None, password=None, tries=1):
+        """Try to add an email account."""
+        for i in range(tries):
+            try:
+                return self.add_email_account(token_info, addr=addr, password=password)
+            except (MailcowError, DBError):
+                if i + 1 >= tries:
+                    raise
+
+    def add_email_account(self, token_info, addr=None, password=None):
+        """Add an email account to the mailcow server & mailadm
+
+        :param token_info: the token which authorizes the new user creation
+        :param addr: email address for the new account; randomly generated if omitted
+        :param password: password for the new account; randomly generated if omitted
+        :return: a UserInfo object with the database information about the new user, plus password
+        """
+        token_info.check_exhausted()
+        if password is None:
+            password = mailadm.util.gen_password()
+        if addr is None:
+            rand_part = mailadm.util.get_human_readable_id()
+            username = "{}{}".format(token_info.prefix, rand_part)
+            addr = "{}@{}".format(username, self.config.mail_domain)
+        else:
+            if not addr.endswith(self.config.mail_domain):
+                raise ValueError("email {!r} is not on domain {!r}".format(
+                    addr, self.config.mail_domain))
+
+        # first check that mailcow doesn't have a user with that name already:
+        if self.get_mailcow_connection().get_user(addr):
+            raise MailcowError("account %s does already exist" % (addr,))
+
+        self.add_user_db(addr=addr, date=int(time.time()),
+                         ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
+
+        self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
+
+        user_info = self.get_user_by_addr(addr)
+        user_info.password = password
+
+        # seems that everything is fine so far, so let's invoke mailcow:
+        self.get_mailcow_connection().add_user_mailcow(addr, password)
+
+        return user_info
+
+    def delete_email_account(self, addr):
+        """Delete an email account from the mailcow server & mailadm.
+
+        :param addr: the email address of the account which is to be deleted.
+        """
+        self.get_mailcow_connection().del_user_mailcow(addr)
+        self.del_user_db(addr)
+
+    def add_user_db(self, addr, date, ttl, token_name):
         self.execute("PRAGMA foreign_keys=on;")
 
-        token = self.get_tokeninfo_by_name(token_name)
-        if token and token.usecount >= token.maxuse:
-            raise TokenExhausted("token {} is exhausted".format(token_name))
-
-        homedir = self.config.get_vmail_user_dir(addr)
-        q = """INSERT INTO users (addr, hash_pw, homedir, date, ttl, token_name)
-               VALUES (?, ?, ?, ?, ?, ?)"""
-        self.execute(q, (addr, hash_pw, str(homedir), date, ttl, token_name))
+        q = """INSERT INTO users (addr, date, ttl, token_name)
+               VALUES (?, ?, ?, ?)"""
+        self.execute(q, (addr, date, ttl, token_name))
         self.execute("UPDATE tokens SET usecount = usecount + 1"
                      "  WHERE name=?", (token_name,))
 
-    def del_user(self, addr):
+    def del_user_db(self, addr):
         q = "DELETE FROM users WHERE addr=?"
         c = self.execute(q, (addr, ))
         if c.rowcount == 0:
             raise UserNotFound("addr {!r} does not exist".format(addr))
-        path = self.config.get_vmail_user_dir(addr)
-        if path.exists():
-            shutil.rmtree(str(path))
         self.log("deleted user {!r}".format(addr))
 
     def get_user_by_addr(self, addr):
@@ -210,32 +239,8 @@ class Connection:
             args.append(token)
         return [UserInfo(*args) for args in self._sqlconn.execute(q, args).fetchall()]
 
-    def add_email_account(self, token_info, addr=None, password=None, tries=1):
-        for i in range(tries):
-            try:
-                return self._add_addr(token_info, addr=addr, password=password)
-            except (ValueError, DBError):
-                if i + 1 >= tries:
-                    raise
-
-    def _add_addr(self, token_info, addr, password):
-        config = self.config
-        if addr is None:
-            rand_part = mailadm.util.get_human_readable_id()
-            username = "{}{}".format(token_info.prefix, rand_part)
-            addr = "{}@{}".format(username, config.mail_domain)
-        else:
-            if not addr.endswith(config.mail_domain):
-                raise ValueError("email {!r} is not on domain {!r}".format(
-                                 addr, config.mail_domain))
-
-        clear_pw, hash_pw = get_doveadm_pw(password=password)
-        self.add_user(addr=addr, hash_pw=hash_pw, date=int(time.time()),
-                      ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
-        user_info = self.get_user_by_addr(addr)
-        self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
-        user_info.clear_pw = clear_pw
-        return user_info
+    def get_mailcow_connection(self) -> MailcowConnection:
+        return MailcowConnection(self.config)
 
 
 class TokenInfo:
@@ -251,43 +256,47 @@ class TokenInfo:
         self.usecount = usecount
 
     def get_maxdays(self):
-        return parse_expiry_code(self.expiry) / (24 * 60 * 60)
+        return mailadm.util.parse_expiry_code(self.expiry) / (24 * 60 * 60)
 
     def get_expiry_seconds(self):
-        return parse_expiry_code(self.expiry)
+        return mailadm.util.parse_expiry_code(self.expiry)
 
     def get_web_url(self):
         return ("{web}?t={token}&n={name}".format(
                 web=self.config.web_endpoint, token=self.token, name=self.name))
 
     def get_qr_uri(self):
-        return ("DCACCOUNT:" + self.get_web_url())
+        return "DCACCOUNT:" + self.get_web_url()
+
+    def check_exhausted(self):
+        """Check if a token can still create email accounts."""
+        if self.usecount >= self.maxuse:
+            raise TokenExhausted
 
 
 class UserInfo:
-    _select_user_columns = "SELECT addr, hash_pw, homedir, date, ttl, token_name from users\n"
+    _select_user_columns = "SELECT addr, date, ttl, token_name from users\n"
 
-    def __init__(self, addr, hash_pw, homedir, date, ttl, token_name):
+    def __init__(self, addr, date, ttl, token_name):
         self.addr = addr
-        self.hash_pw = hash_pw
-        self.homedir = Path(homedir)
         self.date = date
         self.ttl = ttl
         self.token_name = token_name
 
 
 class Config:
-    def __init__(self, mail_domain, web_endpoint, path_virtual_mailboxes, vmail_user, dbversion):
+    """The mailadm config.
+
+    :param mail_domain: the domain of the mailserver
+    :param web_endpoint: the web endpoint of mailadm's web interface
+    :param dbversion: the version of the mailadm database schema
+    :param mailcow_endpoint: the URL to the mailcow API
+    :param mailcow_token: the token to authenticate with the mailcow API
+    """
+    def __init__(self, mail_domain, web_endpoint, dbversion, mailcow_endpoint,
+                 mailcow_token):
         self.mail_domain = mail_domain
         self.web_endpoint = web_endpoint
-        self.path_virtual_mailboxes = Path(path_virtual_mailboxes)
-        self.vmail_user = vmail_user
         self.dbversion = dbversion
-
-    @property
-    def path_vmaildir(self):
-        entry = pwd.getpwnam(self.vmail_user)
-        return pathlib.Path(entry.pw_dir)
-
-    def get_vmail_user_dir(self, user):
-        return self.path_vmaildir.joinpath(self.mail_domain, user)
+        self.mailcow_endpoint = mailcow_endpoint
+        self.mailcow_token = mailcow_token
