@@ -28,6 +28,8 @@ Quick Start
 
 First get a git copy of the mailadm repository and change into it.
 
+.. code:: bash
+
     $ git clone https://github.com/deltachat/mailadm
     $ cd mailadm
     $ mkdir docker-data
