@@ -10,12 +10,12 @@ class MailcowConnection:
         self.config = config
         self.auth = {"X-API-Key": config.mailcow_token}
 
-    def add_user_mailcow(self, addr, password, quota=1024):
+    def add_user_mailcow(self, addr, password, quota=0):
         """HTTP Request to add a user to the mailcow instance.
 
         :param addr: the email address of the new account
         :param password: the password  of the new account
-        :param quota: the maximum mailbox storage in MB
+        :param quota: the maximum mailbox storage in MB. default: unlimited
         """
         url = self.config.mailcow_endpoint + "add/mailbox"
         payload = {
