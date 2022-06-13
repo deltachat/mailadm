@@ -5,5 +5,4 @@ FROM bitnami/minideb:stretch
 RUN install_packages dovecot-core
 RUN install_packages postfix 
 RUN install_packages python-tox python3-pip git
-RUN pip install setuptools-scm
 RUN install_packages make
