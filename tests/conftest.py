@@ -9,7 +9,6 @@ import pytest
 from _pytest.pytester import LineMatcher
 
 import mailadm.db
-from mailadm.mailcow import MailcowConnection
 
 
 @pytest.fixture(autouse=True)

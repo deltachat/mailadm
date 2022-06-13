@@ -1,6 +1,5 @@
 import time
 from mailadm.web import create_app_from_db_path
-from mailadm.mailcow import MailcowConnection
 import mailadm
 import random
 
