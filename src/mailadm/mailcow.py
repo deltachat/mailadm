@@ -56,7 +56,7 @@ class MailcowConnection:
                 raise MailcowError(json)
         for account in json:
             if account.get("username") == addr:
-                return MailcowUser(json)
+                return MailcowUser(account)
 
     def get_user_list(self):
         """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
@@ -73,8 +73,8 @@ class MailcowConnection:
 
 class MailcowUser(object):
     def __init__(self, json):
-        self.addr = json[0].get("username")
-        self.quota = json[0].get("quota")
+        self.addr = json.get("username")
+        self.quota = json.get("quota")
 
 
 class MailcowError(Exception):

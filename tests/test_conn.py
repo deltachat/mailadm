@@ -84,7 +84,9 @@ def test_adduser_db_error(conn, monkeypatch):
     auth = {"X-API-Key": conn.config.mailcow_token}
     result = requests.get(url, headers=auth)
     assert result.status_code == 200
-    assert result.json() == {}
+    if result.json() is not {} and type(result.json()) == list:
+        for user in result.json():
+            assert user["username"] != addr
 
 
 def test_adduser_mailcow_exists(conn, mailcow):
