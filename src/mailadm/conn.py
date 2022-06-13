@@ -240,7 +240,7 @@ class Connection:
         return [UserInfo(*args) for args in self._sqlconn.execute(q, args).fetchall()]
 
     def get_mailcow_connection(self) -> MailcowConnection:
-        return MailcowConnection(self.config)
+        return MailcowConnection(self.config.mailcow_endpoint, self.config.mailcow_token)
 
 
 class TokenInfo:

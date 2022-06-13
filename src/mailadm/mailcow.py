@@ -6,9 +6,9 @@ class MailcowConnection:
 
     :param config: the mailadm config
     """
-    def __init__(self, config):
-        self.config = config
-        self.auth = {"X-API-Key": config.mailcow_token}
+    def __init__(self, mailcow_endpoint, mailcow_token):
+        self.mailcow_endpoint = mailcow_endpoint
+        self.auth = {"X-API-Key": mailcow_token}
 
     def add_user_mailcow(self, addr, password, quota=0):
         """HTTP Request to add a user to the mailcow instance.
@@ -17,7 +17,7 @@ class MailcowConnection:
         :param password: the password  of the new account
         :param quota: the maximum mailbox storage in MB. default: unlimited
         """
-        url = self.config.mailcow_endpoint + "add/mailbox"
+        url = self.mailcow_endpoint + "add/mailbox"
         payload = {
             "local_part": addr.split("@")[0],
             "domain": addr.split("@")[1],
@@ -38,7 +38,7 @@ class MailcowConnection:
 
         :param addr: the email account to be deleted
         """
-        url = self.config.mailcow_endpoint + "delete/mailbox"
+        url = self.mailcow_endpoint + "delete/mailbox"
         result = r.post(url, json=[addr], headers=self.auth)
         json = result.json()
         if not isinstance(json, list) or json[0].get("type" != "success"):
@@ -46,7 +46,7 @@ class MailcowConnection:
 
     def get_user(self, addr):
         """HTTP Request to get a specific mailcow user (not only mailadm-generated ones)."""
-        url = self.config.mailcow_endpoint + "get/mailbox/"
+        url = self.mailcow_endpoint + "get/mailbox/"
         result = r.get(url, headers=self.auth)
         json = result.json()
         if json == {}:
@@ -60,7 +60,7 @@ class MailcowConnection:
 
     def get_user_list(self):
         """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
-        url = self.config.mailcow_endpoint + "get/mailbox/all"
+        url = self.mailcow_endpoint + "get/mailbox/all"
         result = r.get(url, headers=self.auth)
         json = result.json()
         if json == {}:
