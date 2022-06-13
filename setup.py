@@ -38,6 +38,7 @@ def main():
             "qrcode",
             "gunicorn",
             "requests",
+            "imapclient",
         ],
         zip_safe=False,
     )
