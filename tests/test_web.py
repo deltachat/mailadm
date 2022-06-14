@@ -1,6 +1,5 @@
 import time
 from mailadm.web import create_app_from_db_path
-from mailadm.mailcow import MailcowConnection
 import mailadm
 import random
 
@@ -42,7 +41,7 @@ def test_new_user_random(db, monkeypatch):
     assert r3.status_code == 409
 
     with db.write_transaction() as conn:
-        mailcow = MailcowConnection(conn.config)
+        mailcow = conn.get_mailcow_connection()
         mailcow.del_user_mailcow(email)
         mailcow.del_user_mailcow(r2.json["email"])
 

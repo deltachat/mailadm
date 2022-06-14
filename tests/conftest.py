@@ -9,7 +9,6 @@ import pytest
 from _pytest.pytester import LineMatcher
 
 import mailadm.db
-from mailadm.mailcow import MailcowConnection
 
 
 @pytest.fixture(autouse=True)
@@ -101,7 +100,7 @@ def mailcow_auth():
 @pytest.fixture
 def mailcow(db):
     with db.read_connection() as conn:
-        return MailcowConnection(conn.config)
+        return conn.get_mailcow_connection()
 
 
 @pytest.fixture

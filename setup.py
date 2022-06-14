@@ -9,7 +9,7 @@ def main():
         name='mailadm',
         description='web API and CLI tool for automatic e-mail user creation/deletion',
         long_description = long_desc,
-        setup_requires=['setuptools_scm'],
+        setup_requires=['setuptools>=45', 'wheel', 'setuptools_scm>=6.2'],
         use_scm_version = True,
         url='https://github.com/deltachat/mailadm',
         license='GPL',
@@ -38,6 +38,7 @@ def main():
             "qrcode",
             "gunicorn",
             "requests",
+            "imapclient",
         ],
         zip_safe=False,
     )
