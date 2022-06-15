@@ -94,7 +94,7 @@ def test_adduser_mailcow_exists(conn, mailcow):
     token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
     addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
 
-    mailcow.add_user_mailcow(addr, "asdf1234")
+    mailcow.add_user_mailcow(addr, "asdf1234", token_info.name)
     with pytest.raises(MailcowError):
         conn.add_email_account(token_info, addr=addr)
     for user in conn.get_user_list():
