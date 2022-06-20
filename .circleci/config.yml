@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: deltachat/pymailserver 
+      - image: python:buster
     steps:
       - checkout
       - run: 
@@ -12,4 +12,7 @@ jobs:
                 LC_ALL: C.UTF-8
                 LANG: C.UTF-8
           command: |
+            python3 --version
+            pip install .
+            pip install tox
             tox 
