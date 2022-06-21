@@ -26,7 +26,7 @@ class MailcowConnection:
             "force_pw_update": False,
             "tls_enforce_in": False,
             "tls_enforce_out": False,
-            "tags": [token]
+            "tags": ["token:" + token]
         }
         result = r.post(url, json=payload, headers=self.auth)
         if type(result.json()) != list or result.json()[0].get("type") != "success":
