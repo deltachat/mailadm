@@ -191,7 +191,7 @@ class Connection:
         user_info.password = password
 
         # seems that everything is fine so far, so let's invoke mailcow:
-        self.get_mailcow_connection().add_user_mailcow(addr, password)
+        self.get_mailcow_connection().add_user_mailcow(addr, password, token_info.name)
 
         return user_info
 

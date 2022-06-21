@@ -4,17 +4,19 @@ import requests as r
 class MailcowConnection:
     """Class to manage requests to the mailcow instance.
 
-    :param config: the mailadm config
+    :param mailcow_endpoint: the URL to the mailcow API
+    :param mailcow_token: the access token to the mailcow API
     """
     def __init__(self, mailcow_endpoint, mailcow_token):
         self.mailcow_endpoint = mailcow_endpoint
         self.auth = {"X-API-Key": mailcow_token}
 
-    def add_user_mailcow(self, addr, password, quota=0):
+    def add_user_mailcow(self, addr, password, token, quota=0):
         """HTTP Request to add a user to the mailcow instance.
 
         :param addr: the email address of the new account
         :param password: the password  of the new account
+        :param token: the mailadm token used for account creation
         :param quota: the maximum mailbox storage in MB. default: unlimited
         """
         url = self.mailcow_endpoint + "add/mailbox"
@@ -28,6 +30,7 @@ class MailcowConnection:
             "force_pw_update": False,
             "tls_enforce_in": False,
             "tls_enforce_out": False,
+            "tags": ["mailadm:" + token]
         }
         result = r.post(url, json=payload, headers=self.auth)
         if type(result.json()) != list or result.json()[0].get("type") != "success":
@@ -75,6 +78,10 @@ class MailcowUser(object):
     def __init__(self, json):
         self.addr = json.get("username")
         self.quota = json.get("quota")
+        for tag in json.get("tags", []):
+            if "mailadm:" in tag:
+                self.token = tag.strip("mailadm:")
+                break
 
 
 class MailcowError(Exception):
