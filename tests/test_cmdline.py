@@ -46,7 +46,6 @@ class TestQR:
             *oneweek*
         """)
         monkeypatch.chdir(tmpdir)
-        print(os.system("ls -l /home/runner/work/mailadm/mailadm/.tox/py3/lib/python3.8/site-packages/mailadm/data/"))
         mycmd.run_ok(["gen-qr", "oneweek"], """
             *dcaccount-x.testrun.org-oneweek.png*
         """)
