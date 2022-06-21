@@ -2,7 +2,11 @@ import requests as r
 
 
 class MailcowConnection:
-    """Class to manage requests to the mailcow instance. """
+    """Class to manage requests to the mailcow instance. 
+
+    :param mailcow_endpoint: the URL to the mailcow API
+    :param mailcow_token: the access token to the mailcow API
+    """
     def __init__(self, mailcow_endpoint, mailcow_token):
         self.mailcow_endpoint = mailcow_endpoint
         self.auth = {"X-API-Key": mailcow_token}
