@@ -78,11 +78,7 @@ class MailcowUser(object):
     def __init__(self, json):
         self.addr = json.get("username")
         self.quota = json.get("quota")
-        try:
-            tags = json["tags"]
-        except KeyError:
-            return
-        for tag in tags:
+        for tag in json.get("tags", []):
             if "mailadm:" in tag:
                 self.token = tag.strip("mailadm:")
                 break
