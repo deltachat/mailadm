@@ -2,7 +2,7 @@ import requests as r
 
 
 class MailcowConnection:
-    """Class to manage requests to the mailcow instance. 
+    """Class to manage requests to the mailcow instance.
 
     :param mailcow_endpoint: the URL to the mailcow API
     :param mailcow_token: the access token to the mailcow API
@@ -78,7 +78,14 @@ class MailcowUser(object):
     def __init__(self, json):
         self.addr = json.get("username")
         self.quota = json.get("quota")
-        self.tags = json.get("tags")
+        try:
+            tags = json["tags"]
+        except KeyError:
+            return
+        for tag in tags:
+            if "mailadm:" in tag:
+                self.token = tag.strip("mailadm:")
+                break
 
 
 class MailcowError(Exception):
