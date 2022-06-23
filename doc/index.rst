@@ -67,8 +67,11 @@ Now you can build and run the docker container:
     proxy. In this case, WEB_ENDPOINT needs to be the outward facing address,
     in this example maybe something like
     `https://mailadm.example.org/new_email/`.
+
+First Steps
+-----------
     
-Adding a first token and user
+Adding a First Token and User
 +++++++++++++++++++++++++++++
 
 You can now add a first token::
@@ -89,7 +92,7 @@ Then we can add a user::
     $ mailadm add-user --token oneday tmp.12345@example.org
     added addr 'tmp.12345@example.org' with token 'oneday'
 
-Testing the web app
+Testing the Web App
 +++++++++++++++++++
 
 Let's find out the URL again for creating new users::
@@ -114,7 +117,7 @@ We got an e-mail account through the web API, nice.
 Note that we are using a localhost-url whereas in reality
 your "web_endpoint" will be a full https-url.
 
-Purging old accounts
+Purging Old Accounts
 ++++++++++++++++++++
 
 The `mailadm prune` command will remove accounts of expired users. You should
@@ -122,7 +125,7 @@ add a cron job which executes this once an hour, for example::
 
     0 * * * * root docker exec mailadm mailadm prune
 
-QR code generation
+QR Code Generation
 ++++++++++++++++++
 
 Once you have mailadm configured and integrated with
