@@ -87,6 +87,8 @@ def db(tmpdir, make_db):
 @pytest.fixture
 def mailcow_endpoint():
     if not os.environ.get("MAILCOW_ENDPOINT"):
+        if os.environ.get("MAILCOW_TOKEN"):
+            return "https://dc.develcow.de/api/v1/"
         pytest.skip("Please set the mailcow API URL with the environment variable MAILCOW_ENDPOINT")
     return os.environ.get("MAILCOW_ENDPOINT")
 
