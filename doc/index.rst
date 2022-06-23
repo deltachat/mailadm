@@ -69,20 +69,11 @@ Now you can build and run the docker container:
     `https://mailadm.example.org/new_email/`.
     
 Adding a first token and user
-++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++
 
-In order to use `mailadm` you need to be able
-to execute `~mailadm/venv/bin/mailadm` and you
-need write rights to the `mailadm/mailadm.db` file.
-Moreover you need to set an environment variable
-for finding the mailadm database file::
+You can now add a first token::
 
-    export MAILADM_DB=~mailadm/mailadm.db
-
-You can then add a first token::
-
-    $ mailadm add-token oneday --expiry 1d --prefix="tmp."
-    DB: Creating schema /home/mailadm/mailadm.db
+    $ sudo docker exec mailadm mailadm add-token oneday --expiry 1d --prefix="tmp."
     added token 'oneday'
     token:oneday
       prefix = tmp.
@@ -93,20 +84,13 @@ You can then add a first token::
       http://localhost:3691/new_email?t=1d_r84EW3N8hEKk&n=oneday
       DCACCOUNT:http://localhost:3691/new_email?t=1d_r84EW3N8hEKk&n=oneday
 
-and then we can add a user (which will automatically use the token
-because the email addresses matches the prefix)::
+Then we can add a user::
 
-    $ mailadm add-user tmp.12345@example.org
+    $ mailadm add-user --token oneday tmp.12345@example.org
     added addr 'tmp.12345@example.org' with token 'oneday'
-    wrote /home/mailadm/virtual_mailboxes
-
-When adding/manipulating users `mailadm` writes out
-virtual mailbox "map" files (including the ".db" form)
-so that Postfix knows which mailadm mailboxes exist.
-
 
 Testing the web app
------------------------------
++++++++++++++++++++
 
 Let's find out the URL again for creating new users::
 
@@ -131,27 +115,34 @@ Note that we are using a localhost-url whereas in reality
 your "web_endpoint" will be a full https-url.
 
 Purging old accounts
-++++++++++++++++++++++++
+++++++++++++++++++++
 
-The `mailadm prune` command will remove accounts
-including the home directories of expired users.
-The install-script mentioned above makes systemd
-execute a `mailadm-prune` service which runs every hour.
+The `mailadm prune` command will remove accounts of expired users. You should
+add a cron job which executes this once an hour, for example::
+
+    0 * * * * root docker exec mailadm mailadm prune
 
 QR code generation
----------------------------
+++++++++++++++++++
 
 Once you have mailadm configured and integrated with
-nginx, postfix and dovecot you can generate a QR code:
+nginx and mailcow, you can generate a QR code:
 
-    $ mailadm gen-qr oneday
+    $ sudo docker exec mailadm mailadm gen-qr oneday
     dcaccount-testrun.org-oneday.png written for token 'oneday'
+
+This creates a QR code in the docker container. Now we need to copy it out of
+the container to our home directory:
+
+    $ sudo docker cp mailadm:dcaccount-testrun.org-oneday.png ~/
+
+Now you can download it to your computer with `scp` or `rsync`.
 
 You can print or hand out this QR code file and people can scan it with
 their Delta Chat to get a oneday "burner" account.
 
 Migrating from a pre-mailcow setup
-++++++++++++++++++++++++++++++++++
+----------------------------------
 
 mailadm used to be built on top of a standard postfix/dovecot setup; with
 mailcow many things are simplified. The migration can be a bit tricky though.
