@@ -215,8 +215,8 @@ To setup your development environment, you need to do something like this::
     pip install .
 
 With ``tox`` you can run the tests - many of them need access to a mailcow
-instance though. If you have access to https://dc.develcow.de, you can pass a
-``MAILCOW_TOKEN`` via the command line to run them.
+instance though. If you have access to a mailcow instance, you can pass a
+``MAILCOW_TOKEN`` and ``MAILCOW_ENDPOINT`` via the command line to run them.
 
 Migrating from a pre-mailcow setup
 ----------------------------------
