@@ -47,8 +47,8 @@ In the end, your ``.env`` file should look similar to this:
 
 .. code:: bash
 
-    MAIL_DOMAIN=mail.example.org
-    WEB_ENDPOINT=http://mailadm.example.org:3691/
+    MAIL_DOMAIN=example.org
+    WEB_ENDPOINT=http://mailadm.example.org/new_email
     MAILCOW_ENDPOINT=https://mailcow-web.example.org/api/v1/
     MAILCOW_TOKEN=932848-324B2E-787E98-FCA29D-89789A
     
@@ -91,6 +91,8 @@ Then we can add a user::
 
     $ mailadm add-user --token oneday tmp.12345@example.org
     added addr 'tmp.12345@example.org' with token 'oneday'
+
+.. _testing-the-web-app:
 
 Testing the Web App
 +++++++++++++++++++
@@ -143,6 +145,60 @@ Now you can download it to your computer with `scp` or `rsync`.
 
 You can print or hand out this QR code file and people can scan it with
 their Delta Chat to get a oneday "burner" account.
+
+Configuration Details
+---------------------
+
+During setup, but also every time after you changed a config option, you need
+to run `mailadm init` to apply them, and restart the mailadm process/container.
+
+`mailadm init`, saves the configuration in the database. `mailadm init` should
+be called from inside the docker container. Best practice is to save the
+environment variables in a `.env` file, and pass it to `docker run` with the
+`--env-file .env` argument::
+
+    $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --env-file .env --rm mailadm-mailcow mailadm init
+
+mailadm has 4 config options:
+
+MAIL_DOMAIN
++++++++++++
+
+This is the domain part of the email addresses your mailadm instance creates
+later. For addresses like `tmp.12345@example.org`, your `MAIL_DOMAIN` value in
+`.env` needs to look like::
+
+    MAIL_DOMAIN=example.org
+
+WEB_ENDPOINT
+++++++++++++
+
+The `WEB_ENDPOINT` is used for generating the URLs which are later encoded in
+the account creation QR codes. For mailadm to work, it must be reachable with
+`curl -X POST "$WEB_ENDPOINT?t=$TOKEN"` (see testing-the-web-app_). For
+example::
+
+    WEB_ENDPOINT=http://mailadm.example.org/new_email
+
+MAILCOW_ENDPOINT
+++++++++++++++++
+
+mailadm needs to talk to the mailcow API to create and delete accounts. For
+this, add `/api/v1/` to the URL of the mailcow admin interface, e.g.::
+
+    MAILCOW_ENDPOINT=https://mailcow-web.example.org/api/v1/
+
+MAILCOW_TOKEN
++++++++++++++
+
+To authenticate with the mailcow API, mailadm needs an API token. You can generate
+it in the mailcow admin interface, under "API". Note that you need to allow API access
+from the IP address of the server where you're running mailadm, or enable "Skip
+IP check for API" to allow API access from everywhere.
+
+When you have activated the API, you can pass the token to mailadm like this::
+
+    MAILCOW_TOKEN=932848-324B2E-787E98-FCA29D-89789A
 
 Migrating from a pre-mailcow setup
 ----------------------------------
