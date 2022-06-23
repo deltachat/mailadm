@@ -4,12 +4,12 @@ mailadm: managing token-based temporary e-mail accounts
 mailadm is automated e-mail account management tooling
 for use by `Delta Chat <https://delta.chat>`_.
 
-The `mailadm` command line tool allows to add or remove tokens which are
-typically presented to users as QR tokens.  This QR code can then be
-scanned in the Setup screen from all Delta Chat apps. After scanning the
-user is asked if they want to create a temporary account.
+The ``mailadm`` command line tool allows to add or remove tokens which are
+typically presented to users as QR tokens. This QR code can then be scanned in
+the Setup screen from all Delta Chat apps. After scanning the user is asked if
+they want to create a temporary account.
 
-The account creation happens via the `mailadm` web interface
+The account creation happens via the mailadm web interface
 and creates a random user id (the local part of an e-mail).
 
 Mailadm keeps all configuration, token and user state in a single
@@ -117,12 +117,12 @@ The second last line is the one we can use with curl::
 We got an e-mail account through the web API, nice.
 
 Note that we are using a localhost-url whereas in reality
-your "web_endpoint" will be a full https-url.
+your ``WEB_ENDPOINT`` will be a full https-URL.
 
 Purging Old Accounts
 ++++++++++++++++++++
 
-The `mailadm prune` command will remove accounts of expired users. You should
+The ``mailadm prune`` command will remove accounts of expired users. You should
 add a cron job which executes this once an hour, for example::
 
     0 * * * * root docker exec mailadm mailadm prune
@@ -131,31 +131,31 @@ QR Code Generation
 ++++++++++++++++++
 
 Once you have mailadm configured and integrated with
-nginx and mailcow, you can generate a QR code:
+nginx and mailcow, you can generate a QR code::
 
     $ sudo docker exec mailadm mailadm gen-qr oneday
     dcaccount-testrun.org-oneday.png written for token 'oneday'
 
 This creates a QR code in the docker container. Now we need to copy it out of
-the container to our home directory:
+the container to our home directory::
 
     $ sudo docker cp mailadm:dcaccount-testrun.org-oneday.png ~/
 
-Now you can download it to your computer with `scp` or `rsync`.
+Now you can download it to your computer with ``scp`` or ``rsync``.
 
 You can print or hand out this QR code file and people can scan it with
-their Delta Chat to get a oneday "burner" account.
+their Delta Chat to get a temporary account which is valid for one day.
 
 Configuration Details
 ---------------------
 
 During setup, but also every time after you changed a config option, you need
-to run `mailadm init` to apply them, and restart the mailadm process/container.
+to run ``mailadm init`` to apply them, and restart the mailadm process/container.
 
-`mailadm init`, saves the configuration in the database. `mailadm init` should
-be called from inside the docker container. Best practice is to save the
-environment variables in a `.env` file, and pass it to `docker run` with the
-`--env-file .env` argument::
+``mailadm init``, saves the configuration in the database. ``mailadm init``
+should be called from inside the docker container. Best practice is to save the
+environment variables in a ``.env`` file, and pass it to ``docker run`` with
+the ``--env-file .env`` argument::
 
     $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --env-file .env --rm mailadm-mailcow mailadm init
 
@@ -165,17 +165,17 @@ MAIL_DOMAIN
 +++++++++++
 
 This is the domain part of the email addresses your mailadm instance creates
-later. For addresses like `tmp.12345@example.org`, your `MAIL_DOMAIN` value in
-`.env` needs to look like::
+later. For addresses like ``tmp.12345@example.org``, your ``MAIL_DOMAIN`` value
+in ``.env`` needs to look like::
 
     MAIL_DOMAIN=example.org
 
 WEB_ENDPOINT
 ++++++++++++
 
-The `WEB_ENDPOINT` is used for generating the URLs which are later encoded in
+The ``WEB_ENDPOINT`` is used for generating the URLs which are later encoded in
 the account creation QR codes. For mailadm to work, it must be reachable with
-`curl -X POST "$WEB_ENDPOINT?t=$TOKEN"` (see testing-the-web-app_). For
+``curl -X POST "$WEB_ENDPOINT?t=$TOKEN"`` (see testing-the-web-app_). For
 example::
 
     WEB_ENDPOINT=http://mailadm.example.org/new_email
@@ -213,12 +213,12 @@ What you need to do:
 * do an IMAP sync to migrate all the dovecot accounts to mailcow (see
   https://mailcow.github.io/mailcow-dockerized-docs/post_installation/firststeps-sync_jobs_migration/)
 * migrate the mailadm database (maybe this script works for you:
-  `scripts/migrate-pre-mailcow-db.py`)
+  ``scripts/migrate-pre-mailcow-db.py``)
 * re-initialize the mailadm database with your mailcow credentials (see above:
   Quick Start)
 
-If you get `NOT NULL constraint failed: users.hash_pw` errors when you try to
+If you get ``NOT NULL constraint failed: users.hash_pw`` errors when you try to
 create a user, you probably need to migrate your database. You can use
-`scripts/migrate-pre-mailcow-db.py` for this; it's not well tested though, so
+``scripts/migrate-pre-mailcow-db.py`` for this; it's not well tested though, so
 make a backup first and try it out.
 
