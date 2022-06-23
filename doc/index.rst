@@ -146,6 +146,8 @@ Now you can download it to your computer with ``scp`` or ``rsync``.
 You can print or hand out this QR code file and people can scan it with
 their Delta Chat to get a temporary account which is valid for one day.
 
+.. _configuration-details:
+
 Configuration Details
 ---------------------
 
@@ -208,14 +210,13 @@ mailcow many things are simplified. The migration can be a bit tricky though.
 
 What you need to do:
 
-* migrate your dovecot accounts to mailadm
+* create all existing dovecot accounts in mailcow
 * create a master password for dovecot
-* do an IMAP sync to migrate all the dovecot accounts to mailcow (see
+* do an IMAP sync to migrate the inboxes of all the dovecot accounts to mailcow (see
   https://mailcow.github.io/mailcow-dockerized-docs/post_installation/firststeps-sync_jobs_migration/)
-* migrate the mailadm database (maybe this script works for you:
-  ``scripts/migrate-pre-mailcow-db.py``)
-* re-initialize the mailadm database with your mailcow credentials (see above:
-  Quick Start)
+* migrate the mailadm database (maybe the ``mailadm migrate-db`` command works
+  for you; but better make a backup beforehand)
+* re-configure mailadm with your mailcow credentials (see configuration-details_)
 
 If you get ``NOT NULL constraint failed: users.hash_pw`` errors when you try to
 create a user, you probably need to migrate your database. You can use
