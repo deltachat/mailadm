@@ -79,7 +79,7 @@ class TestTokens:
             *DCACCOUNT*&n=test1
         """)
         out = mycmd.run_ok(["list-tokens"], """
-            *of 50 times*
+            *maxuse = 50*
             *DCACCOUNT*&n=test1
         """)
         for line in out.splitlines():
@@ -99,16 +99,16 @@ class TestTokens:
 
     def test_tokens_add_maxuse(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--maxuse=10"], """
-            *of 10 times*
+            *maxuse = 10*
             *DCACCOUNT*&n=test1
         """)
         mycmd.run_ok(["list-tokens"], """
-            *of 10 times*
+            *maxuse = 10*
             *DCACCOUNT*&n=test1
         """)
         mycmd.run_ok(["mod-token", "--maxuse=1000", "test1"])
         mycmd.run_ok(["list-tokens"], """
-            *of 1000 times*
+            *maxuse = 1000*
             *DCACCOUNT*&n=test1
         """)
 
