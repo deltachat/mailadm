@@ -202,6 +202,22 @@ When you have activated the API, you can pass the token to mailadm like this::
 
     MAILCOW_TOKEN=932848-324B2E-787E98-FCA29D-89789A
 
+
+Setup Development Environment
+-----------------------------
+
+To setup your development environment, you need to do something like this::
+
+    git clone https://github.com/deltachat/mailadm
+    python3 -m venv venv
+    . venv/bin/activate
+    pip install pytest tox
+    pip install .
+
+With ``tox`` you can run the tests - many of them need access to a mailcow
+instance though. If you have access to https://dc.develcow.de, you can pass a
+``MAILCOW_TOKEN`` via the command line to run them.
+
 Migrating from a pre-mailcow setup
 ----------------------------------
 
