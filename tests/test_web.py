@@ -13,10 +13,15 @@ def test_new_user_random(db, monkeypatch):
     app.debug = True
     app = app.test_client()
 
+    r = app.post('/?username=hello')
+    assert r.status_code == 403
+    assert r.json.get("reason") == "?t (token) parameter not specified"
     r = app.post('/?t=00000')
     assert r.status_code == 403
+    assert r.json.get("reason") == "token 00000 is invalid"
     r = app.post('/?t=123123&username=hello')
     assert r.status_code == 403
+    assert r.json.get("reason") == "token 123123 is invalid"
 
     chars = list("ab")
 
@@ -39,6 +44,8 @@ def test_new_user_random(db, monkeypatch):
 
     r3 = app.post('/?t=' + token)
     assert r3.status_code == 409
+    assert r3.json.get("reason") == "user already exists"
+
 
     with db.write_transaction() as conn:
         mailcow = conn.get_mailcow_connection()
