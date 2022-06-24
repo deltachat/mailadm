@@ -21,17 +21,19 @@ def create_app_from_db(db):
         token = request.args.get("t")
         if token is None:
             return jsonify(type="error", status_code=403,
-                           reason="?t (token) parameter not specified")
+                           reason="?t (token) parameter not specified"), 403
 
         with db.write_transaction() as conn:
             token_info = conn.get_tokeninfo_by_token(token)
             if token_info is None:
                 return jsonify(type="error", status_code=403,
-                               reason="token {} is invalid".format(token))
+                               reason="token {} is invalid".format(token)), 403
             try:
                 user_info = conn.add_email_account_tries(token_info, tries=10)
                 return jsonify(email=user_info.addr, password=user_info.password,
                                expiry=token_info.expiry, ttl=user_info.ttl)
             except (DBError, MailcowError) as e:
-                return jsonify(type="error", status_code=500, reason=str(e))
+                if "UNIQUE constraint failed" in str(e):
+                    return jsonify(type="error", status_code=409, reason="user already exists"), 409
+                return jsonify(type="error", status_code=500, reason=str(e)), 500
     return app
