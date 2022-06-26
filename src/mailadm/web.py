@@ -33,7 +33,11 @@ def create_app_from_db(db):
                 return jsonify(email=user_info.addr, password=user_info.password,
                                expiry=token_info.expiry, ttl=user_info.ttl)
             except (DBError, MailcowError) as e:
+                if "does already exist" in str(e):
+                    return jsonify(type="error", status_code=409,
+                                   reason="user already exists in mailcow"), 409
                 if "UNIQUE constraint failed" in str(e):
-                    return jsonify(type="error", status_code=409, reason="user already exists"), 409
+                    return jsonify(type="error", status_code=409,
+                                   reason="user already exists in mailadm"), 409
                 return jsonify(type="error", status_code=500, reason=str(e)), 500
     return app
