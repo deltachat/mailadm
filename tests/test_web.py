@@ -4,7 +4,7 @@ import mailadm
 import random
 
 
-def test_new_user_random(db, monkeypatch):
+def test_new_user_random(db, monkeypatch, mailcow):
     token = "12319831923123"
     with db.write_transaction() as conn:
         conn.add_token(name="test123", token=token, prefix="pytest.", expiry="1w")
@@ -22,6 +22,10 @@ def test_new_user_random(db, monkeypatch):
     r = app.post('/?t=123123&username=hello')
     assert r.status_code == 403
     assert r.json.get("reason") == "token 123123 is invalid"
+
+    # delete a@x.testrun.org and b@x.testrun.org in case earlier tests failed to clean them up
+    mailcow.del_user_mailcow("pytest.a@x.testrun.org")
+    mailcow.del_user_mailcow("pytest.b@x.testrun.org")
 
     chars = list("ab")
 
@@ -46,11 +50,8 @@ def test_new_user_random(db, monkeypatch):
     assert r3.status_code == 409
     assert r3.json.get("reason") == "user already exists"
 
-
-    with db.write_transaction() as conn:
-        mailcow = conn.get_mailcow_connection()
-        mailcow.del_user_mailcow(email)
-        mailcow.del_user_mailcow(r2.json["email"])
+    mailcow.del_user_mailcow(email)
+    mailcow.del_user_mailcow(r2.json["email"])
 
 
 def test_env(db, monkeypatch):
