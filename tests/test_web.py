@@ -48,7 +48,7 @@ def test_new_user_random(db, monkeypatch, mailcow):
 
     r3 = app.post('/?t=' + token)
     assert r3.status_code == 409
-    assert r3.json.get("reason") == "user already exists"
+    assert r3.json.get("reason") == "user already exists in mailcow"
 
     mailcow.del_user_mailcow(email)
     mailcow.del_user_mailcow(r2.json["email"])
