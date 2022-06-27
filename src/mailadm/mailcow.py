@@ -32,7 +32,7 @@ class MailcowConnection:
             "tls_enforce_out": False,
             "tags": ["mailadm:" + token]
         }
-        result = r.post(url, json=payload, headers=self.auth)
+        result = r.post(url, json=payload, headers=self.auth, timeout=30)
         if type(result.json()) != list or result.json()[0].get("type") != "success":
             raise MailcowError(result.json())
 

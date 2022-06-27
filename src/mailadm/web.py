@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import mailadm.db
 from mailadm.conn import DBError
 from mailadm.mailcow import MailcowError
+from requests.exceptions import ReadTimeout
 
 
 def create_app_from_db_path(db_path=None):
@@ -40,4 +41,6 @@ def create_app_from_db(db):
                     return jsonify(type="error", status_code=409,
                                    reason="user already exists in mailadm"), 409
                 return jsonify(type="error", status_code=500, reason=str(e)), 500
+            except ReadTimeout:
+                return jsonify(type="error", status_code=504, reason="mailcow not reachable"), 504
     return app
