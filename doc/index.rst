@@ -218,6 +218,42 @@ With ``tox`` you can run the tests - many of them need access to a mailcow
 instance though. If you have access to a mailcow instance, you can pass a
 ``MAILCOW_TOKEN`` and ``MAILCOW_ENDPOINT`` via the command line to run them.
 
+Mailadm API
+-----------
+
+``/``, method: ``POST``: Create a temporary account with a specified token.
+
+Attributes:
+
+* ``?t=`` a valid mailadm token
+
+Successful Response::
+
+    {
+      "status_code": 200,
+      "email": "addr@example.org",
+      "password": "p4$$w0rd",
+      "expiry": "1h",
+      "ttl": 3600,
+    }
+
+Example for an error::
+
+    {
+      "status_code": 403,
+      "type": "error",
+      "reason": "?t (token) parameter not specified",
+    }
+
+Possible errors::
+
+    403: ?t (token) parameter not specified
+    403: token $t is invalid
+    409: user already exists in mailcow
+    409: user already exists in mailadm
+    500: internal server error, can have different reasons
+    504: mailcow not reachable
+
 Migrating from a pre-mailcow setup
 ----------------------------------
 
