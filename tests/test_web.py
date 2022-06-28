@@ -40,6 +40,8 @@ def test_new_user_random(db, monkeypatch, mailcow):
     assert r.json["password"]
     email = r.json["email"]
     assert email in ["pytest.a@x.testrun.org", "pytest.b@x.testrun.org"]
+    assert r.json["expiry"] == "1w"
+    assert r.json["ttl"] == 604800
 
     r2 = app.post('/?t=' + token)
     assert r2.status_code == 200
