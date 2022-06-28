@@ -1,16 +1,9 @@
 FROM docker.io/alpine:latest
 
 # Install Pillow (py3-pillow) from Alpine repository to avoid compiling it.
-RUN apk add git py3-pip py3-pillow
+RUN apk add git py3-pip py3-pillow cmake clang clang-dev make gcc g++ libc-dev linux-headers cargo openssl-dev python3-dev libffi-dev
 
-RUN git clone https://github.com/deltachat/mailadm
+COPY . mailadm
 WORKDIR mailadm
-#RUN LIBRARY_PATH=/lib:/usr/lib /bin/sh -c "pip install -q ."
+RUN pip install -U pip
 RUN pip install .
-
-#COPY .env .env
-#COPY mailadm.db /mailadm.db
-#ENV MAILADM_DB=/mailadm.db
-#RUN . .env && mailadm init --web-endpoint $WEB_ENDPOINT --mail-domain $MAIL_DOMAIN --mailcow-endpoint $MAILCOW_ENDPOINT --mailcow-token $MAILCOW_TOKEN
-#CMD ["gunicorn", "-b", ":3691", "-w", "1", "mailadm.app:app"]
-
