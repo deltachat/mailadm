@@ -245,14 +245,23 @@ Example for an error::
       "reason": "?t (token) parameter not specified",
     }
 
-Possible errors::
+Possible errors:
 
-    403: ?t (token) parameter not specified
-    403: token $t is invalid
-    409: user already exists in mailcow
-    409: user already exists in mailadm
-    500: internal server error, can have different reasons
-    504: mailcow not reachable
+.. list-table::
+   :widths: 10 90
+
+   * - 403
+     - ?t (token) parameter not specified
+   * - 403
+     - token $t is invalid
+   * - 409
+     - user already exists in mailcow
+   * - 409
+     - user already exists in mailadm
+   * - 500
+     - internal server error, can have different reasons
+   * - 504
+     - mailcow not reachable
 
 Migrating from a pre-mailcow setup
 ----------------------------------
