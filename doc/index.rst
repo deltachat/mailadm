@@ -116,8 +116,31 @@ The second last line is the one we can use with curl::
 
 We got an e-mail account through the web API, nice.
 
-Note that we are using a localhost-url whereas in reality
-your ``WEB_ENDPOINT`` will be a full https-URL.
+Note that we are using a localhost-url whereas in reality your ``WEB_ENDPOINT``
+will be a full https-URL. All in all the architecture looks pretty much like
+this::
+
+    Delta Chat
+        |
+        | scans QR code; sends POST request
+        V
+    NGINX Reverse Proxy (Let's Encrypt)
+        |
+        | proxy_pass
+        V
+    gunicorn Python HTTP Server (e.g. in Docker)
+        |
+        | executes
+        V
+    mailadm web API ------> creates user in mailadm.db
+        |
+        | HTTP POST request /api/v1/add/mailbox
+        V
+    mailcow API
+        |
+        | creates account
+        V
+    mailcow user management
 
 Purging Old Accounts
 ++++++++++++++++++++
