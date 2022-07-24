@@ -15,8 +15,8 @@ from .conn import DBError
 def prune():
     print("prune thread started", file=sys.stderr)
     db = DB(get_db_path())
-    sysdate = int(time.time())
     while 1:
+        sysdate = int(time.time())
         with db.write_transaction() as conn:
             expired_users = conn.get_expired_users(sysdate)
             if not expired_users:
