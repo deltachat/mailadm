@@ -42,6 +42,8 @@ def watcher():
         threads = threading.enumerate()
         if "prune" in [t.getName() for t in threads]:
             running += 1
+        else:
+            print("prune thread died, killing everything now", file=sys.stderr)
     else:
         os._exit(1)
 
