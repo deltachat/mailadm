@@ -31,7 +31,7 @@ def prune():
                         continue
                     print("pruned {} (token {!r})".format(user_info.addr, user_info.token_name),
                           file=sys.stderr)
-        time.sleep(10)
+        time.sleep(600)
 
 
 def watcher():
