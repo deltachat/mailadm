@@ -20,20 +20,22 @@ def prune():
         with db.write_transaction() as conn:
             expired_users = conn.get_expired_users(sysdate)
             if not expired_users:
-                print("nothing to prune")
+                print("nothing to prune", file=sys.stderr)
             else:
                 for user_info in expired_users:
                     try:
                         conn.delete_email_account(user_info.addr)
                     except (DBError, MailcowError) as e:
-                        print("failed to delete e-mail account {}: {}".format(user_info.addr, e))
+                        print("failed to delete e-mail account {}: {}".format(user_info.addr, e),
+                              file=sys.stderr)
                         continue
-                    print("{} (token {!r})".format(user_info.addr, user_info.token_name))
+                    print("pruned {} (token {!r})".format(user_info.addr, user_info.token_name),
+                          file=sys.stderr)
         time.sleep(10)
 
 
 def watcher():
-    print("watcher thread started")
+    print("watcher thread started", file=sys.stderr)
     running = 1
     while running == 1:
         running = 0
