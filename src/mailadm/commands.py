@@ -1,5 +1,6 @@
 from mailadm.util import get_human_readable_id
 from mailadm.conn import DBError
+from mailadm.mailcow import MailcowError
 
 
 def add_token(db, name, expiry, maxuse, prefix, token):
@@ -37,6 +38,9 @@ def add_user(db, token=None, addr=None, password=None, dryrun=False):
         try:
             user_info = conn.add_email_account(token_info, addr=addr, password=password)
         except DBError as e:
+            return {"status": "error",
+                    "message": "failed to add e-mail account {}: {}".format(addr, e)}
+        except MailcowError as e:
             return {"status": "error",
                     "message": "failed to add e-mail account {}: {}".format(addr, e)}
         user_info.clear_pw = password
