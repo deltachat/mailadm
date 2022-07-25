@@ -11,7 +11,6 @@ import mailadm.db
 from .conn import UserInfo
 from .mailcow import MailcowError
 import mailadm.util
-import time
 import os
 import sys
 import click
@@ -90,7 +89,12 @@ def setup_bot(ctx, email, password, db):
 
     ac.start_io()
 
-    chat = ac.create_group_chat("Admin group on {}".format(os.environ["MAIL_DOMAIN"]), contacts=[], verified=True)
+    mailadmdb = get_mailadm_db(ctx)
+    with mailadmdb.read_connection() as rconn:
+        mail_domain = rconn.config.mail_domain
+        admingrpid_old = rconn.config.admingrpid
+
+    chat = ac.create_group_chat("Admin group on {}".format(mail_domain), contacts=[], verified=True)
 
     setupplugin = SetupPlugin(chat.id)
     ac.add_account_plugin(setupplugin)
@@ -106,17 +110,16 @@ def setup_bot(ctx, email, password, db):
     sys.stdout.flush()  # flush stdout to actually show the messages above
     setupplugin.member_added.wait()
     setupplugin.message_sent.clear()
-    chat.send_text("Welcome to the Admin group on %s! Type /help to get an overview over existing commands." %
-                   (os.environ["MAIL_DOMAIN"],))
 
-    mailadmdb = get_mailadm_db(ctx)
-    with mailadmdb.read_connection() as rconn:
-        admingrpid_old = rconn.config.admingrpid
-        if admingrpid_old:
-            setupplugin.message_sent.wait()
-            setupplugin.message_sent.clear()
-            oldgroup = ac.get_chat_by_id(int(admingrpid_old))
-            oldgroup.send_text("Someone created a new admin group on the command line. This one is not valid anymore.")
+    chat.send_text("Welcome to the Admin group on %s! Type /help to see the existing commands." %
+                   (mail_domain,))
+    print("Welcome message sent.")
+    if admingrpid_old is not None:
+        setupplugin.message_sent.wait()
+        setupplugin.message_sent.clear()
+        oldgroup = ac.get_chat_by_id(int(admingrpid_old))
+        oldgroup.send_text("Someone created a new admin group on the command line. This one is not valid anymore.")
+        print("The old admin group was deactivated.")
     setupplugin.message_sent.wait()
     ac.shutdown()
 
