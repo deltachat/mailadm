@@ -129,10 +129,10 @@ def setup_bot(ctx, email, password, db):
 def config(ctx):
     """show and manipulate config settings. """
     db = get_mailadm_db(ctx)
-    with db.read_connection() as rconn:
+    with db.read_connection() as conn:
         click.secho("** mailadm version: {}".format(mailadm.__version__))
         click.secho("** mailadm database path: {}".format(db.path))
-        for name, val in rconn.get_config_items():
+        for name, val in conn.get_config_items():
             click.secho("{:22s} {}".format(name, val))
 
 
