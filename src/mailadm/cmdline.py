@@ -118,7 +118,8 @@ def setup_bot(ctx, email, password, db):
         setupplugin.message_sent.wait()
         setupplugin.message_sent.clear()
         oldgroup = ac.get_chat_by_id(int(admingrpid_old))
-        oldgroup.send_text("Someone created a new admin group on the command line. This one is not valid anymore.")
+        oldgroup.send_text("Someone created a new admin group on the command line. "
+                           "This one is not valid anymore.")
         print("The old admin group was deactivated.")
     setupplugin.message_sent.wait()
     ac.shutdown()
@@ -282,7 +283,8 @@ def add_user(ctx, addr, password, token, dryrun):
     if result["status"] == "error":
         ctx.fail(result["message"])
     elif result["status"] == "success":
-        click.secho("Created {} with password: {}".format(result["message"].addr, result["message"].clear_pw))
+        click.secho("Created %s with password: %s" %
+                    (result["message"].addr, result["message"].clear_pw))
 
 
 @click.command()
