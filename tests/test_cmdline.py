@@ -129,7 +129,7 @@ class TestUsers:
             *pytest*@x.testrun.org*test1*
         """)
         mycmd.run_fail(["add-user", addr], """
-            *failed to add*pytest*@x.testrun.org*
+            *failed to add*pytest* account does already exist*
         """)
         mycmd.run_ok(["del-user", addr], """
             *deleted*pytest*@x.testrun.org*

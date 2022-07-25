@@ -181,7 +181,7 @@ class Connection:
 
         # first check that mailcow doesn't have a user with that name already:
         if self.get_mailcow_connection().get_user(addr):
-            raise MailcowError("account %s does already exist" % (addr,))
+            raise MailcowError("account does already exist")
 
         self.add_user_db(addr=addr, date=int(time.time()),
                          ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
