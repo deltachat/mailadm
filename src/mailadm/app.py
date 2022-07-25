@@ -8,29 +8,15 @@ from .web import create_app_from_db_path
 import time
 import threading
 from .db import get_db_path, DB
-from .mailcow import MailcowError
-from .conn import DBError
+from mailadm.commands import prune
 
 
-def prune():
+def prune_loop():
     print("prune thread started", file=sys.stderr)
     db = DB(get_db_path())
     while 1:
-        sysdate = int(time.time())
-        with db.write_transaction() as conn:
-            expired_users = conn.get_expired_users(sysdate)
-            if not expired_users:
-                print("nothing to prune", file=sys.stderr)
-            else:
-                for user_info in expired_users:
-                    try:
-                        conn.delete_email_account(user_info.addr)
-                    except (DBError, MailcowError) as e:
-                        print("failed to delete e-mail account {}: {}".format(user_info.addr, e),
-                              file=sys.stderr)
-                        continue
-                    print("pruned {} (token {!r})".format(user_info.addr, user_info.token_name),
-                          file=sys.stderr)
+        for logmsg in prune(db).get("message"):
+            print(logmsg, file=sys.stderr)
         time.sleep(600)
 
 
@@ -49,7 +35,7 @@ def watcher():
 
 
 def init_threads():
-    prunethread = threading.Thread(target=prune, daemon=True, name="prune")
+    prunethread = threading.Thread(target=prune_loop, daemon=True, name="prune")
     prunethread.start()
     watcherthread = threading.Thread(target=watcher, daemon=True, name="watcher")
     watcherthread.start()

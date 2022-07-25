@@ -8,7 +8,7 @@ from __future__ import print_function
 
 import mailadm
 import mailadm.db
-from .conn import DBError, UserInfo
+from .conn import UserInfo
 from .mailcow import MailcowError
 import mailadm.util
 import time
@@ -299,24 +299,12 @@ def del_user(ctx, addr):
 @click.pass_context
 def prune(ctx, dryrun):
     """prune expired users from postfix and dovecot configurations """
-    sysdate = int(time.time())
-    with get_mailadm_db(ctx).write_transaction() as conn:
-        expired_users = conn.get_expired_users(sysdate)
-        if not expired_users:
-            click.secho("nothing to prune")
-            return
-
-        if dryrun:
-            for user_info in expired_users:
-                click.secho("{} [{}]".format(user_info.addr, user_info.token_name), fg="red")
+    result = mailadm.commands.prune(get_mailadm_db(ctx), dryrun=dryrun)
+    for msg in result.get("message"):
+        if result.get("status") == "error":
+            ctx.fail(msg)
         else:
-            for user_info in expired_users:
-                try:
-                    conn.delete_email_account(user_info.addr)
-                except (DBError, MailcowError) as e:
-                    ctx.fail("failed to delete e-mail account {}: {}".format(user_info.addr, e))
-                    continue
-                click.secho("{} (token {!r})".format(user_info.addr, user_info.token_name))
+            click.secho(msg)
 
 
 @click.command()
