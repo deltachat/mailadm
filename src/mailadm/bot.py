@@ -47,7 +47,8 @@ class AdmBot:
 
         elif message.text.strip() == "/add-token":
             arguments = message.text.split(" ")
-            text = add_token(self.db, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4])
+            text = add_token(self.db, arguments[0], arguments[1], arguments[2], arguments[3],
+                             arguments[4])
             message.chat.send_text(text)
 
         elif message.text.strip() == "/add-user":
@@ -63,11 +64,14 @@ class AdmBot:
         Checks whether the incoming message was in the admin group.
         """
         if command.chat.is_group() and self.admingrpid == command.chat.id:
-            if command.chat.is_protected() and command.chat.is_encrypted() and int(command.chat.num_contacts) >= 2:
+            if command.chat.is_protected() \
+                    and command.chat.is_encrypted() \
+                    and int(command.chat.num_contacts) >= 2:
                 if command.message.get_sender_contact() in command.chat.get_contacts():
                     return True
                 else:
-                    print("%s is not allowed to give commands to mailadm." % (command.message.get_sender_contact(),))
+                    print("%s is not allowed to give commands to mailadm." %
+                          (command.message.get_sender_contact(),))
             else:
                 print("admin chat is broken. Try `mailadm setup-bot`. Group ID:" + self.admingrpid)
                 raise ValueError
@@ -76,7 +80,7 @@ class AdmBot:
             return False
 
 
-def main(mailadm_db, argv=None):
+def main(mailadm_db):
     ac = deltachat.Account(str(os.getenv("MAILADM_HOME")) + "/admbot.sqlite")
     try:
         ac.run_account(account_plugins=[AdmBot(mailadm_db)], show_ffi=True)
