@@ -39,7 +39,6 @@ def add_user(db, token=None, addr=None, password=None, dryrun=False):
         except DBError as e:
             return {"status": "error",
                     "message": "failed to add e-mail account {}: {}".format(addr, e)}
-        conn.gen_sysfiles(dryrun)
         return {"status": "success",
                 "message": user_info}
 
