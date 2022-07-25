@@ -288,7 +288,10 @@ def add_user(ctx, addr, password, token, dryrun):
 def del_user(ctx, addr):
     """remove e-mail address"""
     with get_mailadm_db(ctx).write_transaction() as conn:
-        conn.del_user(addr=addr)
+        try:
+            conn.delete_email_account(addr)
+        except (DBError, MailcowError) as e:
+            ctx.fail("failed to delete e-mail account {}: {}".format(addr, e))
 
 
 @click.command()
