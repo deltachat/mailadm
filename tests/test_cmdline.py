@@ -134,6 +134,12 @@ class TestUsers:
         mycmd.run_ok(["del-user", addr], """
             *deleted*pytest*@x.testrun.org*
         """)
+        mycmd.run_ok(["add-user", addr, "--dryrun"], """
+            *Would create pytest*@x.testrun.org*
+        """)
+        mycmd.run_fail(["del-user", addr], """
+            *failed to delete*pytest*@x.testrun.org*does not exist*
+        """)
 
     def test_adduser_and_expire(self, mycmd, monkeypatch):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", "pytest."])
