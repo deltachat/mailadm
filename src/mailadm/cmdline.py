@@ -300,6 +300,9 @@ def add_user(ctx, addr, password, token, dryrun):
     elif result["status"] == "success":
         click.secho("Created %s with password: %s" %
                     (result["message"].addr, result["message"].clear_pw))
+    elif result["status"] == "dryrun":
+        click.secho("Would create %s with password %s" %
+                    (result["message"].addr, result["message"].clear_pw))
 
 
 @click.command()

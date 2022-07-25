@@ -48,6 +48,10 @@ def add_user(db, token=None, addr=None, password=None, dryrun=False) -> {}:
             return {"status": "error",
                     "message": "failed to add e-mail account {}: {}".format(addr, e)}
         user_info.clear_pw = password
+        if dryrun:
+            conn.delete_email_account(user_info.addr)
+            return {"status": "dryrun",
+                    "message": user_info}
         return {"status": "success",
                 "message": user_info}
 
