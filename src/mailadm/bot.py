@@ -27,17 +27,20 @@ class SetupPlugin:
 
 
 class AdmBot:
-    def __init__(self, db):
+    def __init__(self, db: DB, account: deltachat.Account):
         self.db = db
+        self.account = account
         with self.db.read_connection() as conn:
             config = conn.config
             self.admingrpid = config.admingrpid
 
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
-        print("process_incoming message:", message)
+        print("process_incoming message:", message.text)
         if not self.check_privileges(message):
+            message.create_chat()
             message.chat.send_text("Sorry, I only take commands from the admin group.")
+            return
 
         if message.text.strip() == "/help":
             text = ("/add-token name expiry prefix token maxuse"
@@ -59,7 +62,7 @@ class AdmBot:
         elif message.text.strip() == "/list-tokens":
             message.chat.send_text(list_tokens(self.db))
 
-    def check_privileges(self, command):
+    def check_privileges(self, command: deltachat.Message):
         """
         Checks whether the incoming message was in the admin group.
         """
@@ -67,23 +70,22 @@ class AdmBot:
             if command.chat.is_protected() \
                     and command.chat.is_encrypted() \
                     and int(command.chat.num_contacts) >= 2:
-                if command.message.get_sender_contact() in command.chat.get_contacts():
+                if command.get_sender_contact() in command.chat.get_contacts():
                     return True
                 else:
                     print("%s is not allowed to give commands to mailadm." %
-                          (command.message.get_sender_contact(),))
+                          (command.get_sender_contact(),))
             else:
-                print("admin chat is broken. Try `mailadm setup-bot`. Group ID:" + self.admingrpid)
+                print("admin chat is broken. Try `mailadm setup-bot`. Group ID:", self.admingrpid)
                 raise ValueError
         else:
-            # reply "This command needs to be sent to the admin group"
             return False
 
 
 def main(mailadm_db):
-    ac = deltachat.Account(str(os.getenv("MAILADM_HOME")) + "/admbot.sqlite")
+    ac = deltachat.Account(str(os.getenv("MAILADM_HOME")) + "/docker-data/admbot.sqlite")
     try:
-        ac.run_account(account_plugins=[AdmBot(mailadm_db)], show_ffi=True)
+        ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
     except AssertionError as e:
         if "you must specify email and password once to configure this database/account" in str(e):
             raise Exception("please run mailadm setup-bot to configure the bot")
