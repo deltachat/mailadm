@@ -24,6 +24,7 @@ from .conn import DBError
 from .bot import SetupPlugin
 
 from deltachat import Account, account_hookimpl
+from deltachat.events import FFIEventLogger
 
 
 option_dryrun = click.option(
@@ -59,21 +60,26 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
 
 
 @click.command()
-@click.option("--db", type=str, default=str(os.getenv("MAILADM_HOME")) + "/admbot.sqlite",
+@click.option("--db", type=str,
+              default=str(os.getenv("MAILADM_HOME")) + "/docker-data/admbot.sqlite",
               help="Delta Chat database for admbot account", required=True)
 @click.option("--email", type=str, default=None, help="name of email")
 @click.option("--password", type=str, default=None, help="name of password")
+@click.option("--show-ffi", is_flag=True, help="show low level ffi events")
 @click.pass_context
 @account_hookimpl
-def setup_bot(ctx, email, password, db):
+def setup_bot(ctx, email, password, db, show_ffi):
     """initialize the deltachat bot as an alternative command interface.
 
     :param ctx: the click object passing the CLI environment
     :param email: the email account the deltachat bot will use for receiving commands
     :param password: the password to the bot's email account
     :param db: the path to the deltachat database of the bot - NOT the path to the mailadm database!
+    :param show_ffi: show low level ffi events
     """
     ac = Account(db)
+    if show_ffi:
+        ac.add_account_plugin(FFIEventLogger(ac))
 
     if not ac.is_configured():
         assert email and password, (
@@ -117,10 +123,14 @@ def setup_bot(ctx, email, password, db):
     if admingrpid_old is not None:
         setupplugin.message_sent.wait()
         setupplugin.message_sent.clear()
-        oldgroup = ac.get_chat_by_id(int(admingrpid_old))
-        oldgroup.send_text("Someone created a new admin group on the command line. "
-                           "This one is not valid anymore.")
+        try:
+            oldgroup = ac.get_chat_by_id(int(admingrpid_old))
+            oldgroup.send_text("Someone created a new admin group on the command line. "
+                               "This one is not valid anymore.")
+        except ValueError:
+            print("Could not notify the old admin group.")
         print("The old admin group was deactivated.")
+    sys.stdout.flush()  # flush stdout to actually show the messages above
     setupplugin.message_sent.wait()
     ac.shutdown()
 
