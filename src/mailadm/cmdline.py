@@ -11,7 +11,6 @@ import mailadm.db
 from .conn import UserInfo
 from .mailcow import MailcowError
 import mailadm.util
-import os
 import sys
 import click
 from click import style
@@ -120,13 +119,14 @@ def setup_bot(ctx, email, password, show_ffi):
     chat.send_text("Welcome to the Admin group on %s! Type /help to see the existing commands." %
                    (mail_domain,))
     print("Welcome message sent.")
+    setupplugin.message_sent.wait()
     if admingrpid_old is not None:
-        setupplugin.message_sent.wait()
         setupplugin.message_sent.clear()
         try:
             oldgroup = ac.get_chat_by_id(int(admingrpid_old))
             oldgroup.send_text("Someone created a new admin group on the command line. "
                                "This one is not valid anymore.")
+            setupplugin.message_sent.wait()
         except ValueError as e:
             if "cannot get chat with id=" + admingrpid_old in str(e):
                 print("Could not notify the old admin group.")
@@ -134,7 +134,6 @@ def setup_bot(ctx, email, password, show_ffi):
                 raise
         print("The old admin group was deactivated.")
     sys.stdout.flush()  # flush stdout to actually show the messages above
-    setupplugin.message_sent.wait()
     ac.shutdown()
 
     with mailadmdb.write_transaction() as wconn:
