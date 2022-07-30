@@ -1,8 +1,8 @@
 import sys
-
+import sqlite3
 import deltachat
 from deltachat import account_hookimpl
-from mailadm.db import DB
+from mailadm.db import DB, get_db_path
 from mailadm.commands import add_user, add_token, list_tokens
 import os
 from threading import Event
@@ -82,8 +82,17 @@ class AdmBot:
             return False
 
 
+def get_admbot_db_path():
+    db_path = os.environ.get("ADMBOT_DB", "/mailadm/docker-data/admbot.db")
+    try:
+        sqlite3.connect(db_path)
+    except sqlite3.OperationalError:
+        raise RuntimeError("admbot.db not found: ADMBOT_DB not set")
+    return db_path
+
+
 def main(mailadm_db):
-    ac = deltachat.Account(str(os.getenv("MAILADM_HOME")) + "/docker-data/admbot.sqlite")
+    ac = deltachat.Account(get_admbot_db_path())
     try:
         ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
     except AssertionError as e:
@@ -94,5 +103,5 @@ def main(mailadm_db):
 
 
 if __name__ == "__main__":
-    mailadm_db = DB(os.getenv("MAILADM_DB"))
+    mailadm_db = DB(get_db_path())
     main(mailadm_db)

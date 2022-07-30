@@ -21,7 +21,7 @@ import mailadm.db
 import mailadm.commands
 import mailadm.util
 from .conn import DBError
-from .bot import SetupPlugin
+from .bot import SetupPlugin, get_admbot_db_path
 
 from deltachat import Account, account_hookimpl
 from deltachat.events import FFIEventLogger
@@ -60,15 +60,12 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
 
 
 @click.command()
-@click.option("--db", type=str,
-              default=str(os.getenv("MAILADM_HOME")) + "/docker-data/admbot.sqlite",
-              help="Delta Chat database for admbot account", required=True)
 @click.option("--email", type=str, default=None, help="name of email")
 @click.option("--password", type=str, default=None, help="name of password")
 @click.option("--show-ffi", is_flag=True, help="show low level ffi events")
 @click.pass_context
 @account_hookimpl
-def setup_bot(ctx, email, password, db, show_ffi):
+def setup_bot(ctx, email, password, show_ffi):
     """initialize the deltachat bot as an alternative command interface.
 
     :param ctx: the click object passing the CLI environment
@@ -77,7 +74,8 @@ def setup_bot(ctx, email, password, db, show_ffi):
     :param db: the path to the deltachat database of the bot - NOT the path to the mailadm database!
     :param show_ffi: show low level ffi events
     """
-    ac = Account(db)
+    admbot_db = get_admbot_db_path()
+    ac = Account(admbot_db)
     if show_ffi:
         ac.add_account_plugin(FFIEventLogger(ac))
 
