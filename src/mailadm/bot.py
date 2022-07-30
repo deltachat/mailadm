@@ -43,8 +43,8 @@ class AdmBot:
             return
 
         if message.text.strip() == "/help":
-            text = ("/add-token name expiry prefix token maxuse"
-                    "/add-user addr password token"
+            text = ("/add-token name expiry prefix token maxuse\n"
+                    "/add-user addr password token\n"
                     "/list-tokens")
             message.chat.send_text(text)
 
@@ -66,10 +66,10 @@ class AdmBot:
         """
         Checks whether the incoming message was in the admin group.
         """
-        if command.chat.is_group() and self.admingrpid == command.chat.id:
+        if command.chat.is_group() and self.admingrpid == str(command.chat.id):
             if command.chat.is_protected() \
-                    and command.chat.is_encrypted() \
-                    and int(command.chat.num_contacts) >= 2:
+                    and command.is_encrypted() \
+                    and int(command.chat.num_contacts()) >= 2:
                 if command.get_sender_contact() in command.chat.get_contacts():
                     return True
                 else:
