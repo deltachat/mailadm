@@ -105,7 +105,7 @@ def main(mailadm_db):
     if not ac.is_configured():
         print("if you want to talk to mailadm with Delta Chat, please run: mailadm setup-bot",
               file=sys.stderr)
-    while not ac.get_config("addr"):
+    while not ac.is_configured():
         time.sleep(1)
     else:
         ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
