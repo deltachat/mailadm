@@ -89,7 +89,7 @@ You can now add a first token::
 
 Then we can add a user::
 
-    $ mailadm add-user --token oneday tmp.12345@example.org
+    $ sudo docker exec mailadm mailadm add-user --token oneday tmp.12345@example.org
     added addr 'tmp.12345@example.org' with token 'oneday'
 
 .. _testing-the-web-app:
@@ -142,13 +142,24 @@ this::
         V
     mailcow user management
 
-Purging Old Accounts
-++++++++++++++++++++
+Initializing the Bot Interface
+++++++++++++++++++++++++++++++
 
-The ``mailadm prune`` command will remove accounts of expired users. You should
-add a cron job which executes this once an hour, for example::
+You don't have to login with SSH every time you want to create tokens. You can
+also use the bot interface to talk to the bot in a verified Delta group. The
+bot needs an e-mail account to operate - it doesn't have to be on your mailcow
+server, it can be any e-mail account which also works with Delta Chat.
 
-    0 * * * * root docker exec mailadm mailadm prune
+You can run the following command to setup the bot::
+
+    $ sudo docker exec mailadm mailadm setup-bot --email bot@example.org --password p4ssw0rd
+
+Then you are asked to scan a QR code to join the Admin Group. It is a verified
+Delta Chat group; anyone in the group can use it to issue commands to mailadm
+via Delta Chat. You can send "/help" to the group to learn how to use it.
+
+If you ever lose access to the Admin Group, you can just re-run ``mailadm
+setup-bot`` to invalidate the old Admin Group and create a new one.
 
 QR Code Generation
 ++++++++++++++++++
