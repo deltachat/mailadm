@@ -44,14 +44,16 @@ class AdmBot:
             return
 
         if arguments[0] == "/help":
-            text = ("/add-token name prefix expiry maxuse token\n"
+            text = ("/add-token name expiry maxuse (prefix)\n"
                     "/add-user addr password token\n"
                     "/list-tokens")
             message.chat.send_text(text)
 
         elif arguments[0] == "/add-token":
-            text = add_token(self.db, name=arguments[1], prefix=arguments[2], expiry=arguments[3],
-                             maxuse=arguments[4], token=arguments[5])
+            if len(arguments) == 4:
+                arguments.append("")  # add empty prefix
+            text = add_token(self.db, name=arguments[1], expiry=arguments[2], maxuse=arguments[3],
+                             prefix=arguments[4], token=None)
             message.chat.send_text(text)
 
         elif arguments[0] == "/add-user":
