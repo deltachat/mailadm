@@ -1,5 +1,7 @@
 import sys
 import sqlite3
+import time
+
 import deltachat
 from deltachat import account_hookimpl
 from mailadm.db import DB, get_db_path
@@ -100,11 +102,13 @@ def get_admbot_db_path():
 
 def main(mailadm_db):
     ac = deltachat.Account(get_admbot_db_path())
-    try:
+    if not ac.is_configured():
+        print("if you want to talk to mailadm with Delta Chat, please run: mailadm setup-bot",
+              file=sys.stderr)
+    while not ac.get_config("addr"):
+        time.sleep(1)
+    else:
         ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
-    except AssertionError as e:
-        if "you must specify email and password once to configure this database/account" in str(e):
-            raise Exception("please run mailadm setup-bot to configure the bot")
     ac.wait_shutdown()
     print("shutting down bot.", file=sys.stderr)
 
