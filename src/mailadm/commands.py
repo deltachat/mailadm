@@ -4,7 +4,7 @@ from mailadm.conn import DBError
 from mailadm.mailcow import MailcowError
 
 
-def add_token(db, name, expiry, maxuse, prefix, token):
+def add_token(db, name, expiry, maxuse, prefix, token) -> str:
     """Adds a token to create users
     """
     if token is None:
@@ -16,7 +16,7 @@ def add_token(db, name, expiry, maxuse, prefix, token):
         return dump_token_info(tc)
 
 
-def add_user(db, token=None, addr=None, password=None, dryrun=False):
+def add_user(db, token=None, addr=None, password=None, dryrun=False) -> {}:
     """Adds a new user to be managed by mailadm
     """
     with db.write_transaction() as conn:
@@ -49,7 +49,7 @@ def add_user(db, token=None, addr=None, password=None, dryrun=False):
                 "message": user_info}
 
 
-def prune(db, dryrun=False):
+def prune(db, dryrun=False) -> {}:
     sysdate = int(time.time())
     with db.write_transaction() as conn:
         expired_users = conn.get_expired_users(sysdate)
@@ -78,7 +78,7 @@ def prune(db, dryrun=False):
         return result
 
 
-def list_tokens(db):
+def list_tokens(db) -> str:
     """Print token info for all tokens
     """
     output = []
@@ -89,7 +89,7 @@ def list_tokens(db):
     return '\n'.join(output)
 
 
-def dump_token_info(token_info):
+def dump_token_info(token_info) -> str:
     """Format token info into a string
     """
     return """token: {}
