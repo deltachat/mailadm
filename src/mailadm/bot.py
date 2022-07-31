@@ -36,30 +36,35 @@ class AdmBot:
 
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
-        print("process_incoming message:", message.text)
+        arguments = message.text.split(" ")
+        print("process_incoming command:", arguments)
         if not self.check_privileges(message):
             message.create_chat()
             message.chat.send_text("Sorry, I only take commands from the admin group.")
             return
 
-        if message.text.strip() == "/help":
-            text = ("/add-token name expiry prefix token maxuse\n"
+        if arguments[0] == "/help":
+            text = ("/add-token name prefix expiry maxuse token\n"
                     "/add-user addr password token\n"
                     "/list-tokens")
             message.chat.send_text(text)
 
-        elif message.text.strip() == "/add-token":
-            arguments = message.text.split(" ")
-            text = add_token(self.db, arguments[0], arguments[1], arguments[2], arguments[3],
-                             arguments[4])
+        elif arguments[0] == "/add-token":
+            text = add_token(self.db, name=arguments[1], prefix=arguments[2], expiry=arguments[3],
+                             maxuse=arguments[4], token=arguments[5])
             message.chat.send_text(text)
 
-        elif message.text.strip() == "/add-user":
+        elif arguments[0] == "/add-user":
             arguments = message.text.split(" ")
-            text = add_user(self.db, arguments[0], arguments[1], arguments[2])
+            result = add_user(self.db, addr=arguments[1], password=arguments[2], token=arguments[3])
+            if result.get("status") == "success":
+                user = result.get("message")
+                text = "successfully created %s with password %s" % (user.addr, user.clear_pw)
+            else:
+                text = result.get("message")
             message.chat.send_text(text)
 
-        elif message.text.strip() == "/list-tokens":
+        elif arguments[0] == "/list-tokens":
             message.chat.send_text(list_tokens(self.db))
 
     def check_privileges(self, command: deltachat.Message):
