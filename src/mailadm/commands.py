@@ -106,7 +106,7 @@ def qr_from_token(db, tokenname):
                 "message": "token {!r} does not exist".format(tokenname)}
 
     image = gen_qr(config, token_info)
-    fn = "dcaccount-{domain}-{name}.png".format(domain=config.mail_domain, name=token_info.name)
+    fn = "docker-data/dcaccount-%s-%s.png" % (config.mail_domain, token_info.name)
     return {"status": "success", "image": image, "filename": fn}
 
 

@@ -179,11 +179,7 @@ nginx and mailcow, you can generate a QR code::
     $ mailadm gen-qr oneday
     dcaccount-testrun.org-oneday.png written for token 'oneday'
 
-This creates a QR code in the docker container. Now we need to copy it out of
-the container to our home directory::
-
-    $ sudo docker cp mailadm:dcaccount-testrun.org-oneday.png ~/
-
+This creates a .png file with the QR code in the ``docker-data/`` directory.
 Now you can download it to your computer with ``scp`` or ``rsync``.
 
 You can print or hand out this QR code file and people can scan it with
