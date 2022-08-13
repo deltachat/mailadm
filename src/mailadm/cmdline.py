@@ -237,21 +237,15 @@ def del_token(ctx, name):
 @click.pass_context
 def gen_qr(ctx, tokenname):
     """generate qr code image for a token. """
-    from .gen_qr import gen_qr
-
     db = get_mailadm_db(ctx)
-    with db.read_connection() as conn:
-        token_info = conn.get_tokeninfo_by_name(tokenname)
-        config = conn.config
+    result = mailadm.commands.qr_from_token(db, tokenname)
+    if result["status"] == "error":
+        ctx.fail(result["message"])
+    image = result["image"]
+    fn = result["filename"]
 
-    if token_info is None:
-        ctx.fail("token {!r} does not exist".format(tokenname))
-
-    image = gen_qr(config, token_info)
-    fn = "dcaccount-{domain}-{name}.png".format(
-        domain=config.mail_domain, name=token_info.name)
     image.save(fn)
-    click.secho("{} written for token '{}'".format(fn, token_info.name))
+    click.secho("{} written for token '{}'".format(fn, tokenname))
 
 
 @click.command()
