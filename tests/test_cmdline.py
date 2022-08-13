@@ -46,10 +46,11 @@ class TestQR:
             *oneweek*
         """)
         monkeypatch.chdir(tmpdir)
+        os.system("mkdir docker-data")
         mycmd.run_ok(["gen-qr", "oneweek"], """
             *dcaccount-x.testrun.org-oneweek.png*
         """)
-        p = tmpdir.join("dcaccount-x.testrun.org-oneweek.png")
+        p = tmpdir.join("docker-data/dcaccount-x.testrun.org-oneweek.png")
         assert p.exists()
 
     def test_gen_qr_no_token(self, mycmd, tmpdir, monkeypatch):
