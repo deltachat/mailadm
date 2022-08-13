@@ -72,7 +72,7 @@ class AdmBot:
             token = arguments[1] if len(arguments) > 1 else None
             with self.db.read_connection() as conn:
                 users = conn.get_user_list(token=token)
-            lines = ["%s [token: %s]" % (user.addr, user.token_name) for user in users]
+            lines = ["%s [%s]" % (user.addr, user.token_name) for user in users]
             text = "\n".join(lines)
             message.chat.send_text(text)
 
