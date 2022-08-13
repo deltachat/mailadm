@@ -168,7 +168,7 @@ def list_users(ctx, token):
     db = get_mailadm_db(ctx)
     with db.read_connection() as conn:
         for user_info in conn.get_user_list(token=token):
-            click.secho("{} [token={}]".format(user_info.addr, user_info.token_name))
+            click.secho("{} [{}]".format(user_info.addr, user_info.token_name))
 
 
 def dump_token_info(token_info):

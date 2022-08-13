@@ -75,12 +75,12 @@ class TestTokenAccounts:
         assert len(expired) == 1
         assert expired[0].addr == addr2
 
-        users = conn.get_user_list()
+        users = conn.get_user_list(token="onehour")
         assert len(users) == 3
         conn.del_user_db(addr2)
         conn.commit()
-        assert len(conn.get_user_list()) == 2
-        addrs = [u.addr for u in conn.get_user_list()]
+        assert len(conn.get_user_list(token="onehour")) == 2
+        addrs = [u.addr for u in conn.get_user_list(token="onehour")]
         assert addrs == [addr, addr3]
         with pytest.raises(UserNotFound):
             conn.del_user_db(addr2)

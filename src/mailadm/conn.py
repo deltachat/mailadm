@@ -238,7 +238,19 @@ class Connection:
         if token is not None:
             q += "WHERE token_name=?"
             args.append(token)
-        return [UserInfo(*args) for args in self._sqlconn.execute(q, args).fetchall()]
+        dbusers = [UserInfo(*args) for args in self._sqlconn.execute(q, args).fetchall()]
+        try:
+            mcusers = self.get_mailcow_connection().get_user_list()
+            if not token:
+                for mcuser in mcusers:
+                    if mcuser.addr not in [dbuser.addr for dbuser in dbusers]:
+                        dbusers.append(UserInfo(mcuser.addr, 0, 0, "created in mailcow"))
+            for dbuser in dbusers:
+                if dbuser.addr not in [mcuser.addr for mcuser in mcusers]:
+                    dbuser.token_name = "WARNING: does not exist in mailcow"
+        except MailcowError as e:
+            self.log("Can't check mailcow users: " + str(e))
+        return dbusers
 
     def get_mailcow_connection(self) -> MailcowConnection:
         return MailcowConnection(self.config.mailcow_endpoint, self.config.mailcow_token)

@@ -98,7 +98,7 @@ def test_adduser_mailcow_exists(conn, mailcow):
     with pytest.raises(MailcowError):
         conn.add_email_account(token_info, addr=addr)
     for user in conn.get_user_list():
-        assert user.addr != addr
+        assert user.token_name == "created in mailcow"
 
     mailcow.del_user_mailcow(addr)
 
