@@ -241,10 +241,8 @@ def gen_qr(ctx, tokenname):
     result = mailadm.commands.qr_from_token(db, tokenname)
     if result["status"] == "error":
         ctx.fail(result["message"])
-    image = result["image"]
     fn = result["filename"]
 
-    image.save(fn)
     click.secho("{} written for token '{}'".format(fn, tokenname))
 
 
