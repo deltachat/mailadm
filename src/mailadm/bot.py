@@ -61,6 +61,10 @@ class AdmBot:
             fn = qr_from_token(self.db, arguments[1])["filename"]
             message.chat.send_image(fn)
 
+        elif arguments[0] == "/gen-qr":
+            fn = qr_from_token(self.db, tokenname=arguments[1]).get("filename")
+            message.chat.send_image(fn)
+
         elif arguments[0] == "/add-user":
             arguments = message.text.split(" ")
             result = add_user(self.db, addr=arguments[1], password=arguments[2], token=arguments[3])
