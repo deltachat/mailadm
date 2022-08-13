@@ -55,7 +55,7 @@ class AdmBot:
             if len(arguments) == 4:
                 arguments.append("")  # add empty prefix
             text = add_token(self.db, name=arguments[1], expiry=arguments[2], maxuse=arguments[3],
-                             prefix=arguments[4], token=None)
+                             prefix=arguments[4], token=None).get("message")
             message.chat.send_text(text)
 
         elif arguments[0] == "/add-user":
