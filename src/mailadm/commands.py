@@ -2,6 +2,7 @@ import time
 from mailadm.util import get_human_readable_id
 from mailadm.conn import DBError
 from mailadm.mailcow import MailcowError
+from mailadm.gen_qr import gen_qr
 
 
 def add_token(db, name, expiry, maxuse, prefix, token) -> dict:
@@ -93,6 +94,20 @@ def list_tokens(db) -> str:
             token_info = conn.get_tokeninfo_by_name(name)
             output.append(dump_token_info(token_info))
     return '\n'.join(output)
+
+
+def qr_from_token(db, tokenname):
+    with db.read_connection() as conn:
+        token_info = conn.get_tokeninfo_by_name(tokenname)
+        config = conn.config
+
+    if token_info is None:
+        return {"status": "error",
+                "message": "token {!r} does not exist".format(tokenname)}
+
+    image = gen_qr(config, token_info)
+    fn = "dcaccount-{domain}-{name}.png".format(domain=config.mail_domain, name=token_info.name)
+    return {"status": "success", "image": image, "filename": fn}
 
 
 def dump_token_info(token_info) -> str:
