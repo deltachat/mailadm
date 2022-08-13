@@ -196,7 +196,10 @@ def add_token(ctx, name, expiry, maxuse, prefix, token):
     """add new token for generating new e-mail addresses
     """
     db = get_mailadm_db(ctx)
-    click.secho(mailadm.commands.add_token(db, name, expiry, maxuse, prefix, token))
+    result = mailadm.commands.add_token(db, name, expiry, maxuse, prefix, token)
+    if result["status"] == "error":
+        ctx.fail(result["message"])
+    click.secho(result["message"])
 
 
 @click.command()

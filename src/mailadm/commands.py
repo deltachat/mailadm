@@ -4,16 +4,19 @@ from mailadm.conn import DBError
 from mailadm.mailcow import MailcowError
 
 
-def add_token(db, name, expiry, maxuse, prefix, token) -> str:
+def add_token(db, name, expiry, maxuse, prefix, token) -> dict:
     """Adds a token to create users
     """
     if token is None:
         token = expiry + "_" + get_human_readable_id(len=15)
     with db.write_transaction() as conn:
-        info = conn.add_token(name=name, token=token, expiry=expiry,
-                              maxuse=maxuse, prefix=prefix)
+        try:
+            info = conn.add_token(name=name, token=token, expiry=expiry, maxuse=maxuse,
+                                  prefix=prefix)
+        except DBError:
+            return {"status": "error", "message": "token %s does already exist" % (name,)}
         tc = conn.get_tokeninfo_by_name(info.name)
-        return dump_token_info(tc)
+        return {"status": "success", "message": dump_token_info(tc)}
 
 
 def add_user(db, token=None, addr=None, password=None, dryrun=False) -> {}:
