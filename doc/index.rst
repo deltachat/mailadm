@@ -70,13 +70,23 @@ Now you can build and run the docker container:
 
 First Steps
 -----------
-    
+
+Set Alias to Run Mailadm CLI Commands Easier (optional)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+``mailadm`` CLI commands are run inside the docker container - that means that
+we need to apped ``sudo docker exec -ti mailadm mailadm`` every time. This can
+be abbreviated by running ``alias mailadm="sudo docker exec -ti mailadm mailadm"``
+once, and adding the line to your ``~/.bashrc``.
+
+These docs assume that you have this alias configured.
+
 Adding a First Token and User
 +++++++++++++++++++++++++++++
 
 You can now add a first token::
 
-    $ sudo docker exec mailadm mailadm add-token oneday --expiry 1d --prefix="tmp."
+    $ mailadm add-token oneday --expiry 1d --prefix="tmp."
     added token 'oneday'
     token:oneday
       prefix = tmp.
@@ -168,7 +178,7 @@ QR Code Generation
 Once you have mailadm configured and integrated with
 nginx and mailcow, you can generate a QR code::
 
-    $ sudo docker exec mailadm mailadm gen-qr oneday
+    $ mailadm gen-qr oneday
     dcaccount-testrun.org-oneday.png written for token 'oneday'
 
 This creates a QR code in the docker container. Now we need to copy it out of
