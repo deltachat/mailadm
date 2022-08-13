@@ -5,7 +5,7 @@ import time
 import deltachat
 from deltachat import account_hookimpl
 from mailadm.db import DB, get_db_path
-from mailadm.commands import add_user, add_token, list_tokens
+from mailadm.commands import add_user, add_token, list_tokens, qr_from_token
 import os
 from threading import Event
 
@@ -58,6 +58,8 @@ class AdmBot:
             text = add_token(self.db, name=arguments[1], expiry=arguments[2], maxuse=arguments[3],
                              prefix=arguments[4], token=None).get("message")
             message.chat.send_text(text)
+            fn = qr_from_token(self.db, arguments[1])["filename"]
+            message.chat.send_image(fn)
 
         elif arguments[0] == "/add-user":
             arguments = message.text.split(" ")

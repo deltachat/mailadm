@@ -107,7 +107,8 @@ def qr_from_token(db, tokenname):
 
     image = gen_qr(config, token_info)
     fn = "docker-data/dcaccount-%s-%s.png" % (config.mail_domain, token_info.name)
-    return {"status": "success", "image": image, "filename": fn}
+    image.save(fn)
+    return {"status": "success", "filename": fn}
 
 
 def dump_token_info(token_info) -> str:
