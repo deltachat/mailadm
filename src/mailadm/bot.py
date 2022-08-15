@@ -100,8 +100,8 @@ def get_admbot_db_path():
     return db_path
 
 
-def main(mailadm_db):
-    ac = deltachat.Account(get_admbot_db_path())
+def main(mailadm_db, admbot_db_path):
+    ac = deltachat.Account(admbot_db_path)
     if not ac.is_configured():
         print("if you want to talk to mailadm with Delta Chat, please run: mailadm setup-bot",
               file=sys.stderr)
@@ -118,4 +118,5 @@ def main(mailadm_db):
 
 if __name__ == "__main__":
     mailadm_db = DB(get_db_path())
-    main(mailadm_db)
+    admbot_db_path = get_admbot_db_path()
+    main(mailadm_db, admbot_db_path)
