@@ -10,6 +10,7 @@ import threading
 from .db import get_db_path, DB
 from mailadm.commands import prune
 from mailadm.bot import main as run_bot
+from mailadm.bot import get_admbot_db_path
 
 
 def prune_loop():
@@ -41,7 +42,8 @@ def watcher():
 def init_threads():
     prunethread = threading.Thread(target=prune_loop, daemon=True, name="prune")
     prunethread.start()
-    botthread = threading.Thread(target=run_bot, args=(DB(get_db_path()),), daemon=True, name="bot")
+    botthread = threading.Thread(target=run_bot, args=(DB(get_db_path()), get_admbot_db_path()),
+                                 daemon=True, name="bot")
     botthread.start()
     watcherthread = threading.Thread(target=watcher, daemon=True, name="watcher")
     watcherthread.start()
