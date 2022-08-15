@@ -18,9 +18,9 @@ class SetupPlugin:
 
     @account_hookimpl
     def ac_member_added(self, chat: deltachat.Chat, contact, actor, message):
-        assert chat.num_contacts() == 2
         if chat.id == self.admingrpid:
-            self.member_added.set()
+            if chat.num_contacts() == 2:
+                self.member_added.set()
 
     @account_hookimpl
     def ac_message_delivered(self, message: deltachat.Message):
