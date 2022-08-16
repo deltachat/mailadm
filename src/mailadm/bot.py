@@ -63,7 +63,7 @@ class AdmBot:
             result = add_user(self.db, addr=arguments[1], password=arguments[2], token=arguments[3])
             if result.get("status") == "success":
                 user = result.get("message")
-                text = "successfully created %s with password %s" % (user.addr, user.clear_pw)
+                text = "successfully created %s with password %s" % (user.addr, user.password)
             else:
                 text = result.get("message")
             message.chat.send_text(text)
