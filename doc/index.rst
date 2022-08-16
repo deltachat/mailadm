@@ -71,13 +71,11 @@ Now you can build and run the docker container:
 First Steps
 -----------
 
-Set Alias to Run Mailadm CLI Commands Easier (optional)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 ``mailadm`` CLI commands are run inside the docker container - that means that
-we need to apped ``sudo docker exec -ti mailadm mailadm`` every time. This can
-be abbreviated by running ``alias mailadm="sudo docker exec -ti mailadm mailadm"``
-once, and adding the line to your ``~/.bashrc``.
+we need to type ``sudo docker exec -ti mailadm mailadm`` in front of every
+``mailadm`` command. This can be abbreviated by running
+``alias mailadm="sudo docker exec -ti mailadm mailadm"`` once, and adding the
+line to your ``~/.bashrc``.
 
 These docs assume that you have this alias configured.
 
