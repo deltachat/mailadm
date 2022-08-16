@@ -48,7 +48,7 @@ class AdmBot:
         if arguments[0] == "/help":
             text = ("/add-token name expiry maxuse (prefix)\n"
                     "/add-user addr password token\n"
-                    "/list-users (token)"
+                    "/list-users (token)\n"
                     "/gen-qr token\n"
                     "/list-tokens")
             message.chat.send_text(text)
