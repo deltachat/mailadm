@@ -47,7 +47,6 @@ def add_user(db, token=None, addr=None, password=None, dryrun=False) -> {}:
         except MailcowError as e:
             return {"status": "error",
                     "message": "failed to add e-mail account {}: {}".format(addr, e)}
-        user_info.clear_pw = password
         if dryrun:
             conn.delete_email_account(user_info.addr)
             return {"status": "dryrun",
