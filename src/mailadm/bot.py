@@ -20,8 +20,6 @@ class SetupPlugin:
     def ac_member_added(self, chat: deltachat.Chat, contact, actor, message):
         if chat.id == self.admingrpid:
             if chat.num_contacts() == 2:
-                while not contact.is_verified():
-                    time.sleep(0.1)
                 self.member_added.set()
 
     @account_hookimpl
