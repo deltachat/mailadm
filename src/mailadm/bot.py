@@ -35,6 +35,7 @@ class AdmBot:
         with self.db.read_connection() as conn:
             config = conn.config
             self.admingrpid = config.admingrpid
+            self.admingroup = account.get_chat_by_id(int(self.admingrpid))
 
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
@@ -51,7 +52,7 @@ class AdmBot:
                     "/gen-qr token\n"
                     "/list-users (token)\n"
                     "/list-tokens")
-            message.chat.send_text(text)
+            self.reply(text, message)
 
         elif arguments[0] == "/add-token":
             if len(arguments) == 4:
@@ -105,6 +106,21 @@ class AdmBot:
                 raise ValueError
         else:
             return False
+
+    def reply(self, text: str, reply_to: deltachat.Message, img_fn=None):
+        """The bot replies to command in the admin group
+
+        :param text: text of the reply
+        :param reply_to: the message object which triggered the reply
+        :param img_fn: if an image is to be sent, its filename
+        """
+        if img_fn:
+            msg = self.admingroup.prepare_message_file(img_fn, view_type="image")
+        else:
+            msg = self.admingroup.prepare_message(deltachat.Message.new_empty(self.account, "text"))
+        msg.set_text(text)
+        msg.quote = reply_to
+        self.admingroup.send_prepared(msg)
 
 
 def get_admbot_db_path():
