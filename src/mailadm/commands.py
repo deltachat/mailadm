@@ -16,6 +16,8 @@ def add_token(db, name, expiry, maxuse, prefix, token) -> dict:
                                   prefix=prefix)
         except DBError:
             return {"status": "error", "message": "token %s does already exist" % (name,)}
+        except ValueError:
+            return {"status": "error", "message": "maxuse must be a number"}
         tc = conn.get_tokeninfo_by_name(info.name)
         return {"status": "success", "message": dump_token_info(tc)}
 

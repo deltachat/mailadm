@@ -59,8 +59,11 @@ class AdmBot:
         elif arguments[0] == "/add-token":
             if len(arguments) == 4:
                 arguments.append("")  # add empty prefix
-            text = add_token(self.db, name=arguments[1], expiry=arguments[2], maxuse=arguments[3],
-                             prefix=arguments[4], token=None).get("message")
+            result = add_token(self.db, name=arguments[1], expiry=arguments[2], maxuse=arguments[3],
+                             prefix=arguments[4], token=None)
+            if result["status"] == "error":
+                return self.reply("ERROR: " + result.get("message"), message)
+            text = result.get("message")
             fn = qr_from_token(self.db, arguments[1])["filename"]
             self.reply(text, message, img_fn=fn)
 
