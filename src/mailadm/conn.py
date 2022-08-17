@@ -102,7 +102,7 @@ class Connection:
 
     def add_token(self, name, token, expiry, prefix, maxuse=50):
         q = "INSERT INTO tokens (name, token, prefix, expiry, maxuse) VALUES (?, ?, ?, ?, ?)"
-        self.execute(q, (name, token, prefix, expiry, maxuse))
+        self.execute(q, (name, token, prefix, expiry, int(maxuse)))
         self.log("added token {!r}".format(name))
         return self.get_tokeninfo_by_name(name)
 
