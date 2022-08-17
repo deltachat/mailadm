@@ -1,9 +1,11 @@
+import mimetypes
 import sys
 import sqlite3
 import time
 
 import deltachat
 from deltachat import account_hookimpl
+from deltachat.capi import lib as dclib
 from mailadm.db import DB, get_db_path
 from mailadm.commands import add_user, add_token, list_tokens, qr_from_token
 import os
@@ -115,12 +117,15 @@ class AdmBot:
         :param img_fn: if an image is to be sent, its filename
         """
         if img_fn:
-            msg = self.admingroup.prepare_message_file(img_fn, view_type="image")
+            msg = deltachat.Message.new_empty(self.account, "image")
+            mime_type = mimetypes.guess_type(img_fn)[0]
+            msg.set_file(img_fn, mime_type)
         else:
-            msg = self.admingroup.prepare_message(deltachat.Message.new_empty(self.account, "text"))
+            msg = deltachat.Message.new_empty(self.account, "text")
         msg.set_text(text)
         msg.quote = reply_to
-        self.admingroup.send_prepared(msg)
+        sent_id = dclib.dc_send_msg(self.account._dc_context, self.admingroup.id, msg._dc_msg)
+        assert sent_id == msg.id
 
 
 def get_admbot_db_path():
