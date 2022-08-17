@@ -61,13 +61,12 @@ class AdmBot:
                 arguments.append("")  # add empty prefix
             text = add_token(self.db, name=arguments[1], expiry=arguments[2], maxuse=arguments[3],
                              prefix=arguments[4], token=None).get("message")
-            message.chat.send_text(text)
             fn = qr_from_token(self.db, arguments[1])["filename"]
-            message.chat.send_image(fn)
+            self.reply(text, message, img_fn=fn)
 
         elif arguments[0] == "/gen-qr":
             fn = qr_from_token(self.db, tokenname=arguments[1]).get("filename")
-            message.chat.send_image(fn)
+            self.reply("", message, img_fn=fn)
 
         elif arguments[0] == "/add-user":
             arguments = message.text.split(" ")
@@ -77,7 +76,7 @@ class AdmBot:
                 text = "successfully created %s with password %s" % (user.addr, user.password)
             else:
                 text = result.get("message")
-            message.chat.send_text(text)
+            self.reply(text, message)
 
         elif arguments[0] == "/list-users":
             token = arguments[1] if len(arguments) > 1 else None
@@ -85,10 +84,10 @@ class AdmBot:
                 users = conn.get_user_list(token=token)
             lines = ["%s [%s]" % (user.addr, user.token_name) for user in users]
             text = "\n".join(lines)
-            message.chat.send_text(text)
+            self.reply(text, message)
 
         elif arguments[0] == "/list-tokens":
-            message.chat.send_text(list_tokens(self.db))
+            self.reply(list_tokens(self.db), message)
 
     def check_privileges(self, command: deltachat.Message):
         """
