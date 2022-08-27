@@ -1,14 +1,17 @@
-
 import os
 import pwd
 import grp
 import collections
+import threading
+from random import randint
 from pathlib import Path
 
+import deltachat
 import pytest
 from _pytest.pytester import LineMatcher
 
 import mailadm.db
+import mailadm.bot
 
 
 @pytest.fixture(autouse=True)
@@ -82,6 +85,36 @@ def cmd():
 def db(tmpdir, make_db):
     path = tmpdir.ensure("base", dir=1)
     return make_db(path)
+
+def prepare_account(addr, mailcow, db_path):
+    password = mailcow.auth["X-API-Key"]
+    mailcow.add_user_mailcow(addr, password, "admbot")
+    ac = deltachat.Account(str(db_path))
+    ac.run_account(addr, password)
+    return ac
+
+@pytest.fixture()
+def admbot(mailcow, db, tmpdir):
+    addr = "pytest-admbot-%s@x.testrun.org" % (randint(0, 999),)
+    tmpdir = Path(str(tmpdir))
+    admbot_db_path = str(mailadm.bot.get_admbot_db_path(db_path=tmpdir.joinpath("admbot.db")))
+    botaccount = prepare_account(addr, mailcow, admbot_db_path)
+    botthread = threading.Thread(target=mailadm.bot.main, args=(db, admbot_db_path), daemon=True)
+    botthread.start()
+    yield botaccount
+    botaccount.shutdown()
+    botthread.join()
+    mailcow.del_user_mailcow(addr)
+
+
+@pytest.fixture
+def botuser(mailcow, db, tmpdir):
+    addr = "pytest-%s@x.testrun.org" % (randint(0, 999),)
+    tmpdir = Path(str(tmpdir))
+    db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("botuser.db"))
+    botuser = prepare_account(addr, mailcow, db_path)
+    yield botuser
+    mailcow.del_user_mailcow(addr)
 
 
 @pytest.fixture
