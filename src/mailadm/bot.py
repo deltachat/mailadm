@@ -130,8 +130,9 @@ class AdmBot:
         assert sent_id == msg.id
 
 
-def get_admbot_db_path():
-    db_path = os.environ.get("ADMBOT_DB", "/mailadm/docker-data/admbot.db")
+def get_admbot_db_path(db_path=None):
+    if not db_path:
+        db_path = os.environ.get("ADMBOT_DB", "/mailadm/docker-data/admbot.db")
     try:
         sqlite3.connect(db_path)
     except sqlite3.OperationalError:
@@ -149,7 +150,7 @@ def main(mailadm_db, admbot_db_path):
         time.sleep(1)
     else:
         conn.close()
-        ac = deltachat.Account(get_admbot_db_path())
+        ac = deltachat.Account(admbot_db_path)
         ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
     ac.wait_shutdown()
     print("shutting down bot.", file=sys.stderr)
