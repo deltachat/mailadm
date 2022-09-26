@@ -106,7 +106,7 @@ def admbot(mailcow, db, tmpdir):
     botthread.start()
     yield botaccount
     botaccount.shutdown()
-    botthread.join(timeout=1)  # without timeout this never finishes... :/
+    botaccount.wait_shutdown()
     mailcow.del_user_mailcow(addr)
 
 
@@ -118,6 +118,7 @@ def botuser(mailcow, db, tmpdir):
     botuser = prepare_account(addr, mailcow, db_path)
     yield botuser
     botuser.shutdown()
+    botuser.wait_shutdown()
     mailcow.del_user_mailcow(addr)
 
 
