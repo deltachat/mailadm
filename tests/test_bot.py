@@ -2,7 +2,7 @@ import time
 import pytest
 
 
-TIMEOUT = 30
+TIMEOUT = 60
 
 
 class TestAdminGroup:
