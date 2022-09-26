@@ -1,4 +1,5 @@
-from time import sleep
+import time
+import pytest
 
 
 class TestAdminGroup:
@@ -9,21 +10,27 @@ class TestAdminGroup:
         qr = admchat.get_join_qr()
         chat = botuser.qr_join_chat(qr)
         while not chat.is_protected():
-            sleep(0.1)
+            time.sleep(0.1)
         return chat
 
     def test_help(self, admbot, botuser, db):
         admingroup = self.create_admingroup(admbot, botuser, db)
         admingroup.send_text("/help")
-        while len(admingroup.get_messages()) < 7:  # this sometimes never completes
-            sleep(0.1)
+        begin = time.time()
+        while len(admingroup.get_messages()) < 7:
+            time.sleep(0.1)
+            if time.time() > begin + 20:
+                pytest.fail("Bot reply took more than 20 seconds")
         assert admingroup.get_messages()[6].text.startswith("/add-user addr password token")
 
     def test_list_tokens(self, admbot, botuser, db):
         admingroup = self.create_admingroup(admbot, botuser, db)
         command = admingroup.send_text("/list-tokens")
+        begin = time.time()
         while len(admingroup.get_messages()) < 7:  # this sometimes never completes
-            sleep(0.1)
+            time.sleep(0.1)
+            if time.time() > begin + 20:
+                pytest.fail("Bot reply took more than 20 seconds")
         assert admingroup.get_messages()[6].text.startswith("Existing tokens:")
         #assert admingroup.get_messages()[6].quote == command  # wait for #53
 
@@ -31,6 +38,9 @@ class TestAdminGroup:
         self.create_admingroup(admbot, botuser, db)
         direct = botuser.create_chat(admbot.get_config("addr"))
         direct.send_text("/list-tokens")
+        begin = time.time()
         while len(direct.get_messages()) < 2:  # this sometimes never completes
-            sleep(0.1)
+            time.sleep(0.1)
+            if time.time() > begin + 20:
+                pytest.fail("Bot reply took more than 20 seconds")
         assert direct.get_messages()[1].text == "Sorry, I only take commands from the admin group."
