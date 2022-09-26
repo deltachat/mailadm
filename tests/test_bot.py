@@ -12,22 +12,25 @@ class TestAdminGroup:
             sleep(0.1)
         return chat
 
-
     def test_help(self, admbot, botuser, db):
         admingroup = self.create_admingroup(admbot, botuser, db)
         admingroup.send_text("/help")
-        while len(admingroup.get_messages()) < 7:
+        while len(admingroup.get_messages()) < 7:  # this sometimes never completes
             sleep(0.1)
-        raise ValueError(admingroup.get_messages()[6].text)
+        assert admingroup.get_messages()[6].text.startswith("/add-user addr password token")
 
+    def test_list_tokens(self, admbot, botuser, db):
+        admingroup = self.create_admingroup(admbot, botuser, db)
+        command = admingroup.send_text("/list-tokens")
+        while len(admingroup.get_messages()) < 7:  # this sometimes never completes
+            sleep(0.1)
+        assert admingroup.get_messages()[6].text.startswith("Existing tokens:")
+        #assert admingroup.get_messages()[6].quote == command  # wait for #53
 
-def test_setup_bot():
-    pass
-
-
-def test_reply():
-    pass
-
-
-def test_check_privileges():
-    pass
+    def test_check_privileges(self, admbot, botuser, db):
+        self.create_admingroup(admbot, botuser, db)
+        direct = botuser.create_chat(admbot.get_config("addr"))
+        direct.send_text("/list-tokens")
+        while len(direct.get_messages()) < 2:  # this sometimes never completes
+            sleep(0.1)
+        assert direct.get_messages()[1].text == "Sorry, I only take commands from the admin group."
