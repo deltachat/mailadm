@@ -90,7 +90,7 @@ def prune(db, dryrun=False) -> {}:
 def list_tokens(db) -> str:
     """Print token info for all tokens
     """
-    output = []
+    output = ["Existing tokens:\n"]
     with db.read_connection() as conn:
         for name in conn.get_token_list():
             token_info = conn.get_tokeninfo_by_name(name)
