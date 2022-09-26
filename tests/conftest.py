@@ -87,12 +87,14 @@ def db(tmpdir, make_db):
     path = tmpdir.ensure("base", dir=1)
     return make_db(path)
 
+
 def prepare_account(addr, mailcow, db_path):
     password = mailcow.auth["X-API-Key"]
     mailcow.add_user_mailcow(addr, password, "admbot")
     ac = deltachat.Account(str(db_path))
     ac.run_account(addr, password)
     return ac
+
 
 @pytest.fixture()
 def admbot(mailcow, db, tmpdir):
@@ -104,7 +106,7 @@ def admbot(mailcow, db, tmpdir):
     botthread.start()
     yield botaccount
     botaccount.shutdown()
-    botthread.join()
+    botthread.join(timeout=1)  # without timeout this never finishes... :/
     mailcow.del_user_mailcow(addr)
 
 
@@ -115,6 +117,7 @@ def botuser(mailcow, db, tmpdir):
     db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("botuser.db"))
     botuser = prepare_account(addr, mailcow, db_path)
     yield botuser
+    botuser.shutdown()
     mailcow.del_user_mailcow(addr)
 
 
