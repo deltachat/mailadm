@@ -58,6 +58,28 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
     return db
 
 
+def create_bot_account(ctx, email: str, password: str) -> (str, str):
+    """Make sure that there is a mailcow account to use for the bot.
+
+    This method tries to use the --email and --password CLI arguments. If they are incomplete
+
+    """
+    mailadmdb = get_mailadm_db(ctx)
+    with mailadmdb.read_connection() as rconn:
+        mc = rconn.get_mailcow_connection()
+        password = mailadm.util.gen_password()
+        try:
+            mc.add_user_mailcow(email, password, "bot")
+        except MailcowError as e:
+            if "object_exists" in str(e):
+                ctx.fail("%s already exists; delete the account in mailcow or specify "
+                         "credentials with --email and --password." % (email,))
+            else:
+                raise
+        print("New account %s created as bot account." % (email,))
+    return email, password
+
+
 @click.command()
 @click.option("--email", type=str, default=None, help="name of email")
 @click.option("--password", type=str, default=None, help="name of password")
@@ -78,10 +100,25 @@ def setup_bot(ctx, email, password, show_ffi):
     if show_ffi:
         ac.add_account_plugin(FFIEventLogger(ac))
 
+    mailadmdb = get_mailadm_db(ctx)
+    with mailadmdb.read_connection() as rconn:
+        mail_domain = rconn.config.mail_domain
+        admingrpid_old = rconn.config.admingrpid
+
     if not ac.is_configured():
-        assert email and password, (
-            "you must specify --email and --password once to configure this database/account"
-        )
+        if email and not password:
+            if email.split("@")[1] == mail_domain:
+                print("--password not specified, creating account automatically... ")
+                email, password = create_bot_account(ctx, email, None)
+            else:
+                ctx.fail("You need to provide --password if you want to use an existing account "
+                         "for the mailadm bot.")
+        elif not email and not password:
+            print("--email and --password not specified, creating account automatically... ")
+            email = "bot@" + mail_domain
+            email, password = create_bot_account(ctx, email, password)
+        elif not email and password:
+            ctx.fail("Please also provide --email to use an email account for the mailadm bot.")
     if email:
         ac.set_config("addr", email)
     if password:
@@ -93,11 +130,6 @@ def setup_bot(ctx, email, password, show_ffi):
     configtracker.wait_finish()
 
     ac.start_io()
-
-    mailadmdb = get_mailadm_db(ctx)
-    with mailadmdb.read_connection() as rconn:
-        mail_domain = rconn.config.mail_domain
-        admingrpid_old = rconn.config.admingrpid
 
     chat = ac.create_group_chat("Admin group on {}".format(mail_domain), contacts=[], verified=True)
 
