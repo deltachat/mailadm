@@ -199,15 +199,15 @@ class TestSetupBot:
         print(os.environ.items())
         delete_later = True
         try:
-            mailcow.add_user_mailcow("bot@x.testrun.org", "asdf1234", "pytest")
+            mailcow.add_user_mailcow("mailadm@x.testrun.org", "asdf1234", "pytest")
         except MailcowError as e:
             if "object_exists" in str(e):
                 delete_later = False
         mycmd.run_fail(["setup-bot"], """
-            *bot@x.testrun.org already exists; delete the account in mailcow or specify*
+            *mailadm@x.testrun.org already exists; delete the account in mailcow or specify*
         """)
         if delete_later:
-            mailcow.del_user_mailcow("bot@x.testrun.org")
+            mailcow.del_user_mailcow("mailadm@x.testrun.org")
 
     def test_specify_addr_not_password(self, mycmd):
         mycmd.run_fail(["setup-bot", "--email", "bot@example.org"], """
