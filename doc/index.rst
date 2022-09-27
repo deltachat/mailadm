@@ -155,13 +155,16 @@ Initializing the Bot Interface
 
 You don't have to login with SSH every time you want to create tokens. You can
 also use the bot interface to give commands to mailadm in a verified Delta
-group, the "admin group chat". The mailadm bot needs an e-mail account to
-operate - it doesn't have to be on your mailcow server, it can be any e-mail
-account which also works with Delta Chat.
+group, the "admin group chat".
 
 You can run the following command to setup the bot::
 
-    $ sudo docker exec mailadm mailadm setup-bot --email bot@example.org --password p4ssw0rd
+    $ sudo docker exec mailadm mailadm setup-bot
+
+This creates an account for the bot automatically; by default it's called
+``mailadm@yourdomain.tld``, but you can use the ``--email`` argument if you
+want to call it differently. If you want to use an existing account for the
+mailadm bot, you can specify credentials with ``--email`` and ``--password``.
 
 Then you are asked to scan a QR code to join the Admin Group, a verified Delta
 Chat group. Anyone in the group issue commands to mailadm via Delta Chat. You
