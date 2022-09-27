@@ -58,7 +58,7 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
     return db
 
 
-def create_bot_account(ctx, email: str, password: str) -> (str, str):
+def create_bot_account(ctx, email: str, password=None) -> (str, str):
     """Make sure that there is a mailcow account to use for the bot.
 
     This method tries to use the --email and --password CLI arguments. If they are incomplete
@@ -67,7 +67,8 @@ def create_bot_account(ctx, email: str, password: str) -> (str, str):
     mailadmdb = get_mailadm_db(ctx)
     with mailadmdb.read_connection() as rconn:
         mc = rconn.get_mailcow_connection()
-        password = mailadm.util.gen_password()
+        if not password:
+            password = mailadm.util.gen_password()
         try:
             mc.add_user_mailcow(email, password, "bot")
         except MailcowError as e:
@@ -109,14 +110,14 @@ def setup_bot(ctx, email, password, show_ffi):
         if email and not password:
             if email.split("@")[1] == mail_domain:
                 print("--password not specified, creating account automatically... ")
-                email, password = create_bot_account(ctx, email, None)
+                email, password = create_bot_account(ctx, email)
             else:
                 ctx.fail("You need to provide --password if you want to use an existing account "
                          "for the mailadm bot.")
         elif not email and not password:
             print("--email and --password not specified, creating account automatically... ")
-            email = "bot@" + mail_domain
-            email, password = create_bot_account(ctx, email, password)
+            email = "mailadm@" + mail_domain
+            email, password = create_bot_account(ctx, email, password=password)
         elif not email and password:
             ctx.fail("Please also provide --email to use an email account for the mailadm bot.")
     if email:
