@@ -24,7 +24,7 @@ from .bot import SetupPlugin, get_admbot_db_path
 
 from deltachat import Account, account_hookimpl
 from deltachat.events import FFIEventLogger
-
+from deltachat.tracker import ConfigureFailed
 
 option_dryrun = click.option(
     "-n", "--dryrun", is_flag=True,
@@ -127,7 +127,10 @@ def setup_bot(ctx, email, password, show_ffi):
     ac.set_config("sentbox_watch", "0")
     ac.set_config("bot", "1")
     configtracker = ac.configure(reconfigure=ac.is_configured())
-    configtracker.wait_finish()
+    try:
+        configtracker.wait_finish()
+    except ConfigureFailed as e:
+        ctx.fail("Authentication Failed: " + str(e))
 
     ac.start_io()
 
