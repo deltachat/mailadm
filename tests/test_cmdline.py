@@ -3,12 +3,14 @@ from random import randint
 import time
 import datetime
 import pytest
+from mailadm.mailcow import MailcowError
 
 
 @pytest.fixture
 def mycmd(cmd, make_db, tmpdir, monkeypatch):
     db = make_db(tmpdir.mkdir("mycmd"), init=False)
     monkeypatch.setenv("MAILADM_DB", str(db.path))
+    monkeypatch.setenv("ADMBOT_DB", str(tmpdir.mkdir("admbot")) + "admbot.db")
     cmd.db = db
     if os.environ["MAILCOW_TOKEN"] == "":
         raise KeyError("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
@@ -190,3 +192,34 @@ class TestUsers:
         assert addr2 in out
         mycmd.run_ok(["del-user", addr])
         mycmd.run_ok(["del-user", addr2])
+
+
+class TestSetupBot:
+    def test_account_already_exists(self, mycmd, mailcow):
+        print(os.environ.items())
+        delete_later = True
+        try:
+            mailcow.add_user_mailcow("bot@x.testrun.org", "asdf1234", "pytest")
+        except MailcowError as e:
+            if "object_exists" in str(e):
+                delete_later = False
+        mycmd.run_fail(["setup-bot"], """
+            *bot@x.testrun.org already exists; delete the account in mailcow or specify*
+        """)
+        if delete_later:
+            mailcow.del_user_mailcow("bot@x.testrun.org")
+
+    def test_specify_addr_not_password(self, mycmd):
+        mycmd.run_fail(["setup-bot", "--email", "bot@example.org"], """
+            *You need to provide --password if you want to use an existing account*
+        """)
+
+    def test_specify_password_not_addr(self, mycmd):
+        mycmd.run_fail(["setup-bot", "--password", "asdf"], """
+            *Please also provide --email to use an email account for the mailadm*
+        """)
+
+    def test_wrong_credentials(self, mycmd):
+        mycmd.run_fail(["setup-bot", "--email", "bot@testrun.org", "--password", "asdf"], """
+            *Cannot login as "bot@testrun.org". Please check if the email address and the password*
+        """)
