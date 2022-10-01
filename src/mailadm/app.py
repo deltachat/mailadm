@@ -16,14 +16,24 @@ from mailadm.bot import get_admbot_db_path
 def prune_loop():
     try:
         db = DB(get_db_path())
-        # what to do if admbot wasn't configured yet?
         ac = deltachat.Account(get_admbot_db_path())
-        ac.run_account()
+        botconfigured = True
+        try:
+            ac.run_account()
+        except AssertionError:
+            botconfigured = False
         # how to shut down admbot account in the end?
         while 1:
-            for logmsg in warn_expiring_users(db, ac).get("message"):
-                # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
-                print(logmsg, file=sys.stderr)
+            if botconfigured:
+                for logmsg in warn_expiring_users(db, ac).get("message"):
+                    # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
+                    print(logmsg, file=sys.stderr)
+            else:
+                try:
+                    ac.run_account()
+                    continue
+                except AssertionError:
+                    pass
             for logmsg in prune(db).get("message"):
                 # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
                 print(logmsg, file=sys.stderr)
