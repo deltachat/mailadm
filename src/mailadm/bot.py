@@ -49,7 +49,16 @@ class AdmBot:
                 message.chat.send_text("Sorry, I only take commands from the admin group.")
             else:
                 admingroup = self.account.get_chat_by_id(self.admingrpid)
-                self.account.forward_messages(message, admingroup)
+                admingroup.send_text("message by %s:\n%s" %
+                                     (message.get_sender_contact().addr, message.text))
+            return
+
+        if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
+            if message.quoted_text.startswith("message by "):
+                original_text = message.quote.text.strip("message by ")
+                recipient = original_text.split(":")[0]
+                chat = self.account.create_chat(recipient)
+                chat.send_msg(message)
             return
 
         if arguments[0] == "/help":
@@ -100,7 +109,7 @@ class AdmBot:
         """
         Checks whether the incoming message was in the admin group.
         """
-        if command.chat.is_group() and self.admingrpid == str(command.chat.id):
+        if command.chat.is_group() and self.admingrpid == command.chat.id:
             if command.chat.is_protected() \
                     and command.is_encrypted() \
                     and int(command.chat.num_contacts()) >= 2:
@@ -110,7 +119,8 @@ class AdmBot:
                     print("%s is not allowed to give commands to mailadm." %
                           (command.get_sender_contact(),))
             else:
-                print("admin chat is broken. Try `mailadm setup-bot`. Group ID:", self.admingrpid)
+                print("The admin group is broken. Try `mailadm setup-bot`. Group ID:",
+                      str(self.admingrpid))
                 raise ValueError
         else:
             return False
