@@ -245,7 +245,7 @@ class Connection:
             day = 86400
             warnmsg = "Your account will expire in ?. You should look for an alternative email " \
                 "provider right now.\nWith Delta Chat, you can keep all your chats and " \
-                "conversations; just use the AEAP mechanism to tell your contacts of your " \
+                "conversations. Just use the AEAP mechanism to tell your contacts of your " \
                 "address migration: <link>\n\nYour %s team" % (self.config.mail_domain,)
             if user.ttl > year:
                 if user.warned == 0 and user.date + user.ttl < sysdate + month:
