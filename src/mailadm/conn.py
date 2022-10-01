@@ -265,7 +265,10 @@ class Connection:
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", "1 day")})
             else:
                 if user.warned == 0 and user.date + user.ttl < sysdate + user.ttl / 4:
-                    timeleft = str(user.ttl / 4 / 60) + " minutes"
+                    if user.ttl > day:
+                        timeleft = str(user.ttl / 4 / 60 / 60) + " hours"
+                    else:
+                        timeleft = str(user.ttl / 4 / 60) + " minutes"
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", timeleft)})
         return users_to_warn
 
