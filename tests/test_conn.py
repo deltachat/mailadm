@@ -1,7 +1,7 @@
 import pytest
 from random import randint
 import requests
-
+import time
 import mailadm
 from mailadm.conn import DBError
 from mailadm.mailcow import MailcowError
@@ -116,3 +116,125 @@ def test_delete_user_mailcow_missing(conn, mailcow):
 def test_db_version(conn):
     version = conn.get_dbversion()
     assert type(version) == int
+
+
+def test_users_to_warn(conn, monkeypatch):
+    yeartoken = conn.add_token("1y", token="asd1", expiry="1y", prefix="tmp.")
+    monthtoken = conn.add_token("1m", token="asd2", expiry="1m", prefix="tmp.")
+    weektoken = conn.add_token("1w", token="asd3", expiry="1w", prefix="tmp.")
+    daytoken = conn.add_token("1d", token="asd4", expiry="1d", prefix="tmp.")
+
+    yearuser = conn.add_email_account(yeartoken)
+    monthuser = conn.add_email_account(monthtoken)
+    weekuser = conn.add_email_account(weektoken)
+    dayuser = conn.add_email_account(daytoken)
+
+    sysdate = int(time.time())
+    # add 20 hours to time
+    sysdate += 60 * 60 * 20
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 1
+    assert "360 minutes" in users[0]["message"]
+    assert users[0]["user"].addr == dayuser.addr
+    # don't remember who was warned already
+
+    expired_users = conn.get_expired_users(sysdate)
+    assert len(expired_users) == 0
+    # add 6 days to time
+    sysdate += 60 * 60 * 24 * 6
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 2
+    # now remember the warning
+    for user in users:
+        conn.user_was_warned(user["user"])
+        if user["user"].addr == weekuser.addr:
+            assert "1 day" in user["message"]
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 0
+
+    expired_users = conn.get_expired_users(sysdate)
+    assert len(expired_users) == 1
+    # add 23 days to time
+    sysdate += 60 * 60 * 24 * 23
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 1
+    assert "7 days" in users[0]["message"]
+    assert users[0]["user"].addr == monthuser.addr
+    conn.user_was_warned(users[0]["user"])
+    expired_users = conn.get_expired_users(sysdate)
+    assert len(expired_users) == 2
+
+    # add 306 days to time
+    sysdate += 60 * 60 * 24 * 306
+    expired_users = conn.get_expired_users(sysdate)
+    assert len(expired_users) == 3
+    for user in expired_users:
+        conn.delete_email_account(user.addr)
+    expired_users = conn.get_expired_users(sysdate)
+    assert len(expired_users) == 0
+
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 1
+    assert users[0]["user"].addr == yearuser.addr
+    assert "30 days" in users[0]["message"]
+    conn.user_was_warned(users[0]["user"])
+
+    # add 23 days to time
+    sysdate += 60 * 60 * 24 * 23
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 1
+    assert users[0]["user"].addr == yearuser.addr
+    assert "7 days" in users[0]["message"]
+    conn.user_was_warned(users[0]["user"])
+
+    # add 20 hours to time
+    sysdate += 60 * 60 * 20
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 0
+
+    # add 6 days to time
+    sysdate += 60 * 60 * 24 * 6
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 1
+    assert users[0]["user"].addr == yearuser.addr
+    assert "1 day" in users[0]["message"]
+    conn.user_was_warned(users[0]["user"])
+
+    # add 6 days to time
+    sysdate += 60 * 60 * 24 * 6
+    expired_users = conn.get_expired_users(sysdate)
+    assert len(expired_users) == 1
+    conn.delete_email_account(expired_users[0].addr)
+    expired_users = conn.get_expired_users(sysdate)
+    assert len(expired_users) == 0
+
+
+def test_remember_warning(conn):
+    daytoken = conn.add_token("1d", token="asdf", expiry="1d", prefix="tmp.")
+    dayuser = conn.add_email_account(daytoken)
+
+    sysdate = int(time.time())
+    # add 20 hours to time
+    sysdate += 60 * 60 * 20
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 1
+    # don't remember warning
+
+    # add 1 hour to time
+    sysdate += 60 * 60
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 1
+    conn.user_was_warned(users[0]["user"])
+
+    # add 1 hour to time
+    sysdate += 60 * 60
+    users = conn.get_users_to_warn(sysdate)
+    assert len(users) == 0
+
+    # add 3 hours to time
+    sysdate += 60 * 60 * 3
+    expired_users = conn.get_expired_users(sysdate)
+    assert len(expired_users) == 1
+    conn.delete_email_account(expired_users[0].addr)
+    expired_users = conn.get_expired_users(sysdate)
+    assert len(expired_users) == 0
