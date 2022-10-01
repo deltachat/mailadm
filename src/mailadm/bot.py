@@ -150,7 +150,7 @@ def main(mailadm_db, admbot_db_path):
         time.sleep(1)
     else:
         conn.close()
-        ac = deltachat.Account(admbot_db_path)
+        ac.set_avatar("assets/avatar.jpg")
         ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
     ac.wait_shutdown()
     print("shutting down bot.", file=sys.stderr)
