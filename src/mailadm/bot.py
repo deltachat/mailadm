@@ -42,10 +42,14 @@ class AdmBot:
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
         arguments = message.text.split(" ")
-        print("process_incoming command:", arguments)
+        print("process_incoming message:", message.text)
         if not self.check_privileges(message):
-            message.create_chat()
-            message.chat.send_text("Sorry, I only take commands from the admin group.")
+            if message.text[0] == "/":
+                message.create_chat()
+                message.chat.send_text("Sorry, I only take commands from the admin group.")
+            else:
+                admingroup = self.account.get_chat_by_id(self.admingrpid)
+                self.account.forward_messages(message, admingroup)
             return
 
         if arguments[0] == "/help":
