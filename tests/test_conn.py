@@ -211,7 +211,7 @@ def test_users_to_warn(conn, monkeypatch):
 
 def test_remember_warning(conn):
     daytoken = conn.add_token("1d", token="asdf", expiry="1d", prefix="tmp.")
-    dayuser = conn.add_email_account(daytoken)
+    conn.add_email_account(daytoken)
 
     sysdate = int(time.time())
     # add 20 hours to time
