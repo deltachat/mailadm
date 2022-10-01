@@ -232,6 +232,46 @@ class Connection:
             users.append(UserInfo(*args))
         return users
 
+    def get_users_to_warn(self, sysdate: int) -> [{}]:
+        q = UserInfo._select_user_columns
+        allusers = []
+        users_to_warn = []
+        for args in self._sqlconn.execute(q, (sysdate, )).fetchall():
+            allusers.append(UserInfo(*args))
+        for user in allusers:
+            year = 31536000
+            month = 2592000
+            week = 2592000
+            day = 86400
+            warnmsg = """Your account will expire in ?. You should look for an alternative email
+                provider right now. With Delta Chat, you can keep all your chats and conversations;
+                just use the AEAP mechanism to tell your contacts of your address migration: <link>
+
+                Your %s team""" % (self.config.mail_domain,)
+            if user.ttl > year:
+                if user.warned == 0 and user.date + user.ttl < sysdate + month:
+                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "30 days")})
+                elif user.warned == 1 and user.date + user.ttl < sysdate + week:
+                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "7 days")})
+                elif user.warned == 2 and user.date + user.ttl < sysdate + day:
+                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "1 day")})
+            elif user.ttl > month:
+                if user.warned == 0 and user.date + user.ttl < sysdate + week:
+                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "7 days")})
+                elif user.warned == 1 and user.date + user.ttl < sysdate + day:
+                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "1 day")})
+            elif user.ttl > week:
+                if user.warned == 0 and user.date + user.ttl < sysdate + day:
+                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "1 day")})
+            else:
+                if user.warned == 0 and user.date + user.ttl < sysdate + user.ttl / 4:
+                    timeleft = str(user.ttl / 4 / 60) + " minutes"
+                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", timeleft)})
+        return users_to_warn
+
+    def user_was_warned(self, user):
+        self.execute("UPDATE users SET warned = warned + 1 WHERE addr=?", (user.addr,))
+
     def get_user_list(self, token=None):
         q = UserInfo._select_user_columns
         args = []
@@ -288,13 +328,14 @@ class TokenInfo:
 
 
 class UserInfo:
-    _select_user_columns = "SELECT addr, date, ttl, token_name from users\n"
+    _select_user_columns = "SELECT addr, date, ttl, token_name, warned from users\n"
 
-    def __init__(self, addr, date, ttl, token_name):
+    def __init__(self, addr, date, ttl, token_name, warned=0):
         self.addr = addr
         self.date = date
         self.ttl = ttl
         self.token_name = token_name
+        self.warned = warned
 
 
 class Config:
