@@ -233,33 +233,32 @@ class Connection:
         return users
 
     def get_users_to_warn(self, sysdate: int) -> [{}]:
-        q = UserInfo._select_user_columns
-        allusers = []
+        allusers = self.get_user_list()
         users_to_warn = []
-        for args in self._sqlconn.execute(q).fetchall():
-            allusers.append(UserInfo(*args))
         for user in allusers:
+            if user.token_name == "created in mailcow":
+                continue
             year = 31536000
             month = 2592000
-            week = 2592000
+            week = 604800
             day = 86400
             warnmsg = "Your account will expire in ?. You should look for an alternative email " \
                 "provider right now.\nWith Delta Chat, you can keep all your chats and " \
                 "conversations. Just use the AEAP mechanism to tell your contacts of your " \
                 "address migration: <link>\n\nYour %s team" % (self.config.mail_domain,)
-            if user.ttl > year:
+            if user.ttl >= year:
                 if user.warned == 0 and user.date + user.ttl < sysdate + month:
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", "30 days")})
                 elif user.warned == 1 and user.date + user.ttl < sysdate + week:
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", "7 days")})
                 elif user.warned == 2 and user.date + user.ttl < sysdate + day:
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", "1 day")})
-            elif user.ttl > month:
+            elif user.ttl >= month:
                 if user.warned == 0 and user.date + user.ttl < sysdate + week:
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", "7 days")})
                 elif user.warned == 1 and user.date + user.ttl < sysdate + day:
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", "1 day")})
-            elif user.ttl > week:
+            elif user.ttl >= week:
                 if user.warned == 0 and user.date + user.ttl < sysdate + day:
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", "1 day")})
             else:
