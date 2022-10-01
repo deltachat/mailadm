@@ -81,12 +81,18 @@ class DB:
         with self.read_connection() as conn:
             return conn.config
 
-    CURRENT_DBVERSION = 1
+    CURRENT_DBVERSION = 2
 
     def ensure_tables(self):
         with self.read_connection() as conn:
-            if conn.get_dbversion():
-                return
+            db_version = conn.get_dbversion()
+        if db_version == self.CURRENT_DBVERSION:
+            return
+        elif db_version == 1:
+            with self.write_transaction() as conn:
+                conn.execute("ALTER TABLE users ADD COLUMN warned INTEGER DEFAULT 0")
+                conn.set_config("dbversion", 2)
+            return
         with self.write_transaction() as conn:
             print("DB: Creating tables", self.path)
 
@@ -106,7 +112,7 @@ class DB:
                     date INTEGER,
                     ttl INTEGER,
                     token_name TEXT NOT NULL,
-                    warned INTEGER default 0,
+                    warned INTEGER DEFAULT 0,
                     FOREIGN KEY (token_name) REFERENCES tokens (name)
                 )
             """)
