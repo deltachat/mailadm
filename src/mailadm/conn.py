@@ -236,7 +236,7 @@ class Connection:
         q = UserInfo._select_user_columns
         allusers = []
         users_to_warn = []
-        for args in self._sqlconn.execute(q, (sysdate, )).fetchall():
+        for args in self._sqlconn.execute(q).fetchall():
             allusers.append(UserInfo(*args))
         for user in allusers:
             year = 31536000
