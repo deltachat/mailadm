@@ -243,11 +243,10 @@ class Connection:
             month = 2592000
             week = 2592000
             day = 86400
-            warnmsg = """Your account will expire in ?. You should look for an alternative email
-                provider right now. With Delta Chat, you can keep all your chats and conversations;
-                just use the AEAP mechanism to tell your contacts of your address migration: <link>
-
-                Your %s team""" % (self.config.mail_domain,)
+            warnmsg = "Your account will expire in ?. You should look for an alternative email " \
+                "provider right now.\nWith Delta Chat, you can keep all your chats and " \
+                "conversations; just use the AEAP mechanism to tell your contacts of your " \
+                "address migration: <link>\n\nYour %s team" % (self.config.mail_domain,)
             if user.ttl > year:
                 if user.warned == 0 and user.date + user.ttl < sysdate + month:
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", "30 days")})
@@ -266,9 +265,9 @@ class Connection:
             else:
                 if user.warned == 0 and user.date + user.ttl < sysdate + user.ttl / 4:
                     if user.ttl > day:
-                        timeleft = str(user.ttl / 4 / 60 / 60) + " hours"
+                        timeleft = str(int(user.ttl / 4 / 60 / 60)) + " hours"
                     else:
-                        timeleft = str(user.ttl / 4 / 60) + " minutes"
+                        timeleft = str(int(user.ttl / 4 / 60)) + " minutes"
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", timeleft)})
         return users_to_warn
 
