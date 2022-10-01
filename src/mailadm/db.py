@@ -106,6 +106,7 @@ class DB:
                     date INTEGER,
                     ttl INTEGER,
                     token_name TEXT NOT NULL,
+                    warned INTEGER default 0,
                     FOREIGN KEY (token_name) REFERENCES tokens (name)
                 )
             """)
