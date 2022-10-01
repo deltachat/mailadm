@@ -31,6 +31,7 @@ def prune_loop():
             else:
                 try:
                     ac.run_account()
+                    botconfigured = True
                     continue
                 except AssertionError:
                     pass
