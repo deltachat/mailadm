@@ -23,16 +23,17 @@ def prune_loop():
         botconfigured = False
     # how to shut down admbot account in the end?
     while 1:
+        for logmsg in prune(db).get("message"):
+            # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
+            print(logmsg, file=sys.stderr)
         if not botconfigured:
             try:
                 ac.run_account()
                 botconfigured = True
-                continue
             except AssertionError:
-                pass
-        for logmsg in prune(db).get("message"):
-            # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
-            print(logmsg, file=sys.stderr)
+                time.sleep(600)
+                continue
+        warn_expiring_users(db, ac)
         time.sleep(600)
 
 
