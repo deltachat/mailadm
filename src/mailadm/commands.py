@@ -58,6 +58,17 @@ def add_user(db, token=None, addr=None, password=None, dryrun=False) -> {}:
                 "message": user_info}
 
 
+def warn_expiring_users(db, admbot) -> {}:
+    sysdate = int(time.time())
+    with db.write_transaction() as conn:
+        users = conn.get_users_to_warn(sysdate)
+        for userdict in users:
+            user = userdict["user"]
+            chat = admbot.create_chat(user.addr)
+            chat.send_text(userdict["message"])
+            conn.user_was_warned(user)
+
+
 def prune(db, dryrun=False) -> {}:
     sysdate = int(time.time())
     with db.write_transaction() as conn:
