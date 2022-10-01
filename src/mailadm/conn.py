@@ -245,7 +245,8 @@ class Connection:
             warnmsg = "Your account will expire in ?. You should look for an alternative email " \
                 "provider right now.\nWith Delta Chat, you can keep all your chats and " \
                 "conversations. Just use the AEAP mechanism to tell your contacts of your " \
-                "address migration: <link>\n\nYour %s team" % (self.config.mail_domain,)
+                "address migration: https://delta.chat/en/2022-09-14-aeap\n\nYour %s team" % \
+                (self.config.mail_domain,)
             if user.ttl >= year:
                 if user.warned == 0 and user.date + user.ttl < sysdate + month:
                     users_to_warn.append({"user": user, "message": warnmsg.replace("?", "30 days")})
