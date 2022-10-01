@@ -3,19 +3,26 @@ help gunicorn and other WSGI servers to instantiate a web instance of mailadm
 """
 import sys
 import os
-
+import deltachat
 from .web import create_app_from_db_path
 import time
 import threading
 from .db import get_db_path, DB
-from mailadm.commands import prune
+from mailadm.commands import prune, warn_expiring_users
 from mailadm.bot import main as run_bot
 from mailadm.bot import get_admbot_db_path
 
 
 def prune_loop():
     db = DB(get_db_path())
+    # what to do if admbot wasn't configured yet?
+    ac = deltachat.Account(get_admbot_db_path())
+    ac.run_account()
+    # how to shut down admbot account in the end?
     while 1:
+        for logmsg in warn_expiring_users(db, ac).get("message"):
+            # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
+            print(logmsg, file=sys.stderr)
         for logmsg in prune(db).get("message"):
             # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
             print(logmsg, file=sys.stderr)
