@@ -92,6 +92,7 @@ def prepare_account(addr, mailcow, db_path):
     password = mailcow.auth["X-API-Key"]
     mailcow.add_user_mailcow(addr, password, "admbot")
     ac = deltachat.Account(str(db_path))
+    ac._evtracker = ac.add_account_plugin(deltachat.events.FFIEventTracker(ac))
     ac.run_account(addr, password)
     return ac
 
