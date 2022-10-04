@@ -5,6 +5,7 @@ import collections
 import threading
 from random import randint
 from pathlib import Path
+import time
 
 import deltachat
 import pytest
@@ -93,6 +94,20 @@ def prepare_account(addr, mailcow, db_path):
     ac = deltachat.Account(str(db_path))
     ac.run_account(addr, password)
     return ac
+
+
+@pytest.fixture()
+def admingroup(admbot, botuser, db):
+    admchat = admbot.create_group_chat("admins", [], verified=True)
+    with db.write_transaction() as conn:
+        conn.set_config("admingrpid", admchat.id)
+    qr = admchat.get_join_qr()
+    chat = botuser.qr_join_chat(qr)
+    while not chat.is_protected():
+        time.sleep(0.1)
+    chat.admbot = admbot
+    chat.botuser = botuser
+    return chat
 
 
 @pytest.fixture()
