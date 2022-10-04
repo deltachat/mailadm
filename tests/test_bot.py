@@ -18,12 +18,12 @@ class TestAdminGroup:
     @pytest.mark.timeout(TIMEOUT)
     def test_list_tokens(self, admingroup):
         num_msgs = len(admingroup.get_messages())
-        admingroup.send_text("/list-tokens")  # command =
+        command = admingroup.send_text("/list-tokens")
         while len(admingroup.get_messages()) < num_msgs + 2:  # this sometimes never completes
             time.sleep(0.1)
         reply = admingroup.get_messages()[num_msgs + 1]
         assert reply.text.startswith("Existing tokens:")
-        # assert reply.quote == command  # wait for #53
+        assert reply.quote == command
 
     @pytest.mark.timeout(TIMEOUT)
     def test_check_privileges(self, admingroup):
