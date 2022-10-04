@@ -59,10 +59,11 @@ def get_mailadm_db(ctx, show=False, fail_missing_config=True):
 
 
 def create_bot_account(ctx, email: str, password=None) -> (str, str):
-    """Make sure that there is a mailcow account to use for the bot.
+    """Creates a mailcow account to use for the bot.
 
-    This method tries to use the --email and --password CLI arguments. If they are incomplete
-
+    :param email: the email address to be used for the bot account
+    :param password: you can set a custom password via CLI, auto-generated if ommitted
+    :return email, password: the credentials for the bot account
     """
     mailadmdb = get_mailadm_db(ctx)
     with mailadmdb.read_connection() as rconn:
