@@ -242,33 +242,31 @@ class Connection:
             month = 2592000
             week = 604800
             day = 86400
-            warnmsg = "Your account will expire in ?. You should look for an alternative email " \
-                "provider right now.\nWith Delta Chat, you can keep all your chats and " \
-                "conversations. Just use the AEAP mechanism to tell your contacts of your " \
-                "address migration: https://delta.chat/en/2022-09-14-aeap\n\nYour %s team" % \
-                (self.config.mail_domain,)
+            warnmsg = "Your account will expire in {}."
+            timeleft = ""
             if user.ttl >= year:
                 if user.warned == 0 and user.date + user.ttl < sysdate + month:
-                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "30 days")})
+                    timeleft = "30 days"
                 elif user.warned == 1 and user.date + user.ttl < sysdate + week:
-                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "7 days")})
+                    timeleft = "7 days"
                 elif user.warned == 2 and user.date + user.ttl < sysdate + day:
-                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "1 day")})
+                    timeleft = "1 day"
             elif user.ttl >= month:
                 if user.warned == 0 and user.date + user.ttl < sysdate + week:
-                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "7 days")})
+                    timeleft = "7 days"
                 elif user.warned == 1 and user.date + user.ttl < sysdate + day:
-                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "1 day")})
+                    timeleft = "1 day"
             elif user.ttl >= week:
                 if user.warned == 0 and user.date + user.ttl < sysdate + day:
-                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", "1 day")})
+                    timeleft = "1 day"
             else:
                 if user.warned == 0 and user.date + user.ttl < sysdate + user.ttl / 4:
                     if user.ttl > day:
                         timeleft = str(int(user.ttl / 4 / 60 / 60)) + " hours"
                     else:
                         timeleft = str(int(user.ttl / 4 / 60)) + " minutes"
-                    users_to_warn.append({"user": user, "message": warnmsg.replace("?", timeleft)})
+            if timeleft != "":
+                users_to_warn.append({"user": user, "message": warnmsg.format(timeleft)})
         return users_to_warn
 
     def user_was_warned(self, user):
