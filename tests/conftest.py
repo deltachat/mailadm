@@ -103,7 +103,7 @@ def admingroup(admbot, botuser, db):
         conn.set_config("admingrpid", admchat.id)
     qr = admchat.get_join_qr()
     chat = botuser.qr_join_chat(qr)
-    while len(chat.get_messages()) < 5:
+    while len(chat.get_messages()) < 5:  # wait for verification + welcome message
         time.sleep(0.1)
     chat.admbot = admbot
     chat.botuser = botuser
