@@ -107,6 +107,7 @@ def admingroup(admbot, botuser, db):
         time.sleep(0.1)
     chat.admbot = admbot
     chat.botuser = botuser
+    assert len(chat.get_messages()) == 5
     return chat
 
 
