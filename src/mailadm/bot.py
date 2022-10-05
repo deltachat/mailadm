@@ -46,25 +46,26 @@ class AdmBot:
         if not self.check_privileges(message):
             chat = message.create_chat()
             admingroup = self.account.get_chat_by_id(self.admingrpid)
-            if chat.is_group() and message.get_message_info() not in admingroup.get_contacts():
-                chat.send_text("Sorry, I'm a strictly non-group bot. You can talk to me 1:1.")
-                selfcontact = self.account.get_contact_by_addr(self.account.get_config("addr"))
-                chat.remove_contact(selfcontact)  # leave group
+            if chat.is_group():
+                if message.get_sender_contact() not in admingroup.get_contacts():
+                    chat.send_text("Sorry, I'm a strictly non-group bot. You can talk to me 1:1.")
+                    selfcontact = self.account.get_contact_by_addr(self.account.get_config("addr"))
+                    chat.remove_contact(selfcontact)  # leave group
+                elif message.quote:
+                    if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
+                        recipient = chat.get_name()
+                        chat = self.account.create_chat(recipient)
+                        message.set_override_sender_name(self.account.get_config("addr"))
+                        chat.send_msg(message)
+                # else ignore message, it's just admins discussing what to do with the request
             elif message.text[0] == "/":
                 chat.send_text("Sorry, I only take commands from the admin group.")
             else:
-                admingroup.send_text("message by %s:\n%s" %
-                                     (message.get_sender_contact().addr, message.text))
+                name = message.get_sender_contact().addr
+                supportgroup = self.account.create_group_chat(name, admingroup.get_contacts(), True)
+                message.set_override_sender_name(self.account.get_config("addr"))
+                supportgroup.send_msg(message)
             return
-
-        if message.quote:
-            if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
-                if message.quoted_text.startswith("message by "):
-                    original_text = message.quote.text.strip("message by ")
-                    recipient = original_text.split(":")[0]
-                    chat = self.account.create_chat(recipient)
-                    chat.send_msg(message)
-                return
 
         if arguments[0] == "/help":
             text = ("/add-user addr password token\n"
