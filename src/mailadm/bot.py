@@ -53,13 +53,14 @@ class AdmBot:
                                      (message.get_sender_contact().addr, message.text))
             return
 
-        if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
-            if message.quoted_text.startswith("message by "):
-                original_text = message.quote.text.strip("message by ")
-                recipient = original_text.split(":")[0]
-                chat = self.account.create_chat(recipient)
-                chat.send_msg(message)
-            return
+        if message.quote:
+            if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
+                if message.quoted_text.startswith("message by "):
+                    original_text = message.quote.text.strip("message by ")
+                    recipient = original_text.split(":")[0]
+                    chat = self.account.create_chat(recipient)
+                    chat.send_msg(message)
+                return
 
         if arguments[0] == "/help":
             text = ("/add-user addr password token\n"
