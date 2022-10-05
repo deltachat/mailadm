@@ -146,7 +146,7 @@ def test_users_to_warn(conn, monkeypatch):
     assert len(users) == 2
     # now remember the warning
     for user in users:
-        conn.user_was_warned(user["user"])
+        conn.remember_warning(user["user"])
         if user["user"].addr == weekuser.addr:
             assert "1 day" in user["message"]
     users = conn.get_users_to_warn(sysdate)
@@ -160,7 +160,7 @@ def test_users_to_warn(conn, monkeypatch):
     assert len(users) == 1
     assert "7 days" in users[0]["message"]
     assert users[0]["user"].addr == monthuser.addr
-    conn.user_was_warned(users[0]["user"])
+    conn.remember_warning(users[0]["user"])
     expired_users = conn.get_expired_users(sysdate)
     assert len(expired_users) == 2
 
@@ -177,7 +177,7 @@ def test_users_to_warn(conn, monkeypatch):
     assert len(users) == 1
     assert users[0]["user"].addr == yearuser.addr
     assert "30 days" in users[0]["message"]
-    conn.user_was_warned(users[0]["user"])
+    conn.remember_warning(users[0]["user"])
 
     # add 23 days to time
     sysdate += 60 * 60 * 24 * 23
@@ -185,7 +185,7 @@ def test_users_to_warn(conn, monkeypatch):
     assert len(users) == 1
     assert users[0]["user"].addr == yearuser.addr
     assert "7 days" in users[0]["message"]
-    conn.user_was_warned(users[0]["user"])
+    conn.remember_warning(users[0]["user"])
 
     # add 20 hours to time
     sysdate += 60 * 60 * 20
@@ -198,7 +198,7 @@ def test_users_to_warn(conn, monkeypatch):
     assert len(users) == 1
     assert users[0]["user"].addr == yearuser.addr
     assert "1 day" in users[0]["message"]
-    conn.user_was_warned(users[0]["user"])
+    conn.remember_warning(users[0]["user"])
 
     # add 6 days to time
     sysdate += 60 * 60 * 24 * 6
@@ -224,7 +224,7 @@ def test_remember_warning(conn):
     sysdate += 60 * 60
     users = conn.get_users_to_warn(sysdate)
     assert len(users) == 1
-    conn.user_was_warned(users[0]["user"])
+    conn.remember_warning(users[0]["user"])
 
     # add 1 hour to time
     sysdate += 60 * 60
