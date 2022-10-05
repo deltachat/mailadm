@@ -8,6 +8,7 @@ TIMEOUT = 60
 @pytest.mark.timeout(TIMEOUT)
 class TestAdminGroup:
     def test_help(self, admingroup):
+        assert admingroup.admbot.get_profile_image()
         num_msgs = len(admingroup.get_messages())
         admingroup.send_text("/help")
         while len(admingroup.get_messages()) < num_msgs + 2:  # this sometimes never completes
