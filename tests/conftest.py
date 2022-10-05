@@ -173,6 +173,18 @@ def botuser(mailcow, db, tmpdir):
 
 
 @pytest.fixture
+def supportuser(mailcow, db, tmpdir):
+    addr = "pytest-%s@x.testrun.org" % (randint(0, 999),)
+    tmpdir = Path(str(tmpdir))
+    db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("supportuser.db"))
+    supportuser = prepare_account(addr, mailcow, db_path)
+    yield supportuser
+    supportuser.shutdown()
+    supportuser.wait_shutdown()
+    mailcow.del_user_mailcow(addr)
+
+
+@pytest.fixture
 def mailcow_endpoint():
     if not os.environ.get("MAILCOW_ENDPOINT"):
         if os.environ.get("MAILCOW_TOKEN"):
