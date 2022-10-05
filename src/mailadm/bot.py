@@ -62,9 +62,14 @@ class AdmBot:
             else:
                 name = message.get_sender_contact().addr
                 admins = self.admingroup.get_contacts()
-                allchats = self.account.get_chats()
-                supportgroup = next(filter(lambda chat: chat.get_name() == name, allchats),
-                                    self.account.create_group_chat(name, admins, True))
+                admins.remove(self.account.get_self_contact())
+                supportgroup = None
+                for chat in self.account.get_chats():
+                    if chat.get_name() == name:
+                        if chat.is_group():
+                            supportgroup = chat
+                if not supportgroup:
+                    supportgroup = self.account.create_group_chat(name, admins, True)
                 message.set_override_sender_name(self.account.get_config("addr"))
                 supportgroup.send_msg(message)
             return
