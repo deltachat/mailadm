@@ -44,9 +44,13 @@ class AdmBot:
         arguments = message.text.split(" ")
         print("process_incoming message:", message.text)
         if not self.check_privileges(message):
-            if message.text[0] == "/":
-                message.create_chat()
-                message.chat.send_text("Sorry, I only take commands from the admin group.")
+            chat = message.create_chat()
+            if chat.is_group():  # don't worry, if it's the admin group, check_privileges will fail.
+                chat.send_text("Sorry, I'm a strictly non-group bot. You can talk to me 1:1.")
+                selfcontact = self.account.get_contact_by_addr(self.account.get_config("addr"))
+                chat.remove_contact(selfcontact)  # leave group
+            elif message.text[0] == "/":
+                chat.send_text("Sorry, I only take commands from the admin group.")
             else:
                 admingroup = self.account.get_chat_by_id(self.admingrpid)
                 admingroup.send_text("message by %s:\n%s" %
