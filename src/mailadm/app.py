@@ -9,31 +9,18 @@ import time
 import threading
 from .db import get_db_path, DB
 from mailadm.commands import prune, warn_expiring_users
-from mailadm.bot import main as run_bot
-from mailadm.bot import get_admbot_db_path
+from mailadm.bot import main as bot_loop
+from mailadm.bot import get_admbot_db_path, run_bot
 
 
-def prune_loop():
+def prune_loop(ac: deltachat.Account):
     db = DB(get_db_path())
-    ac = deltachat.Account(get_admbot_db_path())
-    botconfigured = True
-    try:
-        ac.run_account()
-    except AssertionError:
-        botconfigured = False
     # how to shut down admbot account in the end?
     while 1:
+        warn_expiring_users(db, ac)
         for logmsg in prune(db).get("message"):
             # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
             print(logmsg, file=sys.stderr)
-        if not botconfigured:
-            try:
-                ac.run_account()
-                botconfigured = True
-            except AssertionError:
-                time.sleep(600)
-                continue
-        warn_expiring_users(db, ac)
         time.sleep(600)
 
 
@@ -55,10 +42,10 @@ def watcher():
 
 
 def init_threads():
-    prunethread = threading.Thread(target=prune_loop, daemon=True, name="prune")
+    ac = run_bot(DB(get_db_path()), get_admbot_db_path())
+    prunethread = threading.Thread(target=prune_loop, args=(ac,), daemon=True, name="prune")
     prunethread.start()
-    botthread = threading.Thread(target=run_bot, args=(DB(get_db_path()), get_admbot_db_path()),
-                                 daemon=True, name="bot")
+    botthread = threading.Thread(target=bot_loop, args=(ac,), daemon=True, name="bot")
     botthread.start()
     watcherthread = threading.Thread(target=watcher, daemon=True, name="watcher")
     watcherthread.start()
