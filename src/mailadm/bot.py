@@ -45,9 +45,8 @@ class AdmBot:
         print("process_incoming message:", message.text)
         if not self.check_privileges(message):
             chat = message.create_chat()
-            admingroup = self.account.get_chat_by_id(self.admingrpid)
             if chat.is_group():
-                if message.get_sender_contact() not in admingroup.get_contacts():
+                if message.get_sender_contact() not in self.admingroup.get_contacts():
                     chat.send_text("Sorry, I'm a strictly non-group bot. You can talk to me 1:1.")
                     selfcontact = self.account.get_contact_by_addr(self.account.get_config("addr"))
                     chat.remove_contact(selfcontact)  # leave group
@@ -62,9 +61,9 @@ class AdmBot:
                 chat.send_text("Sorry, I only take commands from the admin group.")
             else:
                 name = message.get_sender_contact().addr
-                supportgroup = self.account.create_group_chat(name, admingroup.get_contacts(), True)
+                supgrp = self.account.create_group_chat(name, self.admingroup.get_contacts(), True)
                 message.set_override_sender_name(self.account.get_config("addr"))
-                supportgroup.send_msg(message)
+                supgrp.send_msg(message)
             return
 
         if arguments[0] == "/help":
