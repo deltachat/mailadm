@@ -140,7 +140,7 @@ def get_admbot_db_path(db_path=None):
     return db_path
 
 
-def main(mailadm_db, admbot_db_path):
+def run_bot(mailadm_db, admbot_db_path):
     ac = deltachat.Account(admbot_db_path)
     if not ac.is_configured():
         print("if you want to talk to mailadm with Delta Chat, please run: mailadm setup-bot",
@@ -152,7 +152,11 @@ def main(mailadm_db, admbot_db_path):
         conn.close()
         ac = deltachat.Account(admbot_db_path)
         ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
-    ac.wait_shutdown()
+    return ac
+
+
+def main(account):
+    account.wait_shutdown()
     print("shutting down bot.", file=sys.stderr)
 
 
