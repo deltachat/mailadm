@@ -61,9 +61,12 @@ class AdmBot:
                 chat.send_text("Sorry, I only take commands from the admin group.")
             else:
                 name = message.get_sender_contact().addr
-                supgrp = self.account.create_group_chat(name, self.admingroup.get_contacts(), True)
+                admins = self.admingroup.get_contacts()
+                allchats = self.account.get_chats()
+                supportgroup = next(filter(lambda chat: chat.get_name() == name, allchats),
+                                    self.account.create_group_chat(name, admins, True))
                 message.set_override_sender_name(self.account.get_config("addr"))
-                supgrp.send_msg(message)
+                supportgroup.send_msg(message)
             return
 
         if arguments[0] == "/help":
