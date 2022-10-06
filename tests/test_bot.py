@@ -58,8 +58,8 @@ class SupportGroupUserPlugin:
         print("sent public message")
 
 
+@pytest.mark.timeout(TIMEOUT)
 class TestSupportGroup:
-    @pytest.mark.timeout(TIMEOUT)
     def test_support_group_relaying(self, admingroup, supportuser):
         supportchat = supportuser.create_chat(admingroup.admbot.get_config("addr"))
         question = "Can I ask you a support question?"
@@ -83,7 +83,6 @@ class TestSupportGroup:
         assert "I hope the user can't read this" not in \
                [msg.text for msg in supportchat.get_messages()]
 
-    @pytest.mark.timeout(TIMEOUT)
     def test_invite_bot_to_group(self, admingroup, supportuser):
         botcontact = supportuser.create_contact(admingroup.admbot.get_config("addr"))
         false_group = supportuser.create_group_chat("invite bot", [botcontact])
