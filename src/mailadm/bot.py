@@ -58,7 +58,7 @@ class AdmBot:
                 # else ignore message, it's just admins discussing what to do with the request
             elif message.text[0] == "/":
                 chat.send_text("Sorry, I only take commands from the admin group.")
-            else:
+            else:  # a user message arrived in a 1:1 chat
                 name = message.get_sender_contact().addr
                 admins = self.admingroup.get_contacts()
                 admins.remove(self.account.get_self_contact())
