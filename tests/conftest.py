@@ -92,41 +92,6 @@ def prepare_account(addr, mailcow, db_path):
     password = mailcow.auth["X-API-Key"]
     mailcow.add_user_mailcow(addr, password, "admbot")
     ac = deltachat.Account(str(db_path))
-    ac._evtracker = ac.add_account_plugin(deltachat.events.FFIEventTracker(ac))
-    ac.run_account(addr, password)
-    return ac
-
-
-@pytest.fixture()
-def admbot(mailcow, db, tmpdir):
-    addr = "pytest-admbot-%s@x.testrun.org" % (randint(0, 999),)
-    tmpdir = Path(str(tmpdir))
-    admbot_db_path = str(mailadm.bot.get_admbot_db_path(db_path=tmpdir.joinpath("admbot.db")))
-    botaccount = prepare_account(addr, mailcow, admbot_db_path)
-    botthread = threading.Thread(target=mailadm.bot.main, args=(db, admbot_db_path), daemon=True)
-    botthread.start()
-    yield botaccount
-    botaccount.shutdown()
-    botaccount.wait_shutdown()
-    mailcow.del_user_mailcow(addr)
-
-
-@pytest.fixture
-def botuser(mailcow, db, tmpdir):
-    addr = "pytest-%s@x.testrun.org" % (randint(0, 999),)
-    tmpdir = Path(str(tmpdir))
-    db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("botuser.db"))
-    botuser = prepare_account(addr, mailcow, db_path)
-    yield botuser
-    botuser.shutdown()
-    botuser.wait_shutdown()
-    mailcow.del_user_mailcow(addr)
-
-
-def prepare_account(addr, mailcow, db_path):
-    password = mailcow.auth["X-API-Key"]
-    mailcow.add_user_mailcow(addr, password, "admbot")
-    ac = deltachat.Account(str(db_path))
     ac.run_account(addr, password)
     return ac
 
@@ -164,7 +129,7 @@ def admbot(mailcow, db, tmpdir):
 def botadmin(mailcow, db, tmpdir):
     addr = "pytest-admin-%s@x.testrun.org" % (randint(0, 999),)
     tmpdir = Path(str(tmpdir))
-    db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("botuser.db"))
+    db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("botadmin.db"))
     ac = prepare_account(addr, mailcow, db_path)
     yield ac
     ac.shutdown()
