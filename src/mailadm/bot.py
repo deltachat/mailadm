@@ -80,7 +80,7 @@ class AdmBot:
                 message.set_override_sender_name(message.get_sender_contact().addr)
                 supportgroup.send_msg(message)
             return
-        print(message.text, "seems to be a valid command.")
+        print(message.text, "seems to be a valid message.")
 
         if arguments[0] == "/help":
             text = ("/add-user addr password token\n"
