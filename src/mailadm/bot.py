@@ -47,18 +47,24 @@ class AdmBot:
             chat = message.create_chat()
             if chat.is_group():
                 if message.get_sender_contact() not in self.admingroup.get_contacts():
+                    print("%s added me to a group, I'm leaving it." %
+                          (message.get_sender_contact().addr,))
                     chat.send_text("Sorry, you can not contact me in a group chat. Please use a 1:1"
                                    " chat.")
                     chat.remove_contact(self.account.get_self_contact())   # leave group
                 elif message.quote:  # reply to user
                     if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
                         recipient = chat.get_name()
+                        print("I'm forwarding the admin reply to the support user %s." %
+                              (recipient,))
                         chat = self.account.create_chat(recipient)
                         chat.send_msg(message)
-                # else ignore message, it's just admins discussing what to do with the request
+                print("ignoring message, it's just admins discussing what to do with the request")
             elif message.text[0] == "/":
+                print("command was not supplied in a group, let alone the admin group.")
                 chat.send_text("Sorry, I only take commands from the admin group.")
-            else:  # a user message arrived in a 1:1 chat
+            else:
+                print("forwarding the message to a support group.")
                 name = message.get_sender_contact().addr
                 admins = self.admingroup.get_contacts()
                 admins.remove(self.account.get_self_contact())
@@ -68,10 +74,12 @@ class AdmBot:
                             supportgroup = chat
                             break
                 else:
+                    print("creating new support group:", name)
                     supportgroup = self.account.create_group_chat(name, admins, True)
                 message.set_override_sender_name(message.get_sender_contact().addr)
                 supportgroup.send_msg(message)
             return
+        print(message.text, "seems to be a valid command.")
 
         if arguments[0] == "/help":
             text = ("/add-user addr password token\n"
