@@ -66,7 +66,7 @@ def warn_expiring_users(db, admbot) -> {}:
             user = userdict["user"]
             chat = admbot.create_chat(user.addr)
             chat.send_text(userdict["message"])
-            conn.remember_warning(user)
+            conn.increment_warning_count(user)
 
 
 def prune(db, dryrun=False) -> {}:

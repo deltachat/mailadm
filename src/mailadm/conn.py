@@ -269,7 +269,7 @@ class Connection:
                 users_to_warn.append({"user": user, "message": warnmsg.format(timeleft)})
         return users_to_warn
 
-    def remember_warning(self, user):
+    def increment_warning_count(self, user):
         self.execute("UPDATE users SET warned = warned + 1 WHERE addr=?", (user.addr,))
 
     def get_user_list(self, token=None):
