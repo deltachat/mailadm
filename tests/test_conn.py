@@ -5,6 +5,7 @@ import time
 import mailadm
 from mailadm.conn import DBError
 from mailadm.mailcow import MailcowError
+from mailadm.util import parse_expiry_code
 
 
 @pytest.fixture
@@ -131,7 +132,7 @@ def test_users_to_warn(conn, monkeypatch):
 
     sysdate = int(time.time())
     # add 20 hours to time
-    sysdate += 60 * 60 * 20
+    sysdate += parse_expiry_code("20h")
     users = conn.get_users_to_warn(sysdate)
     assert len(users) == 1
     assert "360 minutes" in users[0]["message"]
@@ -141,7 +142,7 @@ def test_users_to_warn(conn, monkeypatch):
     expired_users = conn.get_expired_users(sysdate)
     assert len(expired_users) == 0
     # add 6 days to time
-    sysdate += 60 * 60 * 24 * 6
+    sysdate += parse_expiry_code("6d")
     users = conn.get_users_to_warn(sysdate)
     assert len(users) == 2
     # now remember the warning
@@ -155,7 +156,7 @@ def test_users_to_warn(conn, monkeypatch):
     expired_users = conn.get_expired_users(sysdate)
     assert len(expired_users) == 1
     # add 23 days to time
-    sysdate += 60 * 60 * 24 * 23
+    sysdate += parse_expiry_code("23d")
     users = conn.get_users_to_warn(sysdate)
     assert len(users) == 1
     assert "7 days" in users[0]["message"]
@@ -165,7 +166,7 @@ def test_users_to_warn(conn, monkeypatch):
     assert len(expired_users) == 2
 
     # add 306 days to time
-    sysdate += 60 * 60 * 24 * 306
+    sysdate += parse_expiry_code("306d")
     expired_users = conn.get_expired_users(sysdate)
     assert len(expired_users) == 3
     for user in expired_users:
@@ -180,7 +181,7 @@ def test_users_to_warn(conn, monkeypatch):
     conn.increment_warning_count(users[0]["user"])
 
     # add 23 days to time
-    sysdate += 60 * 60 * 24 * 23
+    sysdate += parse_expiry_code("23d")
     users = conn.get_users_to_warn(sysdate)
     assert len(users) == 1
     assert users[0]["user"].addr == yearuser.addr
@@ -188,12 +189,12 @@ def test_users_to_warn(conn, monkeypatch):
     conn.increment_warning_count(users[0]["user"])
 
     # add 20 hours to time
-    sysdate += 60 * 60 * 20
+    sysdate += parse_expiry_code("20h")
     users = conn.get_users_to_warn(sysdate)
     assert len(users) == 0
 
     # add 6 days to time
-    sysdate += 60 * 60 * 24 * 6
+    sysdate += parse_expiry_code("6d")
     users = conn.get_users_to_warn(sysdate)
     assert len(users) == 1
     assert users[0]["user"].addr == yearuser.addr
@@ -201,7 +202,7 @@ def test_users_to_warn(conn, monkeypatch):
     conn.increment_warning_count(users[0]["user"])
 
     # add 6 days to time
-    sysdate += 60 * 60 * 24 * 6
+    sysdate += parse_expiry_code("6d")
     expired_users = conn.get_expired_users(sysdate)
     assert len(expired_users) == 1
     conn.delete_email_account(expired_users[0].addr)
@@ -215,24 +216,24 @@ def test_remember_warning(conn):
 
     sysdate = int(time.time())
     # add 20 hours to time
-    sysdate += 60 * 60 * 20
+    sysdate += parse_expiry_code("20h")
     users = conn.get_users_to_warn(sysdate)
     assert len(users) == 1
     # don't remember warning
 
     # add 1 hour to time
-    sysdate += 60 * 60
+    sysdate += parse_expiry_code("1h")
     users = conn.get_users_to_warn(sysdate)
     assert len(users) == 1
     conn.increment_warning_count(users[0]["user"])
 
     # add 1 hour to time
-    sysdate += 60 * 60
+    sysdate += parse_expiry_code("1h")
     users = conn.get_users_to_warn(sysdate)
     assert len(users) == 0
 
     # add 3 hours to time
-    sysdate += 60 * 60 * 3
+    sysdate += parse_expiry_code("3h")
     expired_users = conn.get_expired_users(sysdate)
     assert len(expired_users) == 1
     conn.delete_email_account(expired_users[0].addr)
