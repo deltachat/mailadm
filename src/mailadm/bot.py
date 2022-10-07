@@ -163,4 +163,5 @@ def main(account):
 if __name__ == "__main__":
     mailadm_db = DB(get_db_path())
     admbot_db_path = get_admbot_db_path()
-    main(mailadm_db, admbot_db_path)
+    ac = run_bot(mailadm_db, admbot_db_path)
+    main(ac)
