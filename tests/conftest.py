@@ -84,7 +84,7 @@ def db(tmpdir, make_db):
     return make_db(path)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def mailcow_endpoint():
     if not os.environ.get("MAILCOW_ENDPOINT"):
         if os.environ.get("MAILCOW_TOKEN"):
@@ -93,7 +93,7 @@ def mailcow_endpoint():
     return os.environ.get("MAILCOW_ENDPOINT")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def mailcow_auth():
     if not os.environ.get("MAILCOW_TOKEN"):
         pytest.skip("Please set a mailcow API Key with the environment variable MAILCOW_TOKEN")
