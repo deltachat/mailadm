@@ -13,6 +13,8 @@ from mailadm.util import parse_expiry_code, get_human_readable_id
     ("5h", 5 * 60 * 60),
     ("15h", 15 * 60 * 60),
     ("0h", 0),
+    ("3m", 3 * 30 * 24 * 60 * 60),
+    ("2y", 2 * 365 * 24 * 60 * 60),
 ])
 def test_parse_expiries(code, duration):
     res = parse_expiry_code(code)
