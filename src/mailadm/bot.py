@@ -59,7 +59,8 @@ class AdmBot:
                               (recipient,))
                         chat = self.account.create_chat(recipient)
                         chat.send_msg(message)
-                print("ignoring message, it's just admins discussing what to do with the request")
+                else:
+                    print("ignoring message, it's just admins discussing in a support group.")
             elif message.text[0] == "/":
                 print("command was not supplied in a group, let alone the admin group.")
                 chat.send_text("Sorry, I only take commands from the admin group.")
