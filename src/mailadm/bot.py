@@ -48,8 +48,7 @@ class AdmBot:
             if chat.is_group():
                 if message.get_sender_contact() not in self.admingroup.get_contacts():
                     chat.send_text("Sorry, I'm a strictly non-group bot. You can talk to me 1:1.")
-                    selfcontact = self.account.get_contact_by_addr(self.account.get_config("addr"))
-                    chat.remove_contact(selfcontact)  # leave group
+                    chat.remove_contact(self.account.get_self_contact())   # leave group
                 elif message.quote:
                     if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
                         recipient = chat.get_name()
