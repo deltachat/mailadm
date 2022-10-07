@@ -36,8 +36,8 @@ class AdmBot:
         self.account = account
         with self.db.read_connection() as conn:
             config = conn.config
-            self.admingrpid = config.admingrpid
-            self.admingroup = account.get_chat_by_id(int(self.admingrpid))
+            self.admingrpid = int(config.admingrpid)
+            self.admingroup = account.get_chat_by_id(self.admingrpid)
 
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
