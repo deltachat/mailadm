@@ -47,7 +47,8 @@ class AdmBot:
             chat = message.create_chat()
             if chat.is_group():
                 if message.get_sender_contact() not in self.admingroup.get_contacts():
-                    chat.send_text("Sorry, you can not contact me in a group chat. Please use a 1:1 chat.")
+                    chat.send_text("Sorry, you can not contact me in a group chat. Please use a 1:1"
+                                   " chat.")
                     chat.remove_contact(self.account.get_self_contact())   # leave group
                 elif message.quote:
                     if message.quote.get_sender_contact().addr == self.account.get_config("addr"):

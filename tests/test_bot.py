@@ -92,7 +92,7 @@ class TestSupportGroup:
         while len(false_group.get_messages()) < num_msgs + 3:
             time.sleep(0.1)
         assert len(false_group.get_contacts()) == 1
-        sorry_message = "Sorry, I'm a strictly non-group bot. You can talk to me 1:1."
+        sorry_message = "Sorry, you can not contact me in a group chat. Please use a 1:1 chat."
         assert false_group.get_messages()[num_msgs + 1].text == sorry_message
         assert botcontact.get_profile_image()
 
