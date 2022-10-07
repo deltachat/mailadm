@@ -265,7 +265,7 @@ class Connection:
                         timeleft = str(int(user.ttl / 4 / 60 / 60)) + " hours"
                     else:
                         timeleft = str(int(user.ttl / 4 / 60)) + " minutes"
-            if timeleft != "":
+            if timeleft:
                 users_to_warn.append({"user": user, "message": warnmsg.format(timeleft)})
         return users_to_warn
 
