@@ -130,7 +130,9 @@ def test_users_to_warn(conn, monkeypatch):
     weekuser = conn.add_email_account(weektoken)
     dayuser = conn.add_email_account(daytoken)
 
-    def futuredate(code, basedate=int(time.time())):
+    basedate = int(time.time()) + 1
+
+    def futuredate(code):
         return basedate + parse_expiry_code(code)
 
     # test day user warning
