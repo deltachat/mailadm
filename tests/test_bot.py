@@ -1,6 +1,7 @@
 import time
 import pytest
 import deltachat
+from deltachat.capi import lib as dclib
 
 
 TIMEOUT = 90
@@ -94,3 +95,20 @@ class TestSupportGroup:
         sorry_message = "Sorry, I'm a strictly non-group bot. You can talk to me 1:1."
         assert false_group.get_messages()[num_msgs + 1].text == sorry_message
         assert botcontact.get_profile_image()
+
+    def test_bot_receives_system_message(self, admingroup):
+        def get_group_chats(account):
+            group_chats = []
+            for chat in ac.get_chats():
+                if chat.is_group():
+                    group_chats.append(chat)
+            return group_chats
+
+        ac = admingroup.admbot
+        num_chats = len(get_group_chats(ac))
+        # put system message in admbot's INBOX
+        dev_msg = deltachat.Message.new_empty(ac, "text")
+        dev_msg.set_text("This shouldn't create a support group")
+        dclib.dc_add_device_msg(ac._dc_context, bytes("test_device_msg", "ascii"), dev_msg._dc_msg)
+        # assert that admbot didn't create a support group
+        assert num_chats == len(get_group_chats(ac))
