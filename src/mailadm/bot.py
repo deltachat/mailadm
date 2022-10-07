@@ -43,7 +43,7 @@ class AdmBot:
     def ac_incoming_message(self, message: deltachat.Message):
         arguments = message.text.split(" ")
         print("process_incoming message:", message.text)
-        if not self.check_privileges(message):
+        if not self.is_admin_group_message(message):
             chat = message.create_chat()
             if chat.is_group():
                 if message.get_sender_contact() not in self.admingroup.get_contacts():
@@ -118,7 +118,7 @@ class AdmBot:
         elif arguments[0] == "/list-tokens":
             self.reply(list_tokens(self.db), message)
 
-    def check_privileges(self, command: deltachat.Message):
+    def is_admin_group_message(self, command: deltachat.Message):
         """
         Checks whether the incoming message was in the admin group.
         """
