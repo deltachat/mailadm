@@ -175,10 +175,11 @@ def main(mailadm_db, admbot_db_path):
     while "admingrpid" not in [item[0] for item in conn.get_config_items()]:
         time.sleep(1)
     else:
-        ac.set_config("username", conn.config.mail_domain + " administration")
+        displayname = conn.config.mail_domain + " administration"
         conn.close()
         ac.set_avatar("assets/avatar.jpg")
         ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
+        ac.set_config("displayname", displayname)
     ac.wait_shutdown()
     print("shutting down bot.", file=sys.stderr)
 
