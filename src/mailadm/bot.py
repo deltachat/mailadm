@@ -50,11 +50,10 @@ class AdmBot:
                     chat.send_text("Sorry, you can not contact me in a group chat. Please use a 1:1"
                                    " chat.")
                     chat.remove_contact(self.account.get_self_contact())   # leave group
-                elif message.quote:
+                elif message.quote:  # reply to user
                     if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
                         recipient = chat.get_name()
                         chat = self.account.create_chat(recipient)
-                        message.set_override_sender_name(self.account.get_config("addr"))
                         chat.send_msg(message)
                 # else ignore message, it's just admins discussing what to do with the request
             elif message.text[0] == "/":
@@ -70,7 +69,7 @@ class AdmBot:
                             break
                 else:
                     supportgroup = self.account.create_group_chat(name, admins, True)
-                message.set_override_sender_name(self.account.get_config("addr"))
+                message.set_override_sender_name(message.get_sender_contact().addr)
                 supportgroup.send_msg(message)
             return
 
@@ -176,6 +175,7 @@ def main(mailadm_db, admbot_db_path):
     while "admingrpid" not in [item[0] for item in conn.get_config_items()]:
         time.sleep(1)
     else:
+        ac.set_config("username", conn.config.mail_domain + " administration")
         conn.close()
         ac.set_avatar("assets/avatar.jpg")
         ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
