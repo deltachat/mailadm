@@ -48,7 +48,6 @@ class TestSupportGroup:
             def ac_incoming_message(self, message: deltachat.Message):
                 message.create_chat()
 
-                assert message.chat.is_protected()
                 assert len(message.chat.get_contacts()) == 2
                 assert message.override_sender_name == self.supportuser.get_config("addr")
 

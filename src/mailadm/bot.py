@@ -76,7 +76,7 @@ class AdmBot:
                         break
                 else:
                     print("creating new support group: '" + group_name + "'")
-                    supportgroup = self.account.create_group_chat(group_name, admins, True)
+                    supportgroup = self.account.create_group_chat(group_name, admins)
                     supportgroup.set_profile_image("assets/avatar.jpg")
                 message.set_override_sender_name(support_user)
                 supportgroup.send_msg(message)
