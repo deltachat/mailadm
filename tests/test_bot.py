@@ -71,6 +71,7 @@ class TestSupportGroup:
             time.sleep(0.1)
         # AcceptChatPlugin will send 2 messages to the support group now
         support_group_name = supportuser.get_config("addr") + " support group"
+        support_group_name = " " + support_group_name  # workaround for deltachat-core-rust #3650
         for chat in admin.get_chats():
             print(chat.get_name())
         supportgroup = next(filter(lambda chat: chat.get_name() == support_group_name,
