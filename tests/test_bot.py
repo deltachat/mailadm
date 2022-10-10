@@ -35,43 +35,45 @@ class TestAdminGroup:
         assert direct.get_messages()[1].text == "Sorry, I only take commands from the admin group."
 
 
-class SupportGroupUserPlugin:
-    def __init__(self, account, botaddr):
-        self.account = account
-        self.account.add_account_plugin(deltachat.events.FFIEventLogger(self.account))
-        self.botaddr = botaddr
-
-    @deltachat.account_hookimpl
-    def ac_incoming_message(self, message: deltachat.Message):
-        message.create_chat()
-
-        assert message.chat.is_protected()
-        assert len(message.chat.get_contacts()) == 2
-        assert message.text == "Can I ask you a support question?"
-        assert message.get_sender_contact().addr == self.botaddr
-
-        message.chat.send_text("I hope the user can't read this")
-        print("sent secret message")
-        reply = deltachat.Message.new_empty(self.account, "text")
-        reply.set_text("Yes of course you can ask us :)")
-        reply.quote = message
-        message.chat.send_msg(reply)
-        print("sent public message")
-
-
 @pytest.mark.timeout(TIMEOUT)
 class TestSupportGroup:
     def test_support_group_relaying(self, admingroup, supportuser):
+        class SupportGroupUserPlugin:
+            def __init__(self, account, supportuser):
+                self.account = account
+                self.account.add_account_plugin(deltachat.events.FFIEventLogger(self.account))
+                self.supportuser = supportuser
+
+            @deltachat.account_hookimpl
+            def ac_incoming_message(self, message: deltachat.Message):
+                message.create_chat()
+
+                assert message.chat.is_protected()
+                assert len(message.chat.get_contacts()) == 2
+                assert message.override_sender_name == self.supportuser.get_config("addr")
+
+                if message.text == "Can I ask you a support question?":
+                    message.chat.send_text("I hope the user can't read this")
+                    print("sent secret message")
+                    reply = deltachat.Message.new_empty(self.account, "text")
+                    reply.set_text("Yes of course you can ask us :)")
+                    reply.quote = message
+                    message.chat.send_msg(reply)
+                    print("sent public message")
+                else:
+                    print("botadmin received:", message.text)
+
         supportchat = supportuser.create_chat(admingroup.admbot.get_config("addr"))
         question = "Can I ask you a support question?"
         supportchat.send_text(question)
         admin = admingroup.botadmin
-        botaddr = admingroup.admbot.get_config("addr")
-        admin.add_account_plugin(SupportGroupUserPlugin(admin, botaddr))
+        admin.add_account_plugin(SupportGroupUserPlugin(admin, supportuser))
         while len(admin.get_chats()) < 2:
             time.sleep(0.1)
         # AcceptChatPlugin will send 2 messages to the support group now
-        support_group_name = supportuser.get_config("addr")
+        support_group_name = supportuser.get_config("addr") + " support group"
+        for chat in admin.get_chats():
+            print(chat.get_name())
         supportgroup = next(filter(lambda chat: chat.get_name() == support_group_name,
                                    admin.get_chats()))
         while len(supportchat.get_messages()) < 2:

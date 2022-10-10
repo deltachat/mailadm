@@ -54,7 +54,7 @@ class AdmBot:
                     chat.remove_contact(self.account.get_self_contact())   # leave group
                 elif message.quote:  # reply to user
                     if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
-                        recipient = chat.get_name()
+                        recipient = message.quote.override_sender_name
                         print("I'm forwarding the admin reply to the support user %s." %
                               (recipient,))
                         chat = self.account.create_chat(recipient)
@@ -66,18 +66,19 @@ class AdmBot:
                 chat.send_text("Sorry, I only take commands from the admin group.")
             else:
                 print("forwarding the message to a support group.")
-                name = message.get_sender_contact().addr
+                support_user = message.get_sender_contact().addr
                 admins = self.admingroup.get_contacts()
                 admins.remove(self.account.get_self_contact())
+                group_name = support_user + " support group"
                 for chat in self.account.get_chats():
-                    if chat.get_name() == name:
-                        if chat.is_group():
-                            supportgroup = chat
-                            break
+                    if chat.get_name() == group_name:
+                        supportgroup = chat
+                        break
                 else:
-                    print("creating new support group:", name)
-                    supportgroup = self.account.create_group_chat(name, admins, True)
-                message.set_override_sender_name(message.get_sender_contact().addr)
+                    print("creating new support group: '" + group_name + "'")
+                    supportgroup = self.account.create_group_chat(group_name, admins, True)
+                    supportgroup.set_profile_image("assets/avatar.jpg")
+                message.set_override_sender_name(support_user)
                 supportgroup.send_msg(message)
             return
         print(message.text, "seems to be a valid message.")
