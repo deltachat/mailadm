@@ -8,5 +8,6 @@ WORKDIR mailadm
 RUN mkdir src
 COPY setup.cfg pyproject.toml gunicorn.conf.py README.rst /mailadm/
 COPY src src/
+COPY assets assets/
 
 RUN pip install .

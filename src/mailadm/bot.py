@@ -36,17 +36,52 @@ class AdmBot:
         self.account = account
         with self.db.read_connection() as conn:
             config = conn.config
-            self.admingrpid = config.admingrpid
-            self.admingroup = account.get_chat_by_id(int(self.admingrpid))
+            self.admingrpid = int(config.admingrpid)
+            self.admingroup = account.get_chat_by_id(self.admingrpid)
 
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
         arguments = message.text.split(" ")
-        print("process_incoming command:", arguments)
-        if not self.check_privileges(message):
-            message.create_chat()
-            message.chat.send_text("Sorry, I only take commands from the admin group.")
+        print("process_incoming message:", message.text)
+        if not self.is_admin_group_message(message):
+            chat = message.create_chat()
+            if chat.is_group():
+                if message.get_sender_contact() not in self.admingroup.get_contacts():
+                    print("%s added me to a group, I'm leaving it." %
+                          (message.get_sender_contact().addr,))
+                    chat.send_text("Sorry, you can not contact me in a group chat. Please use a 1:1"
+                                   " chat.")
+                    chat.remove_contact(self.account.get_self_contact())   # leave group
+                elif message.quote:  # reply to user
+                    if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
+                        recipient = message.quote.override_sender_name
+                        print("I'm forwarding the admin reply to the support user %s." %
+                              (recipient,))
+                        chat = self.account.create_chat(recipient)
+                        chat.send_msg(message)
+                else:
+                    print("ignoring message, it's just admins discussing in a support group.")
+            elif message.text[0] == "/":
+                print("command was not supplied in a group, let alone the admin group.")
+                chat.send_text("Sorry, I only take commands from the admin group.")
+            else:
+                print("forwarding the message to a support group.")
+                support_user = message.get_sender_contact().addr
+                admins = self.admingroup.get_contacts()
+                admins.remove(self.account.get_self_contact())
+                group_name = support_user + " support group"
+                for chat in self.account.get_chats():
+                    if chat.get_name() == group_name:
+                        supportgroup = chat
+                        break
+                else:
+                    print("creating new support group: '" + group_name + "'")
+                    supportgroup = self.account.create_group_chat(group_name, admins)
+                    supportgroup.set_profile_image("assets/avatar.jpg")
+                message.set_override_sender_name(support_user)
+                supportgroup.send_msg(message)
             return
+        print(message.text, "seems to be a valid message.")
 
         if arguments[0] == "/help":
             text = ("/add-user addr password token\n"
@@ -92,11 +127,11 @@ class AdmBot:
         elif arguments[0] == "/list-tokens":
             self.reply(list_tokens(self.db), message)
 
-    def check_privileges(self, command: deltachat.Message):
+    def is_admin_group_message(self, command: deltachat.Message):
         """
         Checks whether the incoming message was in the admin group.
         """
-        if command.chat.is_group() and self.admingrpid == str(command.chat.id):
+        if command.chat.is_group() and self.admingrpid == command.chat.id:
             if command.chat.is_protected() \
                     and command.is_encrypted() \
                     and int(command.chat.num_contacts()) >= 2:
@@ -106,7 +141,8 @@ class AdmBot:
                     print("%s is not allowed to give commands to mailadm." %
                           (command.get_sender_contact(),))
             else:
-                print("admin chat is broken. Try `mailadm setup-bot`. Group ID:", self.admingrpid)
+                print("The admin group is broken. Try `mailadm setup-bot`. Group ID:",
+                      str(self.admingrpid))
                 raise ValueError
         else:
             return False
@@ -149,9 +185,11 @@ def main(mailadm_db, admbot_db_path):
     while "admingrpid" not in [item[0] for item in conn.get_config_items()]:
         time.sleep(1)
     else:
+        displayname = conn.config.mail_domain + " administration"
         conn.close()
-        ac = deltachat.Account(admbot_db_path)
+        ac.set_avatar("assets/avatar.jpg")
         ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
+        ac.set_config("displayname", displayname)
     ac.wait_shutdown()
     print("shutting down bot.", file=sys.stderr)
 

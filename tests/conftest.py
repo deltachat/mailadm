@@ -92,22 +92,21 @@ def prepare_account(addr, mailcow, db_path):
     password = mailcow.auth["X-API-Key"]
     mailcow.add_user_mailcow(addr, password, "admbot")
     ac = deltachat.Account(str(db_path))
-    ac._evtracker = ac.add_account_plugin(deltachat.events.FFIEventTracker(ac))
     ac.run_account(addr, password)
     return ac
 
 
 @pytest.fixture()
-def admingroup(admbot, botuser, db):
+def admingroup(admbot, botadmin, db):
     admchat = admbot.create_group_chat("admins", [], verified=True)
     with db.write_transaction() as conn:
         conn.set_config("admingrpid", admchat.id)
     qr = admchat.get_join_qr()
-    chat = botuser.qr_join_chat(qr)
+    chat = botadmin.qr_join_chat(qr)
     while len(chat.get_messages()) < 5:  # wait for verification + welcome message
         time.sleep(0.1)
     chat.admbot = admbot
-    chat.botuser = botuser
+    chat.botadmin = botadmin
     return chat
 
 
@@ -116,24 +115,37 @@ def admbot(mailcow, db, tmpdir):
     addr = "pytest-admbot-%s@x.testrun.org" % (randint(0, 999),)
     tmpdir = Path(str(tmpdir))
     admbot_db_path = str(mailadm.bot.get_admbot_db_path(db_path=tmpdir.joinpath("admbot.db")))
-    botaccount = prepare_account(addr, mailcow, admbot_db_path)
+    ac = prepare_account(addr, mailcow, admbot_db_path)
+    ac._evlogger = ac.add_account_plugin(deltachat.events.FFIEventLogger(ac))
     botthread = threading.Thread(target=mailadm.bot.main, args=(db, admbot_db_path), daemon=True)
     botthread.start()
-    yield botaccount
-    botaccount.shutdown()
-    botaccount.wait_shutdown()
+    yield ac
+    ac.shutdown()
+    ac.wait_shutdown()
     mailcow.del_user_mailcow(addr)
 
 
 @pytest.fixture
-def botuser(mailcow, db, tmpdir):
-    addr = "pytest-%s@x.testrun.org" % (randint(0, 999),)
+def botadmin(mailcow, db, tmpdir):
+    addr = "pytest-admin-%s@x.testrun.org" % (randint(0, 999),)
     tmpdir = Path(str(tmpdir))
-    db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("botuser.db"))
-    botuser = prepare_account(addr, mailcow, db_path)
-    yield botuser
-    botuser.shutdown()
-    botuser.wait_shutdown()
+    db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("botadmin.db"))
+    ac = prepare_account(addr, mailcow, db_path)
+    yield ac
+    ac.shutdown()
+    ac.wait_shutdown()
+    mailcow.del_user_mailcow(addr)
+
+
+@pytest.fixture
+def supportuser(mailcow, db, tmpdir):
+    addr = "pytest-supportuser-%s@x.testrun.org" % (randint(0, 999),)
+    tmpdir = Path(str(tmpdir))
+    db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("supportuser.db"))
+    ac = prepare_account(addr, mailcow, db_path)
+    yield ac
+    ac.shutdown()
+    ac.wait_shutdown()
     mailcow.del_user_mailcow(addr)
 
 
