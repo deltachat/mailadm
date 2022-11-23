@@ -177,21 +177,25 @@ def get_admbot_db_path(db_path=None):
 
 
 def main(mailadm_db, admbot_db_path):
-    ac = deltachat.Account(admbot_db_path)
-    if not ac.is_configured():
-        print("if you want to talk to mailadm with Delta Chat, please run: mailadm setup-bot",
-              file=sys.stderr)
-    conn = mailadm_db.read_connection(closing=False)
-    while "admingrpid" not in [item[0] for item in conn.get_config_items()]:
-        time.sleep(1)
-    else:
-        displayname = conn.config.mail_domain + " administration"
-        conn.close()
-        ac.set_avatar("assets/avatar.jpg")
-        ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
-        ac.set_config("displayname", displayname)
-    ac.wait_shutdown()
-    print("shutting down bot.", file=sys.stderr)
+    try:
+        ac = deltachat.Account(admbot_db_path)
+        if not ac.is_configured():
+            print("if you want to talk to mailadm with Delta Chat, please run: mailadm setup-bot",
+                  file=sys.stderr)
+        conn = mailadm_db.read_connection(closing=False)
+        while "admingrpid" not in [item[0] for item in conn.get_config_items()]:
+            time.sleep(1)
+        else:
+            displayname = conn.config.mail_domain + " administration"
+            conn.close()
+            ac.set_avatar("assets/avatar.jpg")
+            ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
+            ac.set_config("displayname", displayname)
+        ac.wait_shutdown()
+        print("shutting down bot.", file=sys.stderr)
+    finally:
+        print("bot thread died, killing everything now", file=sys.stderr)
+        os._exit(1)
 
 
 if __name__ == "__main__":
