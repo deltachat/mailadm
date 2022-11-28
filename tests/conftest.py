@@ -103,8 +103,9 @@ def admingroup(admbot, botadmin, db):
         conn.set_config("admingrpid", admchat.id)
     qr = admchat.get_join_qr()
     chat = botadmin.qr_join_chat(qr)
-    while len(chat.get_messages()) < 5:  # wait for verification + welcome message
-        time.sleep(0.1)
+    while "added by" not in chat.get_messages()[len(chat.get_messages()) - 1].text:
+        print(chat.get_messages()[len(chat.get_messages()) - 1].text)
+        time.sleep(1)
     chat.admbot = admbot
     chat.botadmin = botadmin
     return chat
