@@ -10,28 +10,28 @@ TIMEOUT = 90
 @pytest.mark.timeout(TIMEOUT)
 class TestAdminGroup:
     def test_help(self, admingroup):
-        num_msgs = len(admingroup.get_messages())
         admingroup.send_text("/help")
-        while len(admingroup.get_messages()) < num_msgs + 2:  # this sometimes never completes
-            time.sleep(0.1)
-        reply = admingroup.get_messages()[num_msgs + 1]
+        while "/add-user" not in admingroup.get_messages()[len(admingroup.get_messages()) - 1].text:
+            print(admingroup.get_messages()[len(admingroup.get_messages()) - 1].text)
+            time.sleep(1)
+        reply = admingroup.get_messages()[len(admingroup.get_messages()) - 1]
         assert reply.text.startswith("/add-user addr password token")
 
     def test_list_tokens(self, admingroup):
-        num_msgs = len(admingroup.get_messages())
         command = admingroup.send_text("/list-tokens")
-        while len(admingroup.get_messages()) < num_msgs + 2:  # this sometimes never completes
-            time.sleep(0.1)
-        reply = admingroup.get_messages()[num_msgs + 1]
+        while "Existing" not in admingroup.get_messages()[len(admingroup.get_messages()) - 1].text:
+            print(admingroup.get_messages()[len(admingroup.get_messages()) - 1].text)
+            time.sleep(1)
+        reply = admingroup.get_messages()[len(admingroup.get_messages()) - 1]
         assert reply.text.startswith("Existing tokens:")
         assert reply.quote == command
 
     def test_check_privileges(self, admingroup):
         direct = admingroup.botadmin.create_chat(admingroup.admbot.get_config("addr"))
         direct.send_text("/list-tokens")
-        num_msgs = len(direct.get_messages())
-        while len(direct.get_messages()) == num_msgs:  # this sometimes never completes
-            time.sleep(0.1)
+        while "Sorry, I" not in direct.get_messages()[len(direct.get_messages()) - 1].text:
+            print(direct.get_messages()[len(direct.get_messages()) - 1].text)
+            time.sleep(1)
         assert direct.get_messages()[1].text == "Sorry, I only take commands from the admin group."
 
 
@@ -53,18 +53,19 @@ class TestSupportGroup:
 
                 if message.text == "Can I ask you a support question?":
                     message.chat.send_text("I hope the user can't read this")
-                    print("sent secret message")
+                    print("\n  botadmin to supportgroup: I hope the user can't read this\n")
                     reply = deltachat.Message.new_empty(self.account, "text")
                     reply.set_text("Yes of course you can ask us :)")
                     reply.quote = message
                     message.chat.send_msg(reply)
-                    print("sent public message")
+                    print("\n  botadmin to supportgroup: Yes of course you can ask us :)\n")
                 else:
-                    print("botadmin received:", message.text)
+                    print("\n  botadmin received:", message.text, "\n")
 
         supportchat = supportuser.create_chat(admingroup.admbot.get_config("addr"))
         question = "Can I ask you a support question?"
         supportchat.send_text(question)
+        print("\n  supportuser to supportchat: Can I ask you a support question?\n")
         admin = admingroup.botadmin
         admin.add_account_plugin(SupportGroupUserPlugin(admin, supportuser))
         while len(admin.get_chats()) < 2:
@@ -73,16 +74,19 @@ class TestSupportGroup:
         support_group_name = supportuser.get_config("addr") + " support group"
         support_group_name = " " + support_group_name  # workaround for deltachat-core-rust #3650
         for chat in admin.get_chats():
-            print(chat.get_name())
+            print(chat.get_name() + str(chat.id))
         supportgroup = next(filter(lambda chat: chat.get_name() == support_group_name,
                                    admin.get_chats()))
-        while len(supportchat.get_messages()) < 2:
-            time.sleep(0.1)
+        while "Yes of" not in supportchat.get_messages()[len(supportchat.get_messages()) - 1].text:
+            print(supportchat.get_messages()[len(supportchat.get_messages()) - 1].text)
+            time.sleep(1)
         botreply = supportchat.get_messages()[1]
         assert botreply.text == "Yes of course you can ask us :)"
         supportchat.send_text("Okay, I will think of something :)")
-        while len(supportgroup.get_messages()) < 4:
-            time.sleep(0.1)
+        print("\n  supportuser to supportchat: Okay, I will think of something :)\n")
+        while "Okay," not in supportgroup.get_messages()[len(supportgroup.get_messages()) - 1].text:
+            print(supportchat.get_messages()[len(supportchat.get_messages()) - 1].text)
+            time.sleep(1)
         assert "I hope the user can't read this" not in \
                [msg.text for msg in supportchat.get_messages()]
 
@@ -91,8 +95,9 @@ class TestSupportGroup:
         false_group = supportuser.create_group_chat("invite bot", [botcontact])
         num_msgs = len(false_group.get_messages())
         false_group.send_text("Welcome, bot!")
-        while len(false_group.get_messages()) < num_msgs + 3:
-            time.sleep(0.1)
+        while "left by" not in false_group.get_messages()[len(false_group.get_messages()) - 1].text:
+            print(false_group.get_messages()[len(false_group.get_messages()) - 1].text)
+            time.sleep(1)
         assert len(false_group.get_contacts()) == 1
         sorry_message = "Sorry, you can not contact me in a group chat. Please use a 1:1 chat."
         assert false_group.get_messages()[num_msgs + 1].text == sorry_message
