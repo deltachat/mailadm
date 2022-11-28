@@ -101,7 +101,6 @@ class TestSupportGroup:
         assert len(false_group.get_contacts()) == 1
         sorry_message = "Sorry, you can not contact me in a group chat. Please use a 1:1 chat."
         assert false_group.get_messages()[num_msgs + 1].text == sorry_message
-        assert botcontact.get_profile_image()
 
     def test_bot_receives_system_message(self, admingroup):
         def get_group_chats(account):
