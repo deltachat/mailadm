@@ -2,7 +2,6 @@ import os
 import pwd
 import grp
 import collections
-import threading
 from random import randint
 from pathlib import Path
 import time
@@ -101,6 +100,7 @@ def admingroup(admbot, botadmin, db):
     admchat = admbot.create_group_chat("admins", [], verified=True)
     with db.write_transaction() as conn:
         conn.set_config("admingrpid", admchat.id)
+    admbot.add_account_plugin(mailadm.bot.AdmBot(db, admbot))
     qr = admchat.get_join_qr()
     chat = botadmin.qr_join_chat(qr)
     while "added by" not in chat.get_messages()[len(chat.get_messages()) - 1].text:
@@ -118,8 +118,7 @@ def admbot(mailcow, db, tmpdir):
     admbot_db_path = str(mailadm.bot.get_admbot_db_path(db_path=tmpdir.joinpath("admbot.db")))
     ac = prepare_account(addr, mailcow, admbot_db_path)
     ac._evlogger = ac.add_account_plugin(deltachat.events.FFIEventLogger(ac))
-    botthread = threading.Thread(target=mailadm.bot.main, args=(db, admbot_db_path), daemon=True)
-    botthread.start()
+    ac.run_account(show_ffi=True)
     yield ac
     ac.shutdown()
     ac.wait_shutdown()
