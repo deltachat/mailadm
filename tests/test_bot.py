@@ -34,7 +34,8 @@ class TestAdminGroup:
         print("======== Waiting for answer ========")
         while "Sorry, I" not in direct.get_messages()[-1].text:
             msg = direct.get_messages()[-1]
-            print()
+            print("======== Last message was not 'Sorry, I...' but: ========")
+            print(msg.text)
             print(msg.get_message_info())
             time.sleep(1)
         assert direct.get_messages()[1].text == "Sorry, I only take commands from the admin group."
