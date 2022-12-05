@@ -27,8 +27,11 @@ class TestAdminGroup:
         assert reply.quote == command
 
     def test_check_privileges(self, admingroup):
+        print("======== Creating chat ========")
         direct = admingroup.botadmin.create_chat(admingroup.admbot.get_config("addr"))
+        print("======== Sending text ========")
         direct.send_text("/list-tokens")
+        print("======== Waiting for answer ========")
         while "Sorry, I" not in direct.get_messages()[len(direct.get_messages()) - 1].text:
             print(direct.get_messages()[len(direct.get_messages()) - 1].text)
             time.sleep(1)
