@@ -178,9 +178,11 @@ You don't have to login with SSH every time you want to create tokens. You can
 also use the bot interface to give commands to mailadm in a verified Delta
 group, the "admin group chat".
 
-You can run the following command to setup the bot::
+You can run the following commands to setup the bot::
 
-    $ sudo docker exec mailadm mailadm setup-bot
+    $ sudo docker stop mailadm
+    $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data mailadm-mailcow mailadm setup-bot
+    $ sudo docker start mailadm
 
 This creates an account for the bot automatically; by default it's called
 ``mailadm@yourdomain.tld``, but you can use the ``--email`` argument if you
