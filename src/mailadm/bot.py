@@ -7,7 +7,7 @@ import deltachat
 from deltachat import account_hookimpl
 from deltachat.capi import lib as dclib
 from mailadm.db import DB, get_db_path
-from mailadm.commands import add_user, add_token, list_tokens, qr_from_token
+from mailadm.commands import add_user, add_token, list_tokens, qr_from_token, prune
 import os
 from threading import Event
 
@@ -180,6 +180,7 @@ def main(mailadm_db, admbot_db_path):
     try:
         ac = deltachat.Account(admbot_db_path)
         if not ac.is_configured():
+            # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
             print("if you want to talk to mailadm with Delta Chat, please run: mailadm setup-bot",
                   file=sys.stderr)
         conn = mailadm_db.read_connection(closing=False)
@@ -191,8 +192,10 @@ def main(mailadm_db, admbot_db_path):
             ac.set_avatar("assets/avatar.jpg")
             ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
             ac.set_config("displayname", displayname)
-        ac.wait_shutdown()
-        print("shutting down bot.", file=sys.stderr)
+        while 1:
+            for logmsg in prune(mailadm_db).get("message"):
+                print(logmsg, file=sys.stderr)
+            time.sleep(600)
     finally:
         print("bot thread died, killing everything now", file=sys.stderr)
         os._exit(1)
