@@ -58,7 +58,8 @@ Now you can build and run the docker container:
 
     $ sudo docker build . -t mailadm-mailcow
     $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --env-file .env --rm mailadm-mailcow mailadm init
-    $ sudo docker run -d -p 3691:3691 --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --name mailadm mailadm-mailcow gunicorn -b :3691 -w 1 mailadm.app:app
+    $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data mailadm-mailcow mailadm setup-bot
+    $ sudo docker run -d -p 3691:3691 --restart=unless-stopped --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --name mailadm mailadm-mailcow gunicorn -b :3691 -w 1 mailadm.app:app
 
 .. note::
 
