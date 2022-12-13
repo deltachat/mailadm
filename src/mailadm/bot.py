@@ -179,20 +179,17 @@ def get_admbot_db_path(db_path=None):
 def main(mailadm_db, admbot_db_path):
     try:
         ac = deltachat.Account(admbot_db_path)
-        if not ac.is_configured():
-            # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
-            print("if you want to talk to mailadm with Delta Chat, please run: mailadm setup-bot",
-                  file=sys.stderr)
-        conn = mailadm_db.read_connection(closing=False)
-        while "admingrpid" not in [item[0] for item in conn.get_config_items()]:
-            time.sleep(1)
-        else:
+        with mailadm_db.read_connection(closing=False) as conn:
+            if "admingrpid" not in [item[0] for item in conn.get_config_items()]:
+                # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
+                print("To complete the mailadm setup, please run: mailadm setup-bot",
+                      file=sys.stderr)
+                os._exit(1)
             displayname = conn.config.mail_domain + " administration"
-            conn.close()
-            ac.set_avatar("assets/avatar.jpg")
-            ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
-            ac.set_config("mvbox_move", "1")
-            ac.set_config("displayname", displayname)
+        ac.set_avatar("assets/avatar.jpg")
+        ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
+        ac.set_config("mvbox_move", "1")
+        ac.set_config("displayname", displayname)
         while 1:
             for logmsg in prune(mailadm_db).get("message"):
                 print(logmsg, file=sys.stderr)
