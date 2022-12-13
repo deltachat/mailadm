@@ -191,6 +191,7 @@ def main(mailadm_db, admbot_db_path):
             conn.close()
             ac.set_avatar("assets/avatar.jpg")
             ac.run_account(account_plugins=[AdmBot(mailadm_db, ac)], show_ffi=True)
+            ac.set_config("mvbox_move", "1")
             ac.set_config("displayname", displayname)
         while 1:
             for logmsg in prune(mailadm_db).get("message"):

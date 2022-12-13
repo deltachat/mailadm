@@ -125,7 +125,7 @@ def setup_bot(ctx, email, password, show_ffi):
         ac.set_config("addr", email)
     if password:
         ac.set_config("mail_pw", password)
-    ac.set_config("mvbox_move", "0")
+    ac.set_config("mvbox_move", "1")
     ac.set_config("sentbox_watch", "0")
     ac.set_config("bot", "1")
     configtracker = ac.configure(reconfigure=ac.is_configured())
