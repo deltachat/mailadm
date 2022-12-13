@@ -69,7 +69,7 @@ from your users:
 
 .. code:: bash
 
-    $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data mailadm-mailcow mailadm setup-bot
+    $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --rm mailadm-mailcow mailadm setup-bot
 
 Then you are asked to scan a QR code to join the Admin Group, a verified Delta
 Chat group. Anyone in the group issue commands to mailadm via Delta Chat. You
