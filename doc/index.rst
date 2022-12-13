@@ -52,13 +52,33 @@ In the end, your ``.env`` file should look similar to this:
     MAILCOW_ENDPOINT=https://mailcow-web.example.org/api/v1/
     MAILCOW_TOKEN=932848-324B2E-787E98-FCA29D-89789A
     
-Now you can build and run the docker container:
+Now you can build the docker container:
 
 .. code:: bash
 
     $ sudo docker build . -t mailadm-mailcow
+
+Initialize the database with the configuration from ``.env``:
+
+.. code:: bash
+
     $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --env-file .env --rm mailadm-mailcow mailadm init
+
+And setup the bot mailadm will use to receive commands and support requests
+from your users:
+
+.. code:: bash
+
     $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data mailadm-mailcow mailadm setup-bot
+
+Then you are asked to scan a QR code to join the Admin Group, a verified Delta
+Chat group. Anyone in the group issue commands to mailadm via Delta Chat. You
+can send "/help" to the group to learn how to use it.
+
+Now, as everything is configured, we can start the mailadm container for good:
+
+.. code:: bash
+
     $ sudo docker run -d -p 3691:3691 --restart=unless-stopped --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --name mailadm mailadm-mailcow gunicorn -b :3691 -w 1 mailadm.app:app
 
 .. note::
