@@ -179,7 +179,7 @@ def get_admbot_db_path(db_path=None):
 def main(mailadm_db, admbot_db_path):
     try:
         ac = deltachat.Account(admbot_db_path)
-        with mailadm_db.read_connection(closing=False) as conn:
+        with mailadm_db.read_connection() as conn:
             if "admingrpid" not in [item[0] for item in conn.get_config_items()]:
                 # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
                 print("To complete the mailadm setup, please run: mailadm setup-bot",
@@ -195,7 +195,7 @@ def main(mailadm_db, admbot_db_path):
                 print(logmsg, file=sys.stderr)
             time.sleep(600)
     finally:
-        print("bot thread died, killing everything now", file=sys.stderr)
+        print("bot received an unexpected error, exiting now", file=sys.stderr)
         os._exit(1)
 
 
