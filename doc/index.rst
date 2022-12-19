@@ -79,7 +79,7 @@ Now, as everything is configured, we can start the mailadm container for good:
 
 .. code:: bash
 
-    $ sudo docker run -d -p 3691:3691 --restart=unless-stopped --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --name mailadm mailadm-mailcow gunicorn -b :3691 -w 1 mailadm.app:app
+    $ sudo docker run -d -p 3691:3691 --restart=unless-stopped --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --name mailadm mailadm-mailcow gunicorn --timeout 60 -b :3691 -w 1 mailadm.app:app
 
 .. note::
 
