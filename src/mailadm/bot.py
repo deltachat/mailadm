@@ -193,6 +193,9 @@ def main(mailadm_db, admbot_db_path):
         while 1:
             for logmsg in prune(mailadm_db).get("message"):
                 print(logmsg, file=sys.stderr)
+            if not ac._event_thread.is_alive():
+                print("dc core event thread died, exiting now", file=sys.stderr)
+                os._exit(1)
             time.sleep(600)
     finally:
         print("bot received an unexpected error, exiting now", file=sys.stderr)
