@@ -171,30 +171,36 @@ this::
         V
     mailcow user management
 
-Initializing the Bot Interface
-++++++++++++++++++++++++++++++
+The Bot Interface
++++++++++++++++++
 
 You don't have to login with SSH every time you want to create tokens. You can
 also use the bot interface to give commands to mailadm in a verified Delta
 group, the "admin group chat".
 
-You can run the following commands to setup the bot::
+During installation, you are asked to scan a QR code to join the Admin Group, a
+verified Delta Chat group. Anyone in the group issue commands to mailadm via
+Delta Chat. You can send "/help" to the group to learn how to use it.
+
+Re-Initializing the Admin Group
+-------------------------------
+
+If you ever lose access to the Admin Group, or want to change the email account
+the bot uses, you can just re-run ``mailadm setup-bot`` to invalidate the old
+Admin Group and create a new one.
+
+By default your bot is called ``mailadm@yourdomain.tld``, but you can use the
+``mailadm setup-bot --email`` command if you want to use a different address.
+If you want to use an existing account for the mailadm bot, you can specify
+credentials with ``--email`` and ``--password``.  If it is an existing email
+account, it doesn't need to be on your mailcow server.
+
+The bot is initialized during installation. If you want to re-setup the bot
+account or admin group, you need to stop mailadm first::
 
     $ sudo docker stop mailadm
     $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data mailadm-mailcow mailadm setup-bot
     $ sudo docker start mailadm
-
-This creates an account for the bot automatically; by default it's called
-``mailadm@yourdomain.tld``, but you can use the ``--email`` argument if you
-want to call it differently. If you want to use an existing account for the
-mailadm bot, you can specify credentials with ``--email`` and ``--password``.
-
-Then you are asked to scan a QR code to join the Admin Group, a verified Delta
-Chat group. Anyone in the group issue commands to mailadm via Delta Chat. You
-can send "/help" to the group to learn how to use it.
-
-If you ever lose access to the Admin Group, you can just re-run ``mailadm
-setup-bot`` to invalidate the old Admin Group and create a new one.
 
 QR Code Generation
 ++++++++++++++++++
