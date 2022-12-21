@@ -172,7 +172,7 @@ this::
     mailcow user management
 
 The Bot Interface
-+++++++++++++++++
+-----------------
 
 You don't have to login with SSH every time you want to create tokens. You can
 also use the bot interface to give commands to mailadm in a verified Delta
@@ -183,7 +183,7 @@ verified Delta Chat group. Anyone in the group issue commands to mailadm via
 Delta Chat. You can send "/help" to the group to learn how to use it.
 
 Re-Initializing the Admin Group
--------------------------------
++++++++++++++++++++++++++++++++
 
 If you ever lose access to the Admin Group, or want to change the email account
 the bot uses, you can just re-run ``mailadm setup-bot`` to invalidate the old
