@@ -33,6 +33,10 @@ class DB:
         uri = "file:%s?mode=%s" % (self.path, mode)
         sqlconn = sqlite3.connect(uri, timeout=60, isolation_level=None, uri=True)
 
+        # Enable Write-Ahead Logging to avoid readers blocking writers and vice versa.
+        if write:
+            sqlconn.execute("PRAGMA journal_mode=wal")
+
         if write:
             start_time = time.time()
             while 1:
