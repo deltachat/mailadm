@@ -42,7 +42,7 @@ class MailcowConnection:
         :param addr: the email account to be deleted
         """
         url = self.mailcow_endpoint + "delete/mailbox"
-        result = r.post(url, json=[addr], headers=self.auth)
+        result = r.post(url, json=[addr], headers=self.auth, timeout=30)
         json = result.json()
         if not isinstance(json, list) or json[0].get("type" != "success"):
             raise MailcowError(json)
