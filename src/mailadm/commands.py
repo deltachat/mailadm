@@ -60,31 +60,34 @@ def add_user(db, token=None, addr=None, password=None, dryrun=False) -> {}:
 
 def prune(db, dryrun=False) -> {}:
     sysdate = int(time.time())
-    with db.write_transaction() as conn:
+    with db.read_connection() as conn:
         expired_users = conn.get_expired_users(sysdate)
         if not expired_users:
             return {"status": "success",
                     "message": ["nothing to prune"]}
-        if dryrun:
-            result = {"status": "dryrun",
-                      "message": []}
-            for user_info in expired_users:
-                result["message"].append("would delete %s (token %s)" %
-                                         (user_info.addr, user_info.token_name))
-        else:
-            result = {"status": "success",
-                      "message": []}
-            for user_info in expired_users:
-                try:
-                    conn.delete_email_account(user_info.addr)
-                except (DBError, MailcowError) as e:
-                    result["status"] = "error"
-                    result["message"].append("failed to delete account %s: %s" %
-                                             (user_info.addr, e))
-                    continue
-                result["message"].append("pruned %s (token %s)" %
-                                         (user_info.addr, user_info.token_name))
-        return result
+    if dryrun:
+        result = {"status": "dryrun",
+                  "message": []}
+        for user_info in expired_users:
+            result["message"].append("would delete %s (token %s)" %
+                                     (user_info.addr, user_info.token_name))
+    else:
+        result = {"status": "success",
+                  "message": []}
+        for user_info in expired_users:
+            try:
+                with db.read_connection() as conn:
+                    conn.get_mailcow_connection().del_user_mailcow(user_info.addr)
+                with db.write_transaction() as conn:
+                    conn.del_user_db(user_info.addr)
+            except (DBError, MailcowError) as e:
+                result["status"] = "error"
+                result["message"].append("failed to delete account %s: %s" %
+                                         (user_info.addr, e))
+                continue
+            result["message"].append("pruned %s (token %s)" %
+                                     (user_info.addr, user_info.token_name))
+    return result
 
 
 def list_tokens(db) -> str:
