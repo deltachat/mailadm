@@ -60,7 +60,7 @@ def add_user(db, token=None, addr=None, password=None, dryrun=False) -> {}:
 
 def prune(db, dryrun=False) -> {}:
     sysdate = int(time.time())
-    with db.write_transaction() as conn:
+    with db.write_connection() as conn:
         expired_users = conn.get_expired_users(sysdate)
         if not expired_users:
             return {"status": "success",

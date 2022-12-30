@@ -22,7 +22,7 @@ class DB:
         self.path = path
         self.ensure_tables()
 
-    def get_connection(self, write=False, closing=False):
+    def get_connection(self, write=False, transaction=True, closing=False):
         # we let the database serialize all writers at connection time
         # to play it very safe (we don't have massive amounts of writes).
         mode = "ro"
@@ -37,7 +37,7 @@ class DB:
         if write:
             sqlconn.execute("PRAGMA journal_mode=wal")
 
-        if write:
+        if write and transaction:
             start_time = time.time()
             while 1:
                 try:
@@ -56,7 +56,7 @@ class DB:
 
     @contextlib.contextmanager
     def write_transaction(self):
-        conn = self.get_connection(closing=False, write=True)
+        conn = self.get_connection(closing=False, write=True, transaction=True)
         try:
             yield conn
         except Exception:
@@ -66,6 +66,9 @@ class DB:
         else:
             conn.commit()
             conn.close()
+
+    def write_connection(self, closing=True):
+        return self.get_connection(closing=closing, write=False, transaction=False)
 
     def read_connection(self, closing=True):
         return self.get_connection(closing=closing, write=False)
