@@ -2,6 +2,7 @@ import mimetypes
 import sys
 import sqlite3
 import time
+import logging
 
 import deltachat
 from deltachat import account_hookimpl
@@ -198,8 +199,8 @@ def main(mailadm_db, admbot_db_path):
                     print("dc core event thread died, exiting now", file=sys.stderr)
                     os._exit(1)
                 time.sleep(1)
-    finally:
-        print("bot received an unexpected error, exiting now", file=sys.stderr)
+    except:
+        logging.exception("bot received an unexpected error, exiting now")
         os._exit(1)
 
 
