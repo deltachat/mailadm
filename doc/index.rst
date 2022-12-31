@@ -62,14 +62,14 @@ Initialize the database with the configuration from ``.env``:
 
 .. code:: bash
 
-    $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --env-file .env --rm mailadm-mailcow mailadm init
+    $ scripts/mailadm.sh init
 
 And setup the bot mailadm will use to receive commands and support requests
 from your users:
 
 .. code:: bash
 
-    $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --rm mailadm-mailcow mailadm setup-bot
+    $ scripts/mailadm.sh setup-bot
 
 Then you are asked to scan a QR code to join the Admin Group, a verified Delta
 Chat group. Anyone in the group issue commands to mailadm via Delta Chat. You
@@ -93,10 +93,12 @@ First Steps
 -----------
 
 ``mailadm`` CLI commands are run inside the docker container - that means that
-we need to type ``sudo docker exec -ti mailadm mailadm`` in front of every
+we need to type ``scripts/mailadm.sh`` in front of every
 ``mailadm`` command. This can be abbreviated by running
-``alias mailadm="sudo docker exec -ti mailadm mailadm"`` once, and adding the
-line to your ``~/.bashrc``.
+``alias mailadm="$PWD/scripts/mailadm.sh"`` once, and adding the
+line to your ``~/.bashrc``::
+
+    $ echo "alias mailadm=$PWD/scripts/mailadm.sh" >> ~/.bashrc
 
 These docs assume that you have this alias configured.
 
@@ -118,7 +120,7 @@ You can now add a first token::
 
 Then we can add a user::
 
-    $ sudo docker exec mailadm mailadm add-user --token oneday tmp.12345@example.org
+    $ mailadm add-user --token oneday tmp.12345@example.org
     added addr 'tmp.12345@example.org' with token 'oneday'
 
 .. _testing-the-web-app:
@@ -199,7 +201,7 @@ The bot is initialized during installation. If you want to re-setup the bot
 account or admin group, you need to stop mailadm first::
 
     $ sudo docker stop mailadm
-    $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data mailadm-mailcow mailadm setup-bot
+    $ mailadm setup-bot
     $ sudo docker start mailadm
 
 QR Code Generation
@@ -228,9 +230,9 @@ to run ``mailadm init`` to apply them, and restart the mailadm process/container
 ``mailadm init``, saves the configuration in the database. ``mailadm init``
 should be called from inside the docker container. Best practice is to save the
 environment variables in a ``.env`` file, and pass it to ``docker run`` with
-the ``--env-file .env`` argument::
+the ``--env-file .env`` argument. ``mailadm.sh`` script does this for you.::
 
-    $ sudo docker run --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --env-file .env --rm mailadm-mailcow mailadm init
+    $ mailadm init
 
 mailadm has 4 config options:
 
