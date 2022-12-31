@@ -1,3 +1,4 @@
+import logging
 import time
 import sqlite3
 import mailadm.util
@@ -23,7 +24,7 @@ class Connection:
         self._write = write
 
     def log(self, msg):
-        print(msg)
+        logging.info("%s", msg)
 
     def close(self):
         self._sqlconn.close()
