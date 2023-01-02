@@ -153,11 +153,12 @@ class Connection:
 
     def add_email_account_tries(self, token_info, addr=None, password=None, tries=1):
         """Try to add an email account."""
-        for i in range(tries):
+        for i in range(1, tries + 1):
+            logging.info("Try %d to create an account", i)
             try:
                 return self.add_email_account(token_info, addr=addr, password=password)
             except (MailcowError, DBError):
-                if i + 1 >= tries:
+                if i >= tries:
                     raise
 
     def add_email_account(self, token_info, addr=None, password=None):
