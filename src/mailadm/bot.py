@@ -43,30 +43,28 @@ class AdmBot:
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
         arguments = message.text.split(" ")
-        print("process_incoming message:", message.text)
+        logging.info("process_incoming_message: %s", message.text)
         if not self.is_admin_group_message(message):
             chat = message.create_chat()
             if chat.is_group():
                 if message.get_sender_contact() not in self.admingroup.get_contacts():
-                    print("%s added me to a group, I'm leaving it." %
-                          (message.get_sender_contact().addr,))
+                    logging.info("%s added me to a group, I'm leaving it.", message.get_sender_contact().addr)
                     chat.send_text("Sorry, you can not contact me in a group chat. Please use a 1:1"
                                    " chat.")
                     chat.remove_contact(self.account.get_self_contact())   # leave group
                 elif message.quote:  # reply to user
                     if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
                         recipient = message.quote.override_sender_name
-                        print("I'm forwarding the admin reply to the support user %s." %
-                              (recipient,))
+                        logging.info("I'm forwarding the admin reply to the support user %s.", recipient)
                         chat = self.account.create_chat(recipient)
                         chat.send_msg(message)
                 else:
-                    print("ignoring message, it's just admins discussing in a support group.")
+                    logging.info("ignoring message, it's just admins discussing in a support group.")
             elif message.text[0] == "/":
-                print("command was not supplied in a group, let alone the admin group.")
+                logging.info("command was not supplied in a group, let alone the admin group.")
                 chat.send_text("Sorry, I only take commands from the admin group.")
             else:
-                print("forwarding the message to a support group.")
+                logging.info("forwarding the message to a support group.")
                 support_user = message.get_sender_contact().addr
                 admins = self.admingroup.get_contacts()
                 admins.remove(self.account.get_self_contact())
@@ -76,13 +74,13 @@ class AdmBot:
                         supportgroup = chat
                         break
                 else:
-                    print("creating new support group: '" + group_name + "'")
+                    logging.info("creating new support group: '%s'", group_name)
                     supportgroup = self.account.create_group_chat(group_name, admins)
                     supportgroup.set_profile_image("assets/avatar.jpg")
                 message.set_override_sender_name(support_user)
                 supportgroup.send_msg(message)
             return
-        print(message.text, "seems to be a valid message.")
+        logging.info("%s seems to be a valid message.", message.text)
 
         if arguments[0] == "/help":
             text = ("/add-user addr password token\n"
@@ -139,10 +137,10 @@ class AdmBot:
                 if command.get_sender_contact() in command.chat.get_contacts():
                     return True
                 else:
-                    print("%s is not allowed to give commands to mailadm." %
-                          (command.get_sender_contact(),))
+                    logging.info("%s is not allowed to give commands to mailadm.",
+                          command.get_sender_contact())
             else:
-                print("The admin group is broken. Try `mailadm setup-bot`. Group ID:",
+                logging.info("The admin group is broken. Try `mailadm setup-bot`. Group ID: %s",
                       str(self.admingrpid))
                 raise ValueError
         else:
@@ -193,10 +191,10 @@ def main(mailadm_db, admbot_db_path):
         ac.set_config("displayname", displayname)
         while 1:
             for logmsg in prune(mailadm_db).get("message"):
-                print(logmsg, file=sys.stderr)
+                logging.info("%s", logmsg)
             for second in range(0, 600):
                 if not ac._event_thread.is_alive():
-                    print("dc core event thread died, exiting now", file=sys.stderr)
+                    logging.error("dc core event thread died, exiting now")
                     os._exit(1)
                 time.sleep(1)
     except:

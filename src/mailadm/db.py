@@ -1,4 +1,4 @@
-
+import logging
 import os
 import contextlib
 import sqlite3
@@ -100,7 +100,7 @@ class DB:
             if conn.get_dbversion():
                 return
         with self.write_transaction() as conn:
-            print("DB: Creating tables", self.path)
+            logging.info("DB: Creating tables %s", self.path)
 
             conn.execute("""
                 CREATE TABLE tokens (
