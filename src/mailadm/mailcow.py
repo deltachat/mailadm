@@ -1,5 +1,6 @@
 import requests as r
 
+HTTP_TIMEOUT = 5
 
 class MailcowConnection:
     """Class to manage requests to the mailcow instance.
@@ -32,7 +33,7 @@ class MailcowConnection:
             "tls_enforce_out": False,
             "tags": ["mailadm:" + token]
         }
-        result = r.post(url, json=payload, headers=self.auth, timeout=30)
+        result = r.post(url, json=payload, headers=self.auth, timeout=HTTP_TIMEOUT)
         if type(result.json()) != list or result.json()[0].get("type") != "success":
             raise MailcowError(result.json())
 
@@ -42,7 +43,7 @@ class MailcowConnection:
         :param addr: the email account to be deleted
         """
         url = self.mailcow_endpoint + "delete/mailbox"
-        result = r.post(url, json=[addr], headers=self.auth, timeout=30)
+        result = r.post(url, json=[addr], headers=self.auth, timeout=HTTP_TIMEOUT)
         json = result.json()
         if not isinstance(json, list) or json[0].get("type" != "success"):
             raise MailcowError(json)
@@ -50,7 +51,7 @@ class MailcowConnection:
     def get_user(self, addr):
         """HTTP Request to get a specific mailcow user (not only mailadm-generated ones)."""
         url = self.mailcow_endpoint + "get/mailbox/" + addr
-        result = r.get(url, headers=self.auth, timeout=30)
+        result = r.get(url, headers=self.auth, timeout=HTTP_TIMEOUT)
         json = result.json()
         if json == {}:
             return None
@@ -62,6 +63,9 @@ class MailcowConnection:
     def get_user_list(self):
         """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
         url = self.mailcow_endpoint + "get/mailbox/all"
+
+        # Using larger timeout here than for other requests,
+        # because some mailcow instances may have a large number of users.
         result = r.get(url, headers=self.auth, timeout=30)
         json = result.json()
         if json == {}:
