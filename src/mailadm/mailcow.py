@@ -10,6 +10,7 @@ class MailcowConnection:
     def __init__(self, mailcow_endpoint, mailcow_token):
         self.mailcow_endpoint = mailcow_endpoint
         self.auth = {"X-API-Key": mailcow_token}
+        self.session = r.Session()
 
     def add_user_mailcow(self, addr, password, token, quota=0):
         """HTTP Request to add a user to the mailcow instance.
@@ -32,7 +33,7 @@ class MailcowConnection:
             "tls_enforce_out": False,
             "tags": ["mailadm:" + token]
         }
-        result = r.post(url, json=payload, headers=self.auth, timeout=30)
+        result = self.session.post(url, json=payload, headers=self.auth, timeout=30)
         if type(result.json()) != list or result.json()[0].get("type") != "success":
             raise MailcowError(result.json())
 
@@ -42,7 +43,7 @@ class MailcowConnection:
         :param addr: the email account to be deleted
         """
         url = self.mailcow_endpoint + "delete/mailbox"
-        result = r.post(url, json=[addr], headers=self.auth, timeout=30)
+        result = self.session.post(url, json=[addr], headers=self.auth, timeout=30)
         json = result.json()
         if not isinstance(json, list) or json[0].get("type" != "success"):
             raise MailcowError(json)
@@ -50,7 +51,7 @@ class MailcowConnection:
     def get_user(self, addr):
         """HTTP Request to get a specific mailcow user (not only mailadm-generated ones)."""
         url = self.mailcow_endpoint + "get/mailbox/" + addr
-        result = r.get(url, headers=self.auth, timeout=30)
+        result = self.session.get(url, headers=self.auth, timeout=30)
         json = result.json()
         if json == {}:
             return None
@@ -62,7 +63,7 @@ class MailcowConnection:
     def get_user_list(self):
         """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
         url = self.mailcow_endpoint + "get/mailbox/all"
-        result = r.get(url, headers=self.auth, timeout=30)
+        result = self.session.get(url, headers=self.auth, timeout=30)
         json = result.json()
         if json == {}:
             return []

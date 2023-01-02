@@ -151,17 +151,17 @@ class Connection:
     # user management
     #
 
-    def add_email_account_tries(self, token_info, addr=None, password=None, tries=1):
+    def add_email_account_tries(self, mailcow_connection, token_info, addr=None, password=None, tries=1):
         """Try to add an email account."""
         for i in range(1, tries + 1):
             logging.info("Try %d to create an account", i)
             try:
-                return self.add_email_account(token_info, addr=addr, password=password)
+                return self.add_email_account(mailcow_connection, token_info, addr=addr, password=password)
             except (MailcowError, DBError):
                 if i >= tries:
                     raise
 
-    def add_email_account(self, token_info, addr=None, password=None):
+    def add_email_account(self, mailcow_connection, token_info, addr=None, password=None):
         """Add an email account to the mailcow server & mailadm
 
         :param token_info: the token which authorizes the new user creation
@@ -182,7 +182,7 @@ class Connection:
                     addr, self.config.mail_domain))
 
         # first check that mailcow doesn't have a user with that name already:
-        if self.get_mailcow_connection().get_user(addr):
+        if mailcow_connection.get_user(addr):
             raise MailcowError("account does already exist")
 
         self.add_user_db(addr=addr, date=int(time.time()),
@@ -194,7 +194,7 @@ class Connection:
         user_info.password = password
 
         # seems that everything is fine so far, so let's invoke mailcow:
-        self.get_mailcow_connection().add_user_mailcow(addr, password, token_info.name)
+        mailcow_connection.add_user_mailcow(addr, password, token_info.name)
 
         return user_info
 

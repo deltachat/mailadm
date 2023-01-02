@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import mailadm.db
 from mailadm.conn import DBError
-from mailadm.mailcow import MailcowError
+from mailadm.mailcow import MailcowError, MailcowConnection
 from requests.exceptions import ReadTimeout
 
 
@@ -16,6 +16,10 @@ def create_app_from_db_path(db_path=None):
 def create_app_from_db(db):
     app = Flask("mailadm-account-server")
     app.db = db
+    with db.read_connection() as conn:
+        config = conn.config
+        app.mailcow_connection = MailcowConnection(config.mailcow_endpoint,
+                                                   config.mailcow_token)
 
     @app.route('/', methods=["POST"])
     def new_email():
@@ -30,7 +34,7 @@ def create_app_from_db(db):
                 return jsonify(type="error", status_code=403,
                                reason="token {} is invalid".format(token)), 403
             try:
-                user_info = conn.add_email_account_tries(token_info, tries=10)
+                user_info = conn.add_email_account_tries(app.mailcow_connection, token_info, tries=10)
                 return jsonify(email=user_info.addr, password=user_info.password,
                                expiry=token_info.expiry, ttl=user_info.ttl)
             except (DBError, MailcowError) as e:
