@@ -8,11 +8,11 @@ from mailadm.util import gen_password
 
 def test_token(tmpdir, make_db):
     db = make_db(tmpdir)
-    with db.get_connection(closing=True, write=True) as conn:
+    with db._get_connection(closing=True, write=True) as conn:
         assert not conn.get_token_list()
         conn.add_token(name="oneweek", prefix="xyz", expiry="1w", maxuse=5, token="123456789012345")
         conn.commit()
-    with db.get_connection(closing=True) as conn:
+    with db._get_connection(closing=True) as conn:
         assert len(conn.get_token_list()) == 1
         entry = conn.get_tokeninfo_by_name("oneweek")
         assert entry.expiry == "1w"
@@ -37,7 +37,7 @@ class TestTokenAccounts:
     @pytest.fixture
     def conn(self, tmpdir, make_db):
         db = make_db(tmpdir.mkdir("conn"))
-        conn = db.get_connection(write=True)
+        conn = db._get_connection(write=True)
         conn.add_token(name="onehour", prefix="xyz", expiry="1h",
                        maxuse=self.MAXUSE, token="123456789012345")
         conn.commit()

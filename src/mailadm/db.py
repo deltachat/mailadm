@@ -22,7 +22,7 @@ class DB:
         self.path = path
         self.ensure_tables()
 
-    def get_connection(self, write=False, closing=False):
+    def _get_connection(self, write=False, transaction=False, closing=False):
         # we let the database serialize all writers at connection time
         # to play it very safe (we don't have massive amounts of writes).
         mode = "ro"
@@ -31,13 +31,18 @@ class DB:
         if not self.path.exists():
             mode = "rwc"
         uri = "file:%s?mode=%s" % (self.path, mode)
-        sqlconn = sqlite3.connect(uri, timeout=60, isolation_level=None, uri=True)
+        sqlconn = sqlite3.connect(
+            uri,
+            timeout=60,
+            isolation_level=None if transaction else "DEFERRED",
+            uri=True,
+        )
 
         # Enable Write-Ahead Logging to avoid readers blocking writers and vice versa.
         if write:
             sqlconn.execute("PRAGMA journal_mode=wal")
 
-        if write:
+        if transaction:
             start_time = time.time()
             while 1:
                 try:
@@ -56,7 +61,7 @@ class DB:
 
     @contextlib.contextmanager
     def write_transaction(self):
-        conn = self.get_connection(closing=False, write=True)
+        conn = self._get_connection(closing=False, write=True, transaction=True)
         try:
             yield conn
         except Exception:
@@ -67,8 +72,11 @@ class DB:
             conn.commit()
             conn.close()
 
+    def write_connection(self, closing=True):
+        return self._get_connection(closing=closing, write=True)
+
     def read_connection(self, closing=True):
-        return self.get_connection(closing=closing, write=False)
+        return self._get_connection(closing=closing, write=False)
 
     def init_config(self, mail_domain, web_endpoint, mailcow_endpoint, mailcow_token):
         with self.write_transaction() as conn:
