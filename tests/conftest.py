@@ -113,7 +113,7 @@ def admingroup(admbot, botadmin, db):
 
 @pytest.fixture()
 def admbot(mailcow, db, tmpdir):
-    addr = "pytest-admbot-%s@x.testrun.org" % (randint(0, 999),)
+    addr = "pytest-admbot-%s@x.testrun.org" % (randint(0, 99999),)
     tmpdir = Path(str(tmpdir))
     admbot_db_path = str(mailadm.bot.get_admbot_db_path(db_path=tmpdir.joinpath("admbot.db")))
     ac = prepare_account(addr, mailcow, admbot_db_path)
@@ -127,7 +127,7 @@ def admbot(mailcow, db, tmpdir):
 
 @pytest.fixture
 def botadmin(mailcow, db, tmpdir):
-    addr = "pytest-admin-%s@x.testrun.org" % (randint(0, 999),)
+    addr = "pytest-admin-%s@x.testrun.org" % (randint(0, 99999),)
     tmpdir = Path(str(tmpdir))
     db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("botadmin.db"))
     ac = prepare_account(addr, mailcow, db_path)
@@ -139,7 +139,7 @@ def botadmin(mailcow, db, tmpdir):
 
 @pytest.fixture
 def supportuser(mailcow, db, tmpdir):
-    addr = "pytest-supportuser-%s@x.testrun.org" % (randint(0, 999),)
+    addr = "pytest-supportuser-%s@x.testrun.org" % (randint(0, 99999),)
     tmpdir = Path(str(tmpdir))
     db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("supportuser.db"))
     ac = prepare_account(addr, mailcow, db_path)
