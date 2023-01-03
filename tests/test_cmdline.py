@@ -124,7 +124,7 @@ class TestUsers:
 
     def test_add_del_user(self, mycmd):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", "pytest."])
-        addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+        addr = "pytest.%s@x.testrun.org" % (randint(0, 99999),)
         mycmd.run_ok(["add-user", addr], """
             *Created*pytest*@x.testrun.org*
         """)
@@ -146,7 +146,7 @@ class TestUsers:
 
     def test_adduser_and_expire(self, mycmd, monkeypatch):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", "pytest."])
-        addr = "pytest.%s@x.testrun.org" % (randint(0, 499),)
+        addr = "pytest.%s@x.testrun.org" % (randint(0, 49999),)
         mycmd.run_ok(["add-user", addr], """
             *Created*pytest*@x.testrun.org*
         """)
@@ -156,7 +156,7 @@ class TestUsers:
         # create an old account that should expire
         with monkeypatch.context() as m:
             m.setattr(time, "time", lambda: to_expire)
-            addr2 = "pytest.%s@x.testrun.org" % (randint(500, 999),)
+            addr2 = "pytest.%s@x.testrun.org" % (randint(50000, 99999),)
             mycmd.run_ok(["add-user", addr2], """
                 *Created*pytest*@x.testrun.org*
             """)
@@ -176,8 +176,8 @@ class TestUsers:
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."])
         mycmd.run_ok(["add-token", "test2", "--expiry=1d", "--prefix=tmpx."])
         mycmd.run_fail(["add-user", "x@x.testrun.org"])
-        addr = "tmpy.%s@x.testrun.org" % (randint(0, 499),)
-        addr2 = "tmpx.%s@x.testrun.org" % (randint(500, 999),)
+        addr = "tmpy.%s@x.testrun.org" % (randint(0, 49999),)
+        addr2 = "tmpx.%s@x.testrun.org" % (randint(50000, 99999),)
         mycmd.run_ok(["add-user", addr])
         mycmd.run_ok(["add-user", addr2])
         mycmd.run_ok(["list-users"], """
