@@ -148,7 +148,7 @@ class TestUsers:
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", "pytest."])
         addr = "pytest.%s@x.testrun.org" % (randint(0, 499),)
         mycmd.run_ok(["add-user", addr], """
-            *added*pytest*@x.testrun.org*
+            *Created*pytest*@x.testrun.org*
         """)
 
         to_expire = time.time() - datetime.timedelta(weeks=1).total_seconds() - 1
@@ -158,7 +158,7 @@ class TestUsers:
             m.setattr(time, "time", lambda: to_expire)
             addr2 = "pytest.%s@x.testrun.org" % (randint(500, 999),)
             mycmd.run_ok(["add-user", addr2], """
-                *added*pytest*@x.testrun.org*
+                *Created*pytest*@x.testrun.org*
             """)
 
         out = mycmd.run_ok(["list-users"])
