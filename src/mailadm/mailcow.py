@@ -1,3 +1,5 @@
+import logging
+
 import requests as r
 
 
@@ -33,8 +35,13 @@ class MailcowConnection:
             "tags": ["mailadm:" + token]
         }
         result = r.post(url, json=payload, headers=self.auth, timeout=30)
-        if type(result.json()) != list or result.json()[0].get("type") != "success":
-            raise MailcowError(result.json())
+        try:
+            json = result.json()
+        except r.exceptions.JSONDecodeError:
+            logging.error("Bad mailcow API response. Couldn't decode json: " + str(result.content))
+            raise
+        if type(json) != list or json[0].get("type") != "success":
+            raise MailcowError(json)
 
     def del_user_mailcow(self, addr):
         """HTTP Request to delete a user from the mailcow instance.
@@ -43,7 +50,11 @@ class MailcowConnection:
         """
         url = self.mailcow_endpoint + "delete/mailbox"
         result = r.post(url, json=[addr], headers=self.auth, timeout=30)
-        json = result.json()
+        try:
+            json = result.json()
+        except r.exceptions.JSONDecodeError:
+            logging.error("Bad mailcow API response. Couldn't decode json: " + str(result.content))
+            raise
         if not isinstance(json, list) or json[0].get("type" != "success"):
             raise MailcowError(json)
 
@@ -51,7 +62,11 @@ class MailcowConnection:
         """HTTP Request to get a specific mailcow user (not only mailadm-generated ones)."""
         url = self.mailcow_endpoint + "get/mailbox/" + addr
         result = r.get(url, headers=self.auth, timeout=30)
-        json = result.json()
+        try:
+            json = result.json()
+        except r.exceptions.JSONDecodeError:
+            logging.error("Bad mailcow API response. Couldn't decode json: " + str(result.content))
+            raise
         if json == {}:
             return None
         if type(json) == dict:
@@ -62,8 +77,12 @@ class MailcowConnection:
     def get_user_list(self):
         """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
         url = self.mailcow_endpoint + "get/mailbox/all"
-        result = r.get(url, headers=self.auth, timeout=30)
-        json = result.json()
+        result = r.get(url, headers=self.auth, timeout=90)
+        try:
+            json = result.json()
+        except r.exceptions.JSONDecodeError:
+            logging.error("Bad mailcow API response. Couldn't decode json: " + str(result.content))
+            raise
         if json == {}:
             return []
         if type(json) == dict:
