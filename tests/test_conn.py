@@ -84,10 +84,10 @@ def test_adduser_mailcow_error(db):
         assert conn.get_user_list(token=token_info.name) == []
 
 
-def test_adduser_db_error(conn, monkeypatch):
+def test_adduser_db_error(conn, monkeypatch, mailcow_domain):
     """Test that no mailcow user is created if there is a DB error"""
     token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
-    addr = "pytest.%s@x.testrun.org" % (randint(0, 99999),)
+    addr = "pytest.%s@%s" % (randint(0, 99999), mailcow_domain)
 
     def add_user_db(*args, **kwargs):
         raise DBError
@@ -105,10 +105,10 @@ def test_adduser_db_error(conn, monkeypatch):
             assert user["username"] != addr
 
 
-def test_adduser_mailcow_exists(conn, mailcow):
+def test_adduser_mailcow_exists(conn, mailcow, mailcow_domain):
     """Test that no user is created if Mailcow user already exists"""
     token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
-    addr = "pytest.%s@x.testrun.org" % (randint(0, 99999),)
+    addr = "pytest.%s@%s" % (randint(0, 99999), mailcow_domain)
 
     mailcow.add_user_mailcow(addr, "asdf1234", token_info.name)
     with pytest.raises(MailcowError):
@@ -119,10 +119,10 @@ def test_adduser_mailcow_exists(conn, mailcow):
     mailcow.del_user_mailcow(addr)
 
 
-def test_delete_user_mailcow_missing(conn, mailcow):
+def test_delete_user_mailcow_missing(conn, mailcow, mailcow_domain):
     """Test if a mailadm user is deleted successfully if mailcow user is already missing"""
     token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
-    addr = "pytest.%s@x.testrun.org" % (randint(0, 99999),)
+    addr = "pytest.%s@%s" % (randint(0, 99999), mailcow_domain)
 
     conn.add_email_account(token_info, addr=addr)
     mailcow.del_user_mailcow(addr)

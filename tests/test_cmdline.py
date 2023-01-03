@@ -7,7 +7,7 @@ from mailadm.mailcow import MailcowError
 
 
 @pytest.fixture
-def mycmd(cmd, make_db, tmpdir, monkeypatch):
+def mycmd(cmd, make_db, tmpdir, monkeypatch, mailcow_domain):
     db = make_db(tmpdir.mkdir("mycmd"), init=False)
     monkeypatch.setenv("MAILADM_DB", str(db.path))
     monkeypatch.setenv("ADMBOT_DB", str(tmpdir.mkdir("admbot")) + "admbot.db")
@@ -15,7 +15,7 @@ def mycmd(cmd, make_db, tmpdir, monkeypatch):
     if os.environ["MAILCOW_TOKEN"] == "":
         raise KeyError("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
     cmd.run_ok(["init", "--mailcow-endpoint", "https://dc.develcow.de/api/v1/",
-                "--mail-domain", "x.testrun.org",
+                "--mail-domain", mailcow_domain,
                 "--web-endpoint", "https://example.org/new_email"])
     return cmd
 
@@ -41,7 +41,7 @@ class TestConfig:
 
 
 class TestQR:
-    def test_gen_qr(self, mycmd, tmpdir, monkeypatch):
+    def test_gen_qr(self, mycmd, tmpdir, monkeypatch, mailcow_domain):
         mycmd.run_ok(["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V",
                       "--prefix", "", "--expiry=1w"])
         mycmd.run_ok(["list-tokens"], """
@@ -50,9 +50,9 @@ class TestQR:
         monkeypatch.chdir(tmpdir)
         os.system("mkdir docker-data")
         mycmd.run_ok(["gen-qr", "oneweek"], """
-            *dcaccount-x.testrun.org-oneweek.png*
+            *dcaccount-*-oneweek.png*
         """)
-        p = tmpdir.join("docker-data/dcaccount-x.testrun.org-oneweek.png")
+        p = tmpdir.join("docker-data/dcaccount-%s-oneweek.png" % (mailcow_domain,))
         assert p.exists()
 
     def test_gen_qr_no_token(self, mycmd):
@@ -122,33 +122,33 @@ class TestUsers:
             *add*user*
         """)
 
-    def test_add_del_user(self, mycmd):
+    def test_add_del_user(self, mycmd, mailcow_domain):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", "pytest."])
-        addr = "pytest.%s@x.testrun.org" % (randint(0, 99999),)
+        addr = "pytest.%s@%s" % (randint(0, 99999), mailcow_domain)
         mycmd.run_ok(["add-user", addr], """
-            *Created*pytest*@x.testrun.org*
+            *Created*pytest*@*
         """)
         mycmd.run_ok(["list-users"], """
-            *pytest*@x.testrun.org*test1*
+            *pytest*@*test1*
         """)
         mycmd.run_fail(["add-user", addr], """
             *failed to add*pytest* account does already exist*
         """)
         mycmd.run_ok(["del-user", addr], """
-            *deleted*pytest*@x.testrun.org*
+            *deleted*pytest*@*
         """)
         mycmd.run_ok(["add-user", addr, "--dryrun"], """
-            *Would create pytest*@x.testrun.org*
+            *Would create pytest*@*
         """)
         mycmd.run_fail(["del-user", addr], """
-            *failed to delete*pytest*@x.testrun.org*does not exist*
+            *failed to delete*pytest*@*does not exist*
         """)
 
-    def test_adduser_and_expire(self, mycmd, monkeypatch):
+    def test_adduser_and_expire(self, mycmd, monkeypatch, mailcow_domain):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix", "pytest."])
-        addr = "pytest.%s@x.testrun.org" % (randint(0, 49999),)
+        addr = "pytest.%s@%s" % (randint(0, 49999), mailcow_domain)
         mycmd.run_ok(["add-user", addr], """
-            *Created*pytest*@x.testrun.org*
+            *Created*pytest*@*
         """)
 
         to_expire = time.time() - datetime.timedelta(weeks=1).total_seconds() - 1
@@ -156,9 +156,9 @@ class TestUsers:
         # create an old account that should expire
         with monkeypatch.context() as m:
             m.setattr(time, "time", lambda: to_expire)
-            addr2 = "pytest.%s@x.testrun.org" % (randint(50000, 99999),)
+            addr2 = "pytest.%s@%s" % (randint(50000, 99999), mailcow_domain)
             mycmd.run_ok(["add-user", addr2], """
-                *Created*pytest*@x.testrun.org*
+                *Created*pytest*@*
             """)
 
         out = mycmd.run_ok(["list-users"])
@@ -172,12 +172,12 @@ class TestUsers:
 
         mycmd.run_ok(["del-user", addr])
 
-    def test_two_tokens_users(self, mycmd):
+    def test_two_tokens_users(self, mycmd, mailcow_domain):
         mycmd.run_ok(["add-token", "test1", "--expiry=1d", "--prefix=tmpy."])
         mycmd.run_ok(["add-token", "test2", "--expiry=1d", "--prefix=tmpx."])
-        mycmd.run_fail(["add-user", "x@x.testrun.org"])
-        addr = "tmpy.%s@x.testrun.org" % (randint(0, 49999),)
-        addr2 = "tmpx.%s@x.testrun.org" % (randint(50000, 99999),)
+        mycmd.run_fail(["add-user", "x@" + mailcow_domain])
+        addr = "tmpy.%s@%s" % (randint(0, 49999), mailcow_domain)
+        addr2 = "tmpx.%s@%s" % (randint(50000, 99999), mailcow_domain)
         mycmd.run_ok(["add-user", addr])
         mycmd.run_ok(["add-user", addr2])
         mycmd.run_ok(["list-users"], """
@@ -195,19 +195,19 @@ class TestUsers:
 
 
 class TestSetupBot:
-    def test_account_already_exists(self, mycmd, mailcow):
+    def test_account_already_exists(self, mycmd, mailcow, mailcow_domain):
         print(os.environ.items())
         delete_later = True
         try:
-            mailcow.add_user_mailcow("mailadm@x.testrun.org", "asdf1234", "pytest")
+            mailcow.add_user_mailcow("mailadm@" + mailcow_domain, "asdf1234", "pytest")
         except MailcowError as e:
             if "object_exists" in str(e):
                 delete_later = False
         mycmd.run_fail(["setup-bot"], """
-            *mailadm@x.testrun.org already exists; delete the account in mailcow or specify*
+            *mailadm@* already exists; delete the account in mailcow or specify*
         """)
         if delete_later:
-            mailcow.del_user_mailcow("mailadm@x.testrun.org")
+            mailcow.del_user_mailcow("mailadm@" + mailcow_domain)
 
     def test_specify_addr_not_password(self, mycmd):
         mycmd.run_fail(["setup-bot", "--email", "bot@example.org"], """

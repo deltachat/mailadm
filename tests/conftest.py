@@ -114,8 +114,8 @@ def admingroup(admbot, botadmin, db):
 
 
 @pytest.fixture()
-def admbot(mailcow, db, tmpdir):
-    addr = "pytest-admbot-%s@x.testrun.org" % (randint(0, 99999),)
+def admbot(mailcow, db, tmpdir, mailcow_domain):
+    addr = "pytest-admbot-%s@%s" % (randint(0, 99999), mailcow_domain)
     tmpdir = Path(str(tmpdir))
     admbot_db_path = str(mailadm.bot.get_admbot_db_path(db_path=tmpdir.joinpath("admbot.db")))
     ac = prepare_account(addr, mailcow, admbot_db_path)
@@ -128,8 +128,8 @@ def admbot(mailcow, db, tmpdir):
 
 
 @pytest.fixture
-def botadmin(mailcow, db, tmpdir):
-    addr = "pytest-admin-%s@x.testrun.org" % (randint(0, 99999),)
+def botadmin(mailcow, db, tmpdir, mailcow_domain):
+    addr = "pytest-admin-%s@%s" % (randint(0, 99999), mailcow_domain)
     tmpdir = Path(str(tmpdir))
     db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("botadmin.db"))
     ac = prepare_account(addr, mailcow, db_path)
@@ -140,8 +140,8 @@ def botadmin(mailcow, db, tmpdir):
 
 
 @pytest.fixture
-def supportuser(mailcow, db, tmpdir):
-    addr = "pytest-supportuser-%s@x.testrun.org" % (randint(0, 99999),)
+def supportuser(mailcow, db, tmpdir, mailcow_domain):
+    addr = "pytest-supportuser-%s@%s" % (randint(0, 99999), mailcow_domain)
     tmpdir = Path(str(tmpdir))
     db_path = mailadm.bot.get_admbot_db_path(tmpdir.joinpath("supportuser.db"))
     ac = prepare_account(addr, mailcow, db_path)
@@ -168,20 +168,25 @@ def mailcow_auth():
 
 
 @pytest.fixture
+def mailcow_domain():
+    return os.environ.get("MAILCOW_DOMAIN", "x.testrun.org")
+
+
+@pytest.fixture
 def mailcow(db):
     with db.read_connection() as conn:
         return conn.get_mailcow_connection()
 
 
 @pytest.fixture
-def make_db(monkeypatch, mailcow_auth, mailcow_endpoint):
+def make_db(monkeypatch, mailcow_auth, mailcow_endpoint, mailcow_domain):
     def make_db(basedir, init=True):
         basedir = Path(str(basedir))
         db_path = basedir.joinpath("mailadm.db")
         db = mailadm.db.DB(db_path, debug=True)
         if init:
             db.init_config(
-                mail_domain="x.testrun.org",
+                mail_domain=mailcow_domain,
                 web_endpoint="https://example.org/new_email",
                 mailcow_endpoint=mailcow_endpoint,
                 mailcow_token=mailcow_auth.get("X-API-Key"),
