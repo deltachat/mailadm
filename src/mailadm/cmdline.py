@@ -343,6 +343,7 @@ def del_user(ctx, addr):
     with get_mailadm_db(ctx).write_transaction() as conn:
         try:
             conn.delete_email_account(addr)
+            click.secho("deleted user " + addr)
         except (DBError, MailcowError) as e:
             ctx.fail("failed to delete e-mail account {}: {}".format(addr, e))
 
