@@ -9,7 +9,7 @@ class TestMailcow:
         mailcow.get_user_list()
 
     def test_add_del_user(self, mailcow):
-        addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+        addr = "pytest.%s@x.testrun.org" % (randint(0, 99999),)
         mailcow.add_user_mailcow(addr, "asdf1234", "pytest")
 
         user = mailcow.get_user(addr)
@@ -21,7 +21,7 @@ class TestMailcow:
 
     def test_wrong_token(self, mailcow):
         mailcow.auth = {"X-API-Key": "asdf"}
-        addr = "pytest.%s@x.testrun.org" % (randint(0, 999),)
+        addr = "pytest.%s@x.testrun.org" % (randint(0, 99999),)
         with pytest.raises(MailcowError):
             mailcow.get_user_list()
         with pytest.raises(MailcowError):
