@@ -48,18 +48,20 @@ class AdmBot:
             chat = message.create_chat()
             if chat.is_group():
                 if message.get_sender_contact() not in self.admingroup.get_contacts():
-                    logging.info("%s added me to a group, I'm leaving it.", message.get_sender_contact().addr)
+                    logging.info("%s added me to a group, I'm leaving it.",
+                                 message.get_sender_contact().addr)
                     chat.send_text("Sorry, you can not contact me in a group chat. Please use a 1:1"
                                    " chat.")
                     chat.remove_contact(self.account.get_self_contact())   # leave group
                 elif message.quote:  # reply to user
                     if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
                         recipient = message.quote.override_sender_name
-                        logging.info("I'm forwarding the admin reply to the support user %s.", recipient)
+                        logging.info("I'm forwarding the admin reply to the support user %s.",
+                                     recipient)
                         chat = self.account.create_chat(recipient)
                         chat.send_msg(message)
                 else:
-                    logging.info("ignoring message, it's just admins discussing in a support group.")
+                    logging.info("ignoring message, it's just admins discussing in a support group")
             elif message.text[0] == "/":
                 logging.info("command was not supplied in a group, let alone the admin group.")
                 chat.send_text("Sorry, I only take commands from the admin group.")
