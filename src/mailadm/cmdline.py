@@ -267,6 +267,7 @@ def del_token(ctx, name):
     db = get_mailadm_db(ctx)
     with db.write_transaction() as conn:
         conn.del_token(name=name)
+    click.secho("deleted token " + name)
 
 
 @click.command()
