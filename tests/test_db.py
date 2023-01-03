@@ -43,28 +43,28 @@ class TestTokenAccounts:
         conn.commit()
         return conn
 
-    def test_add_with_wrong_token(self, conn):
+    def test_add_with_wrong_token(self, conn, mailcow_domain):
         now = 10000
-        addr = "tmp.123@x.testrun.org"
+        addr = "tmp.123@" + mailcow_domain
         with pytest.raises(DBError):
             conn.add_user_db(addr=addr, date=now, ttl=60 * 60, token_name="112l3kj123123")
 
-    def test_add_maxuse(self, conn):
+    def test_add_maxuse(self, conn, mailcow_domain):
         now = 10000
         password = gen_password()
         for i in range(self.MAXUSE):
-            addr = "tmp.{}@x.testrun.org".format(i)
+            addr = "tmp.%s@%s" % (i, mailcow_domain)
             conn.add_user_db(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
 
         token_info = conn.get_tokeninfo_by_name("onehour")
         with pytest.raises(TokenExhaustedError):
-            conn.add_email_account(token_info, addr="tmp.xx@x.testrun.org", password=password)
+            conn.add_email_account(token_info, addr="tmp.xx@" + mailcow_domain, password=password)
 
-    def test_add_expire_del(self, conn):
+    def test_add_expire_del(self, conn, mailcow_domain):
         now = 10000
-        addr = "tmp.123@x.testrun.org"
-        addr2 = "tmp.456@x.testrun.org"
-        addr3 = "tmp.789@x.testrun.org"
+        addr = "tmp.123@" + mailcow_domain
+        addr2 = "tmp.456@" + mailcow_domain
+        addr3 = "tmp.789@" + mailcow_domain
         conn.add_user_db(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
         with pytest.raises(DBError):
             conn.add_user_db(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
