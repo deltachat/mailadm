@@ -199,7 +199,7 @@ def main(mailadm_db, admbot_db_path):
                     logging.error("dc core event thread died, exiting now")
                     os._exit(1)
                 time.sleep(1)
-    except:
+    except Exception:
         logging.exception("bot received an unexpected error, exiting now")
         os._exit(1)
 
