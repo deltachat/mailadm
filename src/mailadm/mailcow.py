@@ -60,6 +60,11 @@ class MailcowConnection:
             if json.get("type") == "error":
                 raise MailcowError(json)
             return MailcowUser(json)
+        # some mailcow versions return all users, even if you only ask for a specific one:
+        if type(json) == list:
+            for user in [MailcowUser(user) for user in json]:
+                if user.addr == addr:
+                    return user
 
     def get_user_list(self):
         """HTTP Request to get all mailcow users (not only mailadm-generated ones)."""
