@@ -7,14 +7,14 @@ from mailadm.mailcow import MailcowError
 
 
 @pytest.fixture
-def mycmd(cmd, make_db, tmpdir, monkeypatch, mailcow_domain):
+def mycmd(cmd, make_db, tmpdir, monkeypatch, mailcow_domain, mailcow_endpoint):
     db = make_db(tmpdir.mkdir("mycmd"), init=False)
     monkeypatch.setenv("MAILADM_DB", str(db.path))
     monkeypatch.setenv("ADMBOT_DB", str(tmpdir.mkdir("admbot")) + "admbot.db")
     cmd.db = db
     if os.environ["MAILCOW_TOKEN"] == "":
         raise KeyError("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
-    cmd.run_ok(["init", "--mailcow-endpoint", "https://dc.develcow.de/api/v1/",
+    cmd.run_ok(["init", "--mailcow-endpoint", mailcow_endpoint,
                 "--mail-domain", mailcow_domain,
                 "--web-endpoint", "https://example.org/new_email"])
     return cmd
