@@ -169,7 +169,7 @@ def mailcow_auth():
 
 @pytest.fixture
 def mailcow_domain():
-    return os.environ.get("MAILCOW_DOMAIN", "x.testrun.org")
+    return os.environ.get("MAIL_DOMAIN", "x.testrun.org")
 
 
 @pytest.fixture

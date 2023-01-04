@@ -289,7 +289,8 @@ To setup your development environment, you need to do something like this::
 
 With ``tox`` you can run the tests - many of them need access to a mailcow
 instance though. If you have access to a mailcow instance, you can pass a
-``MAILCOW_TOKEN`` and ``MAILCOW_ENDPOINT`` via the command line to run them.
+``MAILCOW_TOKEN``, ``MAIL_DOMAIN``, and ``MAILCOW_ENDPOINT`` via the command
+line to run them.
 
 Mailadm HTTP API
 ----------------
