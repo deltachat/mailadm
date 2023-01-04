@@ -7,7 +7,7 @@ import random
 def test_new_user_random(db, monkeypatch, mailcow, mailcow_domain):
     token = "12319831923123"
     with db.write_transaction() as conn:
-        conn.add_token(name="test123", token=token, prefix="pytest.", expiry="1w")
+        conn.add_token(name="pytest", token=token, prefix="pytest.", expiry="1w")
 
     app = create_app_from_db_path(db.path)
     app.debug = True
