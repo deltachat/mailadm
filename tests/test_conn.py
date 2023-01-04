@@ -14,9 +14,9 @@ def conn(db):
 
 
 def test_token_twice(conn):
-    conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
+    conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
     with pytest.raises(DBError):
-        conn.add_token("burner2", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="xp")
+        conn.add_token("pytest:burner2", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="xp")
 
 
 def test_add_del_user(conn, mailcow):
@@ -36,25 +36,25 @@ def test_add_del_user(conn, mailcow):
 
 
 def test_token_info(conn):
-    conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
-    conn.add_token("burner2", expiry="10w", token="10w_7wDioPeeXyZx96v3", prefix="xp")
+    conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
+    conn.add_token("pytest:burner2", expiry="10w", token="10w_7wDioPeeXyZx96v3", prefix="xp")
 
     assert conn.get_tokeninfo_by_token("1w_7wDio111111") is None
     ti = conn.get_tokeninfo_by_token("1w_7wDioPeeXyZx96v3")
     assert ti.expiry == "1w"
     assert ti.prefix == "pp"
-    assert ti.name == "burner1"
-    conn.del_token("burner2")
+    assert ti.name == "pytest:burner1"
+    conn.del_token("pytest:burner2")
     assert not conn.get_tokeninfo_by_token("10w_7wDioPeeXyZx96v3")
-    assert not conn.get_tokeninfo_by_name("burner2")
+    assert not conn.get_tokeninfo_by_name("pytest:burner2")
 
 
 def test_email_tmp_gen(conn, mailcow):
-    conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
-    token_info = conn.get_tokeninfo_by_name("burner1")
+    conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
+    token_info = conn.get_tokeninfo_by_name("pytest:burner1")
     user_info = conn.add_email_account(token_info=token_info)
 
-    assert user_info.token_name == "burner1"
+    assert user_info.token_name == "pytest:burner1"
     localpart, domain = user_info.addr.split("@")
     assert localpart.startswith("tmp.")
     assert domain == conn.config.mail_domain
@@ -70,7 +70,7 @@ def test_email_tmp_gen(conn, mailcow):
 def test_adduser_mailcow_error(db):
     """Test that DB doesn't change if mailcow doesn't work"""
     with db.write_transaction() as conn:
-        token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3",
+        token_info = conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3",
                                     prefix="tmp.", maxuse=1)
 
     with db.write_transaction() as conn:
@@ -86,7 +86,8 @@ def test_adduser_mailcow_error(db):
 
 def test_adduser_db_error(conn, monkeypatch, mailcow_domain):
     """Test that no mailcow user is created if there is a DB error"""
-    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
+    token_info = conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3",
+                                prefix="tmp.")
     addr = "pytest.%s@%s" % (randint(0, 99999), mailcow_domain)
 
     def add_user_db(*args, **kwargs):
@@ -107,8 +108,8 @@ def test_adduser_db_error(conn, monkeypatch, mailcow_domain):
 
 def test_adduser_mailcow_exists(conn, mailcow, mailcow_domain):
     """Test that no user is created if Mailcow user already exists"""
-    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
-    addr = "pytest.%s@%s" % (randint(0, 99999), mailcow_domain)
+    token_info = conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx", prefix="p.")
+    addr = "%s@%s" % (randint(0, 99999), mailcow_domain)
 
     mailcow.add_user_mailcow(addr, "asdf1234", token_info.name)
     with pytest.raises(MailcowError):
@@ -121,8 +122,8 @@ def test_adduser_mailcow_exists(conn, mailcow, mailcow_domain):
 
 def test_delete_user_mailcow_missing(conn, mailcow, mailcow_domain):
     """Test if a mailadm user is deleted successfully if mailcow user is already missing"""
-    token_info = conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.")
-    addr = "pytest.%s@%s" % (randint(0, 99999), mailcow_domain)
+    token_info = conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx", prefix="p.")
+    addr = "%s@%s" % (randint(0, 99999), mailcow_domain)
 
     conn.add_email_account(token_info, addr=addr)
     mailcow.del_user_mailcow(addr)
