@@ -39,6 +39,7 @@ class AdmBot:
             config = conn.config
             self.admingrpid = int(config.admingrpid)
             self.admingroup = account.get_chat_by_id(self.admingrpid)
+            self.mail_domain = config.mail_domain
 
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
@@ -98,7 +99,7 @@ class AdmBot:
             if len(arguments) < 4:
                 result = {"status": "error",
                           "message": "Sorry, you need to tell me more precisely what you want. For "
-                                     "example:\n\n/list-tokens oneweek 1w 50\n\nThis would create"
+                                     "example:\n\n/add-token oneweek 1w 50\n\nThis would create"
                                      "a token which creates up to 50 accounts which each are valid"
                                      "for one week."}
             else:
@@ -111,12 +112,28 @@ class AdmBot:
             self.reply(text, message, img_fn=fn)
 
         elif arguments[0] == "/gen-qr":
-            fn = qr_from_token(self.db, tokenname=arguments[1]).get("filename")
-            self.reply("", message, img_fn=fn)
+            if len(arguments) != 2:
+                self.reply("Sorry, which token do you want a QR code for?", message)
+            else:
+                fn = qr_from_token(self.db, tokenname=arguments[1]).get("filename")
+                self.reply("", message, img_fn=fn)
 
         elif arguments[0] == "/add-user":
             arguments = message.text.split(" ")
-            result = add_user(self.db, addr=arguments[1], password=arguments[2], token=arguments[3])
+            if len(arguments) < 4:
+                try:
+                    with self.db.read_connection() as conn:
+                        token_name = conn.get_token_list()[0]
+                except IndexError:
+                    self.reply("You need to create a token with /add-token first.", message)
+                result = {"status": "error",
+                          "message": "Sorry, you need to tell me more precisely what you want. For "
+                                     "example:\n\n/add-user test@%s p4$$w0rd %s\n\nThis would "
+                                     "create a user with the '%s' token and the password "
+                                     "'p4$$w0rd'." % (self.mail_domain, token_name, token_name)}
+            else:
+                result = add_user(self.db, addr=arguments[1], password=arguments[2],
+                                  token=arguments[3])
             if result.get("status") == "success":
                 user = result.get("message")
                 text = "successfully created %s with password %s" % (user.addr, user.password)
