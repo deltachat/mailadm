@@ -95,8 +95,15 @@ class AdmBot:
         elif arguments[0] == "/add-token":
             if len(arguments) == 4:
                 arguments.append("")  # add empty prefix
-            result = add_token(self.db, name=arguments[1], expiry=arguments[2], maxuse=arguments[3],
-                             prefix=arguments[4], token=None)
+            if len(arguments) < 4:
+                result = {"status": "error",
+                          "message": "Sorry, you need to tell me more precisely what you want. For "
+                                     "example:\n\n/list-tokens oneweek 1w 50\n\nThis would create"
+                                     "a token which creates up to 50 accounts which each are valid"
+                                     "for one week."}
+            else:
+                result = add_token(self.db, name=arguments[1], expiry=arguments[2],
+                                   maxuse=arguments[3], prefix=arguments[4], token=None)
             if result["status"] == "error":
                 return self.reply("ERROR: " + result.get("message"), message)
             text = result.get("message")
