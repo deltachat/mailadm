@@ -26,6 +26,15 @@ class TestAdminGroup:
         assert reply.text.startswith("Existing tokens:")
         assert reply.quote == command
 
+    def test_wrong_number_of_arguments(self, admingroup):
+        command = admingroup.send_text("/add-token pytest")
+        while "Sorry" not in admingroup.get_messages()[len(admingroup.get_messages()) - 1].text:
+            print(admingroup.get_messages()[len(admingroup.get_messages()) - 1].text)
+            time.sleep(1)
+        reply = admingroup.get_messages()[len(admingroup.get_messages()) - 1]
+        assert reply.quote == command
+        print(reply.text)
+
     @pytest.mark.skip("This test works in real life, but not under test conditions somehow")
     def test_check_privileges(self, admingroup):
         direct = admingroup.botadmin.create_chat(admingroup.admbot.get_config("addr"))
