@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from random import randint
 import requests
@@ -17,6 +19,14 @@ def test_token_twice(conn):
     conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
     with pytest.raises(DBError):
         conn.add_token("burner2", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="xp")
+
+
+def test_token_seconds(conn):
+    token_info = conn.add_token("pytest:seconds", expiry="1s", token="1w_7wDioPeeXyZx", prefix="xp")
+    user_info = conn.add_email_account(token_info)
+    time.sleep(2)
+    assert user_info.addr in [user_info.addr for user_info in conn.get_expired_users(time.time())]
+    conn.delete_email_account(user_info.addr)
 
 
 def test_add_del_user(conn, mailcow):
