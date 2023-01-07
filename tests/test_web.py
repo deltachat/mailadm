@@ -60,6 +60,26 @@ def test_env(db, monkeypatch):
     assert app.db.path == db.path
 
 
+def test_user_in_db(db, mailcow):
+    with db.write_transaction() as conn:
+        token = conn.add_token("pytest:web", expiry="1w", token="1w_7wDioPeeXyZx96v", prefix="")
+    app = create_app_from_db_path(db.path)
+    app.debug = True
+    app = app.test_client()
+
+    r = app.post('/?t=' + token.token)
+    assert r.status_code == 200
+    assert r.json["password"]
+    addr = r.json["email"]
+
+    assert mailcow.get_user(addr)
+    with db.read_connection() as conn:
+        assert conn.get_user_by_addr(addr)
+
+    with db.write_transaction() as conn:
+        conn.delete_email_account(addr)
+
+
 # we used to allow setting the username/password through the web
 # but the code has been removed, let's keep the test around
 def xxxtest_new_user_usermod(db):

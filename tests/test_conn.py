@@ -19,6 +19,22 @@ def test_token_twice(conn):
         conn.add_token("burner2", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="xp")
 
 
+def test_add_del_user(conn, mailcow):
+    token = conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
+    usecount = conn.get_tokeninfo_by_name(token.name).usecount
+    addr = conn.add_email_account_tries(token, tries=10).addr
+    assert usecount + 1 == conn.get_tokeninfo_by_name(token.name).usecount
+
+    assert mailcow.get_user(addr)
+    assert conn.get_user_by_addr(addr)
+
+    conn.delete_email_account(addr)
+
+    with pytest.raises(TypeError):
+        conn.get_user_by_addr(addr)
+    assert not mailcow.get_user(addr)
+
+
 def test_token_info(conn):
     conn.add_token("burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="pp")
     conn.add_token("burner2", expiry="10w", token="10w_7wDioPeeXyZx96v3", prefix="xp")
