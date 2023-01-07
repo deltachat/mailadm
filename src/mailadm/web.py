@@ -24,7 +24,7 @@ def create_app_from_db(db):
             return jsonify(type="error", status_code=403,
                            reason="?t (token) parameter not specified"), 403
 
-        with db.write_connection() as conn:
+        with db.write_transaction() as conn:
             token_info = conn.get_tokeninfo_by_token(token)
             if token_info is None:
                 return jsonify(type="error", status_code=403,
