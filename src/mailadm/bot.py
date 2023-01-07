@@ -116,6 +116,13 @@ class AdmBot:
                 else:
                     logging.info("%s is not allowed to give commands to mailadm.",
                           command.get_sender_contact())
+            elif command.chat.is_protected() and not command.is_encrypted():
+                sender = command.get_sender_contact().addr
+                logging.warning("The bot doesn't trust %s, please re-add them to admin group" %
+                                (sender,))
+                command.chat.send_text("I didn't see %s being added to this group - can someone who"
+                                       " verified them re-add them?" % (sender,))
+                raise ValueError
             else:
                 logging.info("The admin group is broken. Try `mailadm setup-bot`. Group ID: %s",
                       str(self.admingrpid))
