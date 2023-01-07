@@ -27,6 +27,8 @@ def test_parse_expiries_short():
 def test_parse_expiries_wrong():
     with pytest.raises(ValueError):
         parse_expiry_code("123h123d")
+    with pytest.raises(ValueError):
+        parse_expiry_code("12j")
 
 
 def test_human_readable_id():
