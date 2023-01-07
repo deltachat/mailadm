@@ -21,9 +21,15 @@ def parse_expiry_code(code):
         raise ValueError("expiry codes are at least 2 characters")
     val = int(code[:-1])
     c = code[-1]
-    if c == "w":
+    if c == "y":
+        return val * 365 * 24 * 60 * 60
+    elif c == "w":
         return val * 7 * 24 * 60 * 60
     elif c == "d":
         return val * 24 * 60 * 60
     elif c == "h":
         return val * 60 * 60
+    elif c == "m":
+        return val * 60
+    elif c == "s":
+        return val
