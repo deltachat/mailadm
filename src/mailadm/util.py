@@ -33,3 +33,5 @@ def parse_expiry_code(code):
         return val * 60
     elif c == "s":
         return val
+    else:
+        raise ValueError(c + " is not a valid time unit. Try [y]ears, [w]eeks, [d]ays, or [h]ours")
