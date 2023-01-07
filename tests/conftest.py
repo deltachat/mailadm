@@ -176,7 +176,7 @@ def make_db(monkeypatch, mailcow_auth, mailcow_endpoint):
     def make_db(basedir, init=True):
         basedir = Path(str(basedir))
         db_path = basedir.joinpath("mailadm.db")
-        db = mailadm.db.DB(db_path)
+        db = mailadm.db.DB(db_path, debug=True)
         if init:
             db.init_config(
                 mail_domain="x.testrun.org",

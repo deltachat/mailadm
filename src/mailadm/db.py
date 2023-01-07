@@ -18,8 +18,9 @@ def get_db_path():
 
 
 class DB:
-    def __init__(self, path, autoinit=True):
+    def __init__(self, path, autoinit=True, debug=False):
         self.path = path
+        self.debug = debug
         self.ensure_tables()
 
     def _get_connection(self, write=False, transaction=False, closing=False):
@@ -37,6 +38,8 @@ class DB:
             isolation_level=None if transaction else "DEFERRED",
             uri=True,
         )
+        if self.debug:
+            sqlconn.set_trace_callback(print)
 
         # Enable Write-Ahead Logging to avoid readers blocking writers and vice versa.
         if write:
