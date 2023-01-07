@@ -46,7 +46,9 @@ class AdmBot:
         logging.info("process_incoming_message: %s", message.text)
         if not self.is_admin_group_message(message):
             chat = message.create_chat()
-            if chat.is_group():
+            if chat.id == self.admingrpid:
+                return  # the reply is handled by is_admin_group_message() already
+            elif chat.is_group():
                 if message.get_sender_contact() not in self.admingroup.get_contacts():
                     logging.info("%s added me to a group, I'm leaving it.",
                                  message.get_sender_contact().addr)
@@ -141,6 +143,13 @@ class AdmBot:
                 else:
                     logging.info("%s is not allowed to give commands to mailadm.",
                           command.get_sender_contact())
+            elif command.chat.is_protected() and not command.is_encrypted():
+                sender = command.get_sender_contact().addr
+                logging.warning("The bot doesn't trust %s, please re-add them to admin group" %
+                                (sender,))
+                self.reply("I didn't see %s being added to this group - can someone who verified "
+                           "them re-add them?" % (sender,), reply_to=command)
+                return False
             else:
                 logging.info("The admin group is broken. Try `mailadm setup-bot`. Group ID: %s",
                       str(self.admingrpid))
