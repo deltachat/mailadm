@@ -29,8 +29,6 @@ def parse_expiry_code(code):
         return val * 24 * 60 * 60
     elif c == "h":
         return val * 60 * 60
-    elif c == "m":
-        return val * 60
     elif c == "s":
         return val
     else:
