@@ -96,6 +96,25 @@ class AdmBot:
         chat = self.account.create_chat(recipient)
         chat.send_msg(message)
 
+    def add_token(self, arguments):
+        """add a token via bot command"""
+        if len(arguments) == 4:
+            arguments.append("")  # add empty prefix
+        if len(arguments) < 4:
+            result = {"status": "error",
+                      "message": "Sorry, you need to tell me more precisely what you want. For "
+                                 "example:\n\n/add-token oneweek 1w 50\n\nThis would create a token"
+                                 " which creates up to 50 accounts which each are valid for one "
+                                 "week."}
+        else:
+            result = add_token(self.db, name=arguments[1], expiry=arguments[2], maxuse=arguments[3],
+                               prefix=arguments[4], token=None)
+        if result["status"] == "error":
+            return "ERROR: " + result.get("message"), None
+        text = result.get("message")
+        fn = qr_from_token(self.db, arguments[1])["filename"]
+        return text, fn
+
     def handle_command(self, message: deltachat.Message):
         """execute the command and reply to the admin. """
         arguments = message.text.split(" ")
@@ -109,22 +128,8 @@ class AdmBot:
             self.reply(text, message)
 
         elif arguments[0] == "/add-token":
-            if len(arguments) == 4:
-                arguments.append("")  # add empty prefix
-            if len(arguments) < 4:
-                result = {"status": "error",
-                          "message": "Sorry, you need to tell me more precisely what you want. For "
-                                     "example:\n\n/add-token oneweek 1w 50\n\nThis would create"
-                                     "a token which creates up to 50 accounts which each are valid"
-                                     "for one week."}
-            else:
-                result = add_token(self.db, name=arguments[1], expiry=arguments[2],
-                                   maxuse=arguments[3], prefix=arguments[4], token=None)
-            if result["status"] == "error":
-                return self.reply("ERROR: " + result.get("message"), message)
-            text = result.get("message")
-            fn = qr_from_token(self.db, arguments[1])["filename"]
-            self.reply(text, message, img_fn=fn)
+            text, image_path = self.add_token(arguments)
+            self.reply(text, reply_to=message, img_fn=image_path)
 
         elif arguments[0] == "/gen-qr":
             if len(arguments) != 2:
