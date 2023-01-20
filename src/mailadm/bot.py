@@ -45,15 +45,16 @@ class AdmBot:
     def ac_incoming_message(self, message: deltachat.Message):
         logging.info("new message from %s: %s" % (message.get_sender_contact().addr, message.text))
         if self.is_admin_group_message(message):
-            logging.info("%s seems to be a valid command.", message.text)
-            self.handle_command(message)
+            if message.text[0] == "/":
+                logging.info("%s seems to be a valid command.", message.text)
+                self.handle_command(message)
         elif self.is_support_group(message.chat):
             if message.quote:
                 if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
                     self.forward_reply_to_support_user(message)
             elif message.text[0] == "/":
                 logging.info("ignoring command, it wasn't given in the admin group")
-                self.reply("Sorry, I only take commands in the admin group.", reply_to=message)
+                message.chat.send_text("Sorry, I only take commands in the admin group.")
             else:
                 logging.info("ignoring message, it's just admins discussing in a support group")
         else:
@@ -116,7 +117,7 @@ class AdmBot:
         return text, fn
 
     def gen_qr(self, arguments: [str]):
-        """generate a QR code to send to the admin group"""
+        """generate a QR code via bot command"""
         if len(arguments) != 2:
             return "Sorry, which token do you want a QR code for?", None
         else:
@@ -144,40 +145,51 @@ class AdmBot:
         else:
             return result.get("message")
 
+    def list_users(self, arguments: [str]):
+        """list users per bot command"""
+        token = arguments[1] if len(arguments) > 1 else None
+        with self.db.read_connection() as conn:
+            users = conn.get_user_list(token=token)
+        lines = ["%s [%s]" % (user.addr, user.token_name) for user in users]
+        return "\n".join(lines)
+
     def handle_command(self, message: deltachat.Message):
         """execute the command and reply to the admin. """
         arguments = message.text.split(" ")
+        image_path = None
 
-        if arguments[0] == "/help":
+        if arguments[0] == "/add-token":
+            text, image_path = self.add_token(arguments)
+
+        elif arguments[0] == "/gen-qr":
+            text, image_path = self.gen_qr(arguments)
+
+        elif arguments[0] == "/add-user":
+            text = self.add_user(arguments)
+
+        elif arguments[0] == "/list-users":
+            text = self.list_users(arguments)
+
+        elif arguments[0] == "/list-tokens":
+            text = list_tokens(self.db)
+
+        else:
             text = ("/add-user addr password token\n"
                     "/add-token name expiry maxuse (prefix)\n"
                     "/gen-qr token\n"
                     "/list-users (token)\n"
                     "/list-tokens")
-            self.reply(text, message)
 
-        elif arguments[0] == "/add-token":
-            text, image_path = self.add_token(arguments)
-            self.reply(text, reply_to=message, img_fn=image_path)
-
-        elif arguments[0] == "/gen-qr":
-            text, image_path = self.gen_qr(arguments)
-            self.reply(text, reply_to=message, img_fn=image_path)
-
-        elif arguments[0] == "/add-user":
-            text = self.add_user(arguments)
-            self.reply(text, message)
-
-        elif arguments[0] == "/list-users":
-            token = arguments[1] if len(arguments) > 1 else None
-            with self.db.read_connection() as conn:
-                users = conn.get_user_list(token=token)
-            lines = ["%s [%s]" % (user.addr, user.token_name) for user in users]
-            text = "\n".join(lines)
-            self.reply(text, message)
-
-        elif arguments[0] == "/list-tokens":
-            self.reply(list_tokens(self.db), message)
+        if image_path:
+            msg = deltachat.Message.new_empty(self.account, "image")
+            mime_type = mimetypes.guess_type(image_path)[0]
+            msg.set_file(image_path, mime_type)
+        else:
+            msg = deltachat.Message.new_empty(self.account, "text")
+        msg.set_text(text)
+        msg.quote = message
+        sent_id = dclib.dc_send_msg(self.account._dc_context, self.admingroup.id, msg._dc_msg)
+        assert sent_id == msg.id
 
     def is_admin_group_message(self, command: deltachat.Message):
         """
@@ -203,24 +215,6 @@ class AdmBot:
         """Checks whether the group was created by the bot. """
         if chat.is_group():
             return chat.get_messages()[0].get_sender_contact() == self.account.get_self_contact()
-
-    def reply(self, text: str, reply_to: deltachat.Message, img_fn=None):
-        """The bot replies to command in the admin group
-
-        :param text: text of the reply
-        :param reply_to: the message object which triggered the reply
-        :param img_fn: if an image is to be sent, its filename
-        """
-        if img_fn:
-            msg = deltachat.Message.new_empty(self.account, "image")
-            mime_type = mimetypes.guess_type(img_fn)[0]
-            msg.set_file(img_fn, mime_type)
-        else:
-            msg = deltachat.Message.new_empty(self.account, "text")
-        msg.set_text(text)
-        msg.quote = reply_to
-        sent_id = dclib.dc_send_msg(self.account._dc_context, self.admingroup.id, msg._dc_msg)
-        assert sent_id == msg.id
 
 
 def get_admbot_db_path(db_path=None):
