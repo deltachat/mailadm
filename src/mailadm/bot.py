@@ -65,6 +65,8 @@ class AdmBot:
                     chat.send_text("Sorry, you can not contact me in a group chat. Please use a 1:1"
                                    " chat.")
                     chat.remove_contact(self.account.get_self_contact())   # leave group
+            elif message.text[0:5] == "/help":
+                self.reply("You can use this chat to talk to the admins.", reply_to=message)
             elif message.text[0] == "/":
                 logging.info("ignoring command, it wasn't given in the admin group")
                 self.reply("Sorry, I only take commands in the admin group.", reply_to=message)
