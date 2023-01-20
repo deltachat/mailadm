@@ -66,10 +66,10 @@ class AdmBot:
                                    " chat.")
                     chat.remove_contact(self.account.get_self_contact())   # leave group
             elif message.text[0:5] == "/help":
-                self.reply("You can use this chat to talk to the admins.", reply_to=message)
+                chat.send_text("You can use this chat to talk to the admins.")
             elif message.text[0] == "/":
                 logging.info("ignoring command, it wasn't given in the admin group")
-                self.reply("Sorry, I only take commands in the admin group.", reply_to=message)
+                chat.send_text("Sorry, I only take commands in the admin group.")
             else:
                 logging.info("forwarding the message to a support group.")
                 support_user = message.get_sender_contact().addr
@@ -90,8 +90,7 @@ class AdmBot:
     def forward_reply_to_support_user(self, message: deltachat.Message):
         """an admin replied in a support group; forward their reply to the user."""
         recipient = message.quote.override_sender_name
-        logging.info("I'm forwarding the admin reply to the support user %s.",
-                     recipient)
+        logging.info("I'm forwarding the admin reply to the support user %s.", recipient)
         chat = self.account.create_chat(recipient)
         chat.send_msg(message)
 
