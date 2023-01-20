@@ -96,7 +96,7 @@ class AdmBot:
         chat = self.account.create_chat(recipient)
         chat.send_msg(message)
 
-    def add_token(self, arguments):
+    def add_token(self, arguments: [str]):
         """add a token via bot command"""
         if len(arguments) == 4:
             arguments.append("")  # add empty prefix
@@ -115,6 +115,12 @@ class AdmBot:
         fn = qr_from_token(self.db, arguments[1])["filename"]
         return text, fn
 
+    def gen_qr(self, arguments: [str]):
+        if len(arguments) != 2:
+            return "Sorry, which token do you want a QR code for?", None
+        else:
+            return "", qr_from_token(self.db, tokenname=arguments[1]).get("filename")
+
     def handle_command(self, message: deltachat.Message):
         """execute the command and reply to the admin. """
         arguments = message.text.split(" ")
@@ -132,11 +138,8 @@ class AdmBot:
             self.reply(text, reply_to=message, img_fn=image_path)
 
         elif arguments[0] == "/gen-qr":
-            if len(arguments) != 2:
-                self.reply("Sorry, which token do you want a QR code for?", message)
-            else:
-                fn = qr_from_token(self.db, tokenname=arguments[1]).get("filename")
-                self.reply("", message, img_fn=fn)
+            text, image_path = self.gen_qr(arguments)
+            self.reply(text, reply_to=message, img_fn=image_path)
 
         elif arguments[0] == "/add-user":
             arguments = message.text.split(" ")
