@@ -62,7 +62,13 @@ class AdmBot:
                 logging.debug("ignoring message, it's just admins discussing in a support group")
         else:
             chat = message.create_chat()
-            if chat.is_group():
+            if chat.is_protected() and not message.is_encrypted():
+                sender = message.get_sender_contact().addr
+                logging.warning("The bot doesn't trust %s, please re-add them to admin group" %
+                                (sender,))
+                message.chat.send_text("I didn't see %s being added to this group - can someone who"
+                                       " verified them re-add them?" % (sender,))
+            elif chat.is_group():
                 logging.info("%s added me to a group, I'm leaving it.",
                              message.get_sender_contact().addr)
                 chat.send_text("Sorry, you can not contact me in groups. Please use a 1:1 chat.")
@@ -117,12 +123,8 @@ class AdmBot:
                     logging.info("%s is not allowed to give commands to mailadm.",
                           command.get_sender_contact())
             elif command.chat.is_protected() and not command.is_encrypted():
-                sender = command.get_sender_contact().addr
-                logging.warning("The bot doesn't trust %s, please re-add them to admin group" %
-                                (sender,))
-                command.chat.send_text("I didn't see %s being added to this group - can someone who"
-                                       " verified them re-add them?" % (sender,))
-                raise ValueError
+                # warning is handled in ac_incoming_message
+                return False
             else:
                 logging.info("The admin group is broken. Try `mailadm setup-bot`. Group ID: %s",
                       str(self.admingrpid))
