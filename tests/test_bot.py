@@ -102,14 +102,13 @@ class TestSupportGroup:
     def test_invite_bot_to_group(self, admingroup, supportuser):
         botcontact = supportuser.create_contact(admingroup.admbot.get_config("addr"))
         false_group = supportuser.create_group_chat("invite bot", [botcontact])
-        num_msgs = len(false_group.get_messages())
         false_group.send_text("Welcome, bot!")
-        while "left by" not in false_group.get_messages()[len(false_group.get_messages()) - 1].text:
-            print(false_group.get_messages()[len(false_group.get_messages()) - 1].text)
-            time.sleep(1)
+        while "left by %s" % (botcontact.addr,) not in false_group.get_messages()[-1].text:
+            print(false_group.get_messages()[-1].text)
+            time.sleep(0.1)
         assert len(false_group.get_contacts()) == 1
-        sorry_message = "Sorry, you can not contact me in a group chat. Please use a 1:1 chat."
-        assert false_group.get_messages()[num_msgs + 1].text == sorry_message
+        sorry_message = "Sorry, you can not contact me in groups. Please use a 1:1 chat."
+        assert false_group.get_messages()[-2].text == sorry_message
 
     def test_bot_receives_system_message(self, admingroup):
         def get_group_chats(account):
