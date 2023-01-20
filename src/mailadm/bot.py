@@ -59,12 +59,10 @@ class AdmBot:
         else:
             chat = message.create_chat()
             if chat.is_group():
-                if message.get_sender_contact() not in self.admingroup.get_contacts():
-                    logging.info("%s added me to a group, I'm leaving it.",
-                                 message.get_sender_contact().addr)
-                    chat.send_text("Sorry, you can not contact me in a group chat. Please use a 1:1"
-                                   " chat.")
-                    chat.remove_contact(self.account.get_self_contact())   # leave group
+                logging.info("%s added me to a group, I'm leaving it.",
+                             message.get_sender_contact().addr)
+                chat.send_text("Sorry, you can not contact me in groups. Please use a 1:1 chat.")
+                chat.remove_contact(self.account.get_self_contact())   # leave group
             elif message.text[0:5] == "/help":
                 chat.send_text("You can use this chat to talk to the admins.")
             elif message.text[0] == "/":
@@ -72,20 +70,24 @@ class AdmBot:
                 chat.send_text("Sorry, I only take commands in the admin group.")
             else:
                 logging.info("forwarding the message to a support group.")
-                support_user = message.get_sender_contact().addr
-                admins = self.admingroup.get_contacts()
-                admins.remove(self.account.get_self_contact())
-                group_name = support_user + " support group"
-                for chat in self.account.get_chats():
-                    if chat.get_name() == group_name:
-                        supportgroup = chat
-                        break
-                else:
-                    logging.info("creating new support group: '%s'", group_name)
-                    supportgroup = self.account.create_group_chat(group_name, admins)
-                    supportgroup.set_profile_image("assets/avatar.jpg")
-                message.set_override_sender_name(support_user)
-                supportgroup.send_msg(message)
+                self.forward_to_support_group(message)
+
+    def forward_to_support_group(self, message: deltachat.Message):
+        """forward a support request to a support group; create one if it doesn't exist yet."""
+        support_user = message.get_sender_contact().addr
+        admins = self.admingroup.get_contacts()
+        admins.remove(self.account.get_self_contact())
+        group_name = support_user + " support group"
+        for chat in self.account.get_chats():
+            if chat.get_name() == group_name:
+                support_group = chat
+                break
+        else:
+            logging.info("creating new support group: '%s'", group_name)
+            support_group = self.account.create_group_chat(group_name, admins)
+            support_group.set_profile_image("assets/avatar.jpg")
+        message.set_override_sender_name(support_user)
+        support_group.send_msg(message)
 
     def forward_reply_to_support_user(self, message: deltachat.Message):
         """an admin replied in a support group; forward their reply to the user."""
