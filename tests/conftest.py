@@ -100,7 +100,8 @@ def admingroup(admbot, botadmin, db):
     admchat = admbot.create_group_chat("admins", [], verified=True)
     with db.write_transaction() as conn:
         conn.set_config("admingrpid", admchat.id)
-    admbot.add_account_plugin(mailadm.bot.AdmBot(db, admbot))
+    botplugin = mailadm.bot.AdmBot(db, admbot)
+    admbot.add_account_plugin(botplugin)
     qr = admchat.get_join_qr()
     chat = botadmin.qr_join_chat(qr)
     while "added by" not in chat.get_messages()[len(chat.get_messages()) - 1].text:
@@ -108,6 +109,7 @@ def admingroup(admbot, botadmin, db):
         time.sleep(1)
     chat.admbot = admbot
     chat.botadmin = botadmin
+    chat.botplugin = botplugin
     return chat
 
 

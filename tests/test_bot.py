@@ -127,3 +127,31 @@ class TestSupportGroup:
         dclib.dc_add_device_msg(ac._dc_context, bytes("test_device_msg", "ascii"), dev_msg._dc_msg)
         # assert that admbot didn't create a support group
         assert num_chats == len(get_group_chats(ac))
+
+    def test_did_bot_create_support_group(self, admingroup, supportuser):
+        # send first message to support user to test that it isn't seen as support group later
+        bot = admingroup.admbot
+        supportchat_bot_side = bot.create_chat(supportuser.get_config("addr"))
+        supportchat_bot_side.send_text("Your account will expire soon!")
+
+        # create support group
+        supportchat = supportuser.create_chat(admingroup.admbot.get_config("addr"))
+        question = "Can I ask you a support question?"
+        supportchat.send_text(question)
+        support_group_name = supportuser.get_config("addr") + " support group"
+
+        # wait for supportgroup to be created
+        while 1:
+            try:
+                supportgroup = next(filter(lambda chat: chat.get_name() == support_group_name,
+                                           bot.get_chats()))
+                print(supportgroup.get_messages()[0].get_sender_contact().addr)
+            except (StopIteration, IndexError):
+                time.sleep(0.1)
+            else:
+                break
+        print(bot.get_self_contact().addr)
+
+        assert admingroup.botplugin.is_support_group(supportgroup)
+        assert not admingroup.botplugin.is_support_group(admingroup)
+        assert not admingroup.botplugin.is_support_group(supportchat_bot_side)
