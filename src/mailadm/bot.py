@@ -73,6 +73,11 @@ class AdmBot:
                 logging.info("forwarding the message to a support group.")
                 self.forward_to_support_group(message)
 
+    def is_support_group(self, chat: deltachat.Chat):
+        """Checks whether the group was created by the bot. """
+        if chat.is_group():
+            return chat.get_messages()[0].get_sender_contact() == self.account.get_self_contact()
+
     def forward_to_support_group(self, message: deltachat.Message):
         """forward a support request to a support group; create one if it doesn't exist yet."""
         support_user = message.get_sender_contact().addr
@@ -96,6 +101,64 @@ class AdmBot:
         logging.info("I'm forwarding the admin reply to the support user %s.", recipient)
         chat = self.account.create_chat(recipient)
         chat.send_msg(message)
+
+    def is_admin_group_message(self, command: deltachat.Message):
+        """
+        Checks whether the incoming message was in the admin group.
+        """
+        if command.chat.is_group() and self.admingrpid == command.chat.id:
+            if command.chat.is_protected() \
+                    and command.is_encrypted() \
+                    and int(command.chat.num_contacts()) >= 2:
+                if command.get_sender_contact() in command.chat.get_contacts():
+                    return True
+                else:
+                    logging.info("%s is not allowed to give commands to mailadm.",
+                          command.get_sender_contact())
+            else:
+                logging.info("The admin group is broken. Try `mailadm setup-bot`. Group ID: %s",
+                      str(self.admingrpid))
+                raise ValueError
+        else:
+            return False
+
+    def handle_command(self, message: deltachat.Message):
+        """execute the command and reply to the admin. """
+        arguments = message.text.split(" ")
+        image_path = None
+
+        if arguments[0] == "/add-token":
+            text, image_path = self.add_token(arguments)
+
+        elif arguments[0] == "/gen-qr":
+            text, image_path = self.gen_qr(arguments)
+
+        elif arguments[0] == "/add-user":
+            text = self.add_user(arguments)
+
+        elif arguments[0] == "/list-users":
+            text = self.list_users(arguments)
+
+        elif arguments[0] == "/list-tokens":
+            text = list_tokens(self.db)
+
+        else:
+            text = ("/add-user addr password token\n"
+                    "/add-token name expiry maxuse (prefix)\n"
+                    "/gen-qr token\n"
+                    "/list-users (token)\n"
+                    "/list-tokens")
+
+        if image_path:
+            msg = deltachat.Message.new_empty(self.account, "image")
+            mime_type = mimetypes.guess_type(image_path)[0]
+            msg.set_file(image_path, mime_type)
+        else:
+            msg = deltachat.Message.new_empty(self.account, "text")
+        msg.set_text(text)
+        msg.quote = message
+        sent_id = dclib.dc_send_msg(self.account._dc_context, self.admingroup.id, msg._dc_msg)
+        assert sent_id == msg.id
 
     def add_token(self, arguments: [str]):
         """add a token via bot command"""
@@ -152,69 +215,6 @@ class AdmBot:
             users = conn.get_user_list(token=token)
         lines = ["%s [%s]" % (user.addr, user.token_name) for user in users]
         return "\n".join(lines)
-
-    def handle_command(self, message: deltachat.Message):
-        """execute the command and reply to the admin. """
-        arguments = message.text.split(" ")
-        image_path = None
-
-        if arguments[0] == "/add-token":
-            text, image_path = self.add_token(arguments)
-
-        elif arguments[0] == "/gen-qr":
-            text, image_path = self.gen_qr(arguments)
-
-        elif arguments[0] == "/add-user":
-            text = self.add_user(arguments)
-
-        elif arguments[0] == "/list-users":
-            text = self.list_users(arguments)
-
-        elif arguments[0] == "/list-tokens":
-            text = list_tokens(self.db)
-
-        else:
-            text = ("/add-user addr password token\n"
-                    "/add-token name expiry maxuse (prefix)\n"
-                    "/gen-qr token\n"
-                    "/list-users (token)\n"
-                    "/list-tokens")
-
-        if image_path:
-            msg = deltachat.Message.new_empty(self.account, "image")
-            mime_type = mimetypes.guess_type(image_path)[0]
-            msg.set_file(image_path, mime_type)
-        else:
-            msg = deltachat.Message.new_empty(self.account, "text")
-        msg.set_text(text)
-        msg.quote = message
-        sent_id = dclib.dc_send_msg(self.account._dc_context, self.admingroup.id, msg._dc_msg)
-        assert sent_id == msg.id
-
-    def is_admin_group_message(self, command: deltachat.Message):
-        """
-        Checks whether the incoming message was in the admin group.
-        """
-        if command.chat.is_group() and self.admingrpid == command.chat.id:
-            if command.chat.is_protected() \
-                    and command.is_encrypted() \
-                    and int(command.chat.num_contacts()) >= 2:
-                if command.get_sender_contact() in command.chat.get_contacts():
-                    return True
-                else:
-                    logging.info("%s is not allowed to give commands to mailadm.",
-                          command.get_sender_contact())
-            else:
-                logging.info("The admin group is broken. Try `mailadm setup-bot`. Group ID: %s",
-                      str(self.admingrpid))
-                raise ValueError
-        else:
-            return False
-
-    def is_support_group(self, chat: deltachat.Chat):
-        """Checks whether the group was created by the bot. """
-        if chat.is_group():
-            return chat.get_messages()[0].get_sender_contact() == self.account.get_self_contact()
 
 
 def get_admbot_db_path(db_path=None):
