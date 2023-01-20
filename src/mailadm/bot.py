@@ -172,6 +172,11 @@ class AdmBot:
         else:
             return False
 
+    def is_support_group(self, chat: deltachat.Chat):
+        """Checks whether the group was created by the bot. """
+        if chat.is_group():
+            return chat.get_messages()[0].get_sender_contact() == self.account.get_self_contact()
+
     def reply(self, text: str, reply_to: deltachat.Message, img_fn=None):
         """The bot replies to command in the admin group
 
