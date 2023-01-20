@@ -43,9 +43,20 @@ class AdmBot:
 
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
-        arguments = message.text.split(" ")
-        logging.info("process_incoming_message: %s", message.text)
-        if not self.is_admin_group_message(message):
+        logging.info("new message from %s: %s" % (message.get_sender_contact().addr, message.text))
+        if self.is_admin_group_message(message):
+            logging.info("%s seems to be a valid command.", message.text)
+            self.handle_command(message)
+        elif self.is_support_group(message.chat):
+            if message.quote:
+                if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
+                    self.forward_reply_to_support_user(message)
+            elif message.text[0] == "/":
+                logging.info("ignoring command, it wasn't given in the admin group")
+                self.reply("Sorry, I only take commands in the admin group.", reply_to=message)
+            else:
+                logging.info("ignoring message, it's just admins discussing in a support group")
+        else:
             chat = message.create_chat()
             if chat.is_group():
                 if message.get_sender_contact() not in self.admingroup.get_contacts():
@@ -54,18 +65,9 @@ class AdmBot:
                     chat.send_text("Sorry, you can not contact me in a group chat. Please use a 1:1"
                                    " chat.")
                     chat.remove_contact(self.account.get_self_contact())   # leave group
-                elif message.quote:  # reply to user
-                    if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
-                        recipient = message.quote.override_sender_name
-                        logging.info("I'm forwarding the admin reply to the support user %s.",
-                                     recipient)
-                        chat = self.account.create_chat(recipient)
-                        chat.send_msg(message)
-                else:
-                    logging.info("ignoring message, it's just admins discussing in a support group")
             elif message.text[0] == "/":
-                logging.info("command was not supplied in a group, let alone the admin group.")
-                chat.send_text("Sorry, I only take commands from the admin group.")
+                logging.info("ignoring command, it wasn't given in the admin group")
+                self.reply("Sorry, I only take commands in the admin group.", reply_to=message)
             else:
                 logging.info("forwarding the message to a support group.")
                 support_user = message.get_sender_contact().addr
@@ -82,8 +84,18 @@ class AdmBot:
                     supportgroup.set_profile_image("assets/avatar.jpg")
                 message.set_override_sender_name(support_user)
                 supportgroup.send_msg(message)
-            return
-        logging.info("%s seems to be a valid message.", message.text)
+
+    def forward_reply_to_support_user(self, message: deltachat.Message):
+        """an admin replied in a support group; forward their reply to the user."""
+        recipient = message.quote.override_sender_name
+        logging.info("I'm forwarding the admin reply to the support user %s.",
+                     recipient)
+        chat = self.account.create_chat(recipient)
+        chat.send_msg(message)
+
+    def handle_command(self, message: deltachat.Message):
+        """execute the command and reply to the admin. """
+        arguments = message.text.split(" ")
 
         if arguments[0] == "/help":
             text = ("/add-user addr password token\n"
