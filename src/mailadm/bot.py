@@ -116,10 +116,33 @@ class AdmBot:
         return text, fn
 
     def gen_qr(self, arguments: [str]):
+        """generate a QR code to send to the admin group"""
         if len(arguments) != 2:
             return "Sorry, which token do you want a QR code for?", None
         else:
             return "", qr_from_token(self.db, tokenname=arguments[1]).get("filename")
+
+    def add_user(self, arguments: [str]):
+        """add a user via bot command"""
+        if len(arguments) < 4:
+            try:
+                with self.db.read_connection() as conn:
+                    token_name = conn.get_token_list()[0]
+            except IndexError:
+                return "You need to create a token with /add-token first."
+            result = {"status": "error",
+                      "message": "Sorry, you need to tell me more precisely what you want. For "
+                                 "example:\n\n/add-user test@%s p4$$w0rd %s\n\nThis would "
+                                 "create a user with the '%s' token and the password "
+                                 "'p4$$w0rd'." % (self.mail_domain, token_name, token_name)}
+        else:
+            result = add_user(self.db, addr=arguments[1], password=arguments[2],
+                              token=arguments[3])
+        if result.get("status") == "success":
+            user = result.get("message")
+            return "successfully created %s with password %s" % (user.addr, user.password)
+        else:
+            return result.get("message")
 
     def handle_command(self, message: deltachat.Message):
         """execute the command and reply to the admin. """
@@ -142,26 +165,7 @@ class AdmBot:
             self.reply(text, reply_to=message, img_fn=image_path)
 
         elif arguments[0] == "/add-user":
-            arguments = message.text.split(" ")
-            if len(arguments) < 4:
-                try:
-                    with self.db.read_connection() as conn:
-                        token_name = conn.get_token_list()[0]
-                except IndexError:
-                    self.reply("You need to create a token with /add-token first.", message)
-                result = {"status": "error",
-                          "message": "Sorry, you need to tell me more precisely what you want. For "
-                                     "example:\n\n/add-user test@%s p4$$w0rd %s\n\nThis would "
-                                     "create a user with the '%s' token and the password "
-                                     "'p4$$w0rd'." % (self.mail_domain, token_name, token_name)}
-            else:
-                result = add_user(self.db, addr=arguments[1], password=arguments[2],
-                                  token=arguments[3])
-            if result.get("status") == "success":
-                user = result.get("message")
-                text = "successfully created %s with password %s" % (user.addr, user.password)
-            else:
-                text = result.get("message")
+            text = self.add_user(arguments)
             self.reply(text, message)
 
         elif arguments[0] == "/list-users":
