@@ -49,6 +49,8 @@ class AdmBot:
             if message.text[0] == "/":
                 logging.info("%s seems to be a valid command.", message.text)
                 self.handle_command(message)
+            else:
+                logging.info("ignoring message, it's just admins discussing in the admin group")
         elif self.is_support_group(message.chat):
             if message.quote:
                 if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
