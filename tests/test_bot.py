@@ -4,7 +4,7 @@ import deltachat
 from deltachat.capi import lib as dclib
 
 
-TIMEOUT = 90
+TIMEOUT = 30
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -39,10 +39,10 @@ class TestAdminGroup:
     def test_check_privileges(self, admingroup):
         direct = admingroup.botadmin.create_chat(admingroup.admbot.get_config("addr"))
         direct.send_text("/list-tokens")
-        while "Sorry, I" not in direct.get_messages()[len(direct.get_messages()) - 1].text:
-            print(direct.get_messages()[len(direct.get_messages()) - 1].text)
-            time.sleep(1)
-        assert direct.get_messages()[1].text == "Sorry, I only take commands from the admin group."
+        while "Sorry, I" not in direct.get_messages()[-1].text:
+            print(direct.get_messages()[-1].text)
+            time.sleep(0.1)
+        assert direct.get_messages()[-1].text == "Sorry, I only take commands from the admin group."
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -155,3 +155,9 @@ class TestSupportGroup:
         assert admingroup.botplugin.is_support_group(supportgroup)
         assert not admingroup.botplugin.is_support_group(admingroup)
         assert not admingroup.botplugin.is_support_group(supportchat_bot_side)
+
+    def test_support_user_help(self, admingroup, supportuser):
+        supportchat = supportuser.create_chat(admingroup.admbot.get_config("addr"))
+        supportchat.send_text("/help")
+        while "use this chat to talk to the admins." not in supportchat.get_messages()[-1].text:
+            time.sleep(0.1)
