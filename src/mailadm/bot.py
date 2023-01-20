@@ -43,6 +43,7 @@ class AdmBot:
 
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
+        """This method is called on every incoming message and decides what to do with it."""
         logging.info("new message from %s: %s" % (message.get_sender_contact().addr, message.text))
         if self.is_admin_group_message(message):
             if message.text[0] == "/":
@@ -74,7 +75,7 @@ class AdmBot:
                 self.forward_to_support_group(message)
 
     def is_support_group(self, chat: deltachat.Chat):
-        """Checks whether the group was created by the bot. """
+        """Checks whether the group was created by the bot."""
         if chat.is_group():
             return chat.get_messages()[0].get_sender_contact() == self.account.get_self_contact()
 
@@ -103,9 +104,7 @@ class AdmBot:
         chat.send_msg(message)
 
     def is_admin_group_message(self, command: deltachat.Message):
-        """
-        Checks whether the incoming message was in the admin group.
-        """
+        """Checks whether the incoming message was in the admin group."""
         if command.chat.is_group() and self.admingrpid == command.chat.id:
             if command.chat.is_protected() \
                     and command.is_encrypted() \
@@ -123,7 +122,7 @@ class AdmBot:
             return False
 
     def handle_command(self, message: deltachat.Message):
-        """execute the command and reply to the admin. """
+        """execute the command and reply to the admin."""
         arguments = message.text.split(" ")
         image_path = None
 
