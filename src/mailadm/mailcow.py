@@ -2,6 +2,7 @@ import requests as r
 
 HTTP_TIMEOUT = 5
 
+
 class MailcowConnection:
     """Class to manage requests to the mailcow instance.
 
