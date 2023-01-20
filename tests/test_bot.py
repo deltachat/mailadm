@@ -45,7 +45,7 @@ class TestAdminGroup:
         assert direct.get_messages()[-1].text == "Sorry, I only take commands from the admin group."
 
 
-@pytest.mark.timeout(TIMEOUT)
+@pytest.mark.timeout(TIMEOUT * 2)
 class TestSupportGroup:
     def test_support_group_relaying(self, admingroup, supportuser):
         class SupportGroupUserPlugin:
@@ -157,7 +157,12 @@ class TestSupportGroup:
         assert not admingroup.botplugin.is_support_group(supportchat_bot_side)
 
     def test_support_user_help(self, admingroup, supportuser):
-        supportchat = supportuser.create_chat(admingroup.admbot.get_config("addr"))
-        supportchat.send_text("/help")
-        while "use this chat to talk to the admins." not in supportchat.get_messages()[-1].text:
+        supchat = supportuser.create_chat(admingroup.admbot.get_config("addr"))
+        supchat.send_text("/help")
+        while "use this chat to talk to the admins." not in supchat.get_messages()[-1].text:
             time.sleep(0.1)
+        supchat.send_text("/list-tokens")
+        while "Sorry, I" not in supchat.get_messages()[-1].text:
+            print(supchat.get_messages()[-1].text)
+            time.sleep(0.1)
+        assert supchat.get_messages()[-1].text == "Sorry, I only take commands in the admin group."
