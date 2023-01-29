@@ -47,7 +47,7 @@ class AdmBot:
         logging.info("new message from %s: %s", message.get_sender_contact().addr, message.text)
         if self.is_admin_group_message(message):
             if message.text.startswith("/"):
-                logging.info("%s seems to be a valid command.", message.text)
+                logging.info("%s seems to be a command.", message.text)
                 self.handle_command(message)
             else:
                 logging.debug("ignoring message, it's just admins discussing in the admin group")
