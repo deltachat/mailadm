@@ -2,7 +2,7 @@
 
 import pytest
 
-from mailadm.conn import DBError, TokenExhausted, UserNotFound
+from mailadm.conn import DBError, TokenExhaustedError, UserNotFoundError
 from mailadm.util import gen_password
 
 
@@ -57,7 +57,7 @@ class TestTokenAccounts:
             conn.add_user_db(addr=addr, date=now, ttl=60 * 60, token_name="onehour")
 
         token_info = conn.get_tokeninfo_by_name("onehour")
-        with pytest.raises(TokenExhausted):
+        with pytest.raises(TokenExhaustedError):
             conn.add_email_account(token_info, addr="tmp.xx@x.testrun.org", password=password)
 
     def test_add_expire_del(self, conn):
@@ -82,6 +82,6 @@ class TestTokenAccounts:
         assert len(conn.get_user_list(token="onehour")) == 2
         addrs = [u.addr for u in conn.get_user_list(token="onehour")]
         assert addrs == [addr, addr3]
-        with pytest.raises(UserNotFound):
+        with pytest.raises(UserNotFoundError):
             conn.del_user_db(addr2)
         assert conn.get_tokeninfo_by_name("onehour").usecount == 3

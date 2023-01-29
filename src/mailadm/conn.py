@@ -9,11 +9,11 @@ class DBError(Exception):
     """ error during an operation on the database. """
 
 
-class TokenExhausted(DBError):
+class TokenExhaustedError(DBError):
     """ A token has reached its max-use limit. """
 
 
-class UserNotFound(DBError):
+class UserNotFoundError(DBError):
     """ user not found in database. """
 
 
@@ -219,7 +219,7 @@ class Connection:
         q = "DELETE FROM users WHERE addr=?"
         c = self.execute(q, (addr, ))
         if c.rowcount == 0:
-            raise UserNotFound("addr {!r} does not exist".format(addr))
+            raise UserNotFoundError("addr {!r} does not exist".format(addr))
         self.log("deleted user {!r}".format(addr))
 
     def get_user_by_addr(self, addr):
@@ -286,7 +286,7 @@ class TokenInfo:
     def check_exhausted(self):
         """Check if a token can still create email accounts."""
         if self.usecount >= self.maxuse:
-            raise TokenExhausted
+            raise TokenExhaustedError
 
 
 class UserInfo:

@@ -15,7 +15,7 @@ import mailadm.bot
 
 
 @pytest.fixture(autouse=True)
-def _nocfg(monkeypatch, tmpdir):
+def _nocfg(monkeypatch):
     # tests can still set this env var but we want to isolate tests by default
     monkeypatch.delenv("MAILADM_DB", raising=False)
 

@@ -55,7 +55,7 @@ class TestQR:
         p = tmpdir.join("docker-data/dcaccount-x.testrun.org-oneweek.png")
         assert p.exists()
 
-    def test_gen_qr_no_token(self, mycmd, tmpdir, monkeypatch):
+    def test_gen_qr_no_token(self, mycmd):
         mycmd.run_fail(["gen-qr", "notexistingtoken"], """
             *Error*not*
         """)
@@ -92,7 +92,7 @@ class TestTokens:
                 assert token.isalnum()
                 break
         else:
-            assert 0
+            pytest.fail()
 
         mycmd.run_ok(["del-token", "test1"], """
             *deleted*test1*

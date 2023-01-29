@@ -1,3 +1,8 @@
 [build-system]
 requires = ["setuptools_scm"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+select = ["E", "F", "W", "N", "YTT", "C4", "ISC", "ICN", "PT", "TID", "DTZ", "PLC", "PLE", "PLW", "PIE"]
+ignore = ["PT001", "PT016", "PT011"]
+line-length = 100

@@ -14,7 +14,7 @@ class TestMailcow:
 
         user = mailcow.get_user(addr)
         assert user.addr == addr
-        assert "pytest" == user.token
+        assert user.token == "pytest"
 
         mailcow.del_user_mailcow(addr)
         assert mailcow.get_user(addr) is None

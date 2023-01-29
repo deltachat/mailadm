@@ -5,7 +5,7 @@ import pytest
 from mailadm.util import parse_expiry_code, get_human_readable_id
 
 
-@pytest.mark.parametrize("code,duration", [
+@pytest.mark.parametrize(("code", "duration"), [
     ("never", sys.maxsize),
     ("1w", 7 * 24 * 60 * 60),
     ("2w", 2 * 7 * 24 * 60 * 60),

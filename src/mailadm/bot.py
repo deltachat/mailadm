@@ -21,9 +21,8 @@ class SetupPlugin:
 
     @account_hookimpl
     def ac_member_added(self, chat: deltachat.Chat, contact, actor, message):
-        if chat.id == self.admingrpid:
-            if chat.num_contacts() == 2:
-                self.member_added.set()
+        if chat.id == self.admingrpid and chat.num_contacts() == 2:
+            self.member_added.set()
 
     @account_hookimpl
     def ac_message_delivered(self, message: deltachat.Message):
@@ -76,10 +75,10 @@ class AdmBot:
                 logging.info("forwarding the message to a support group.")
                 self.forward_to_support_group(message)
 
-    def is_support_group(self, chat: deltachat.Chat):
+    def is_support_group(self, chat: deltachat.Chat) -> bool:
         """Checks whether the group was created by the bot."""
-        if chat.is_group():
-            return chat.get_messages()[0].get_sender_contact() == self.account.get_self_contact()
+        return chat.is_group() \
+                and chat.get_messages()[0].get_sender_contact() == self.account.get_self_contact()
 
     def forward_to_support_group(self, message: deltachat.Message):
         """forward a support request to a support group; create one if it doesn't exist yet."""
@@ -246,7 +245,7 @@ def main(mailadm_db, admbot_db_path):
         while 1:
             for logmsg in prune(mailadm_db).get("message"):
                 logging.info("%s", logmsg)
-            for second in range(0, 600):
+            for _second in range(0, 600):
                 if not ac._event_thread.is_alive():
                     logging.error("dc core event thread died, exiting now")
                     os._exit(1)

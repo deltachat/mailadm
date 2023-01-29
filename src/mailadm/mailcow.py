@@ -83,7 +83,7 @@ class MailcowUser(object):
         self.quota = json.get("quota")
         for tag in json.get("tags", []):
             if "mailadm:" in tag:
-                self.token = tag.strip("mailadm:")
+                self.token = tag.removeprefix("mailadm:")
                 break
 
 

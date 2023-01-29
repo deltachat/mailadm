@@ -31,7 +31,7 @@ option_dryrun = click.option(
     help="don't change any files, only show what would be changed.")
 
 
-@click.command(cls=click.Group, context_settings=dict(help_option_names=["-h", "--help"]))
+@click.command(cls=click.Group, context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option()
 @click.pass_context
 def mailadm_main(context):
