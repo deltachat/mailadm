@@ -133,7 +133,7 @@ class AdmBot:
             else:
                 logging.info("The admin group is broken. Try `mailadm setup-bot`. Group ID: %s",
                       str(self.admingrpid))
-                raise ValueError
+                return False
         else:
             return False
 
