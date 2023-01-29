@@ -64,8 +64,7 @@ class AdmBot:
             chat = message.create_chat()
             if chat.is_protected() and not message.is_encrypted():
                 sender = message.get_sender_contact().addr
-                logging.warning("The bot doesn't trust %s, please re-add them to admin group" %
-                                (sender,))
+                logging.warning("The bot doesn't trust %s, please re-add them to the group", sender)
                 message.chat.send_text("I didn't see %s being added to this group - can someone who"
                                        " verified them re-add them?" % (sender,))
             elif chat.is_group():
