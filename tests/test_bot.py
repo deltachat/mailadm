@@ -84,8 +84,9 @@ class TestSupportGroup:
         support_group_name = supportuser.get_config("addr") + " support group"
         for chat in admin.get_chats():
             print(chat.get_name() + str(chat.id))
-        supportgroup = next(filter(lambda chat: chat.get_name() == support_group_name,
-                                   admin.get_chats()))
+        supportgroup = next(
+            filter(lambda chat: chat.get_name() == support_group_name, admin.get_chats())
+        )
         while "Yes of" not in supportchat.get_messages()[len(supportchat.get_messages()) - 1].text:
             print(supportchat.get_messages()[len(supportchat.get_messages()) - 1].text)
             time.sleep(1)
@@ -96,8 +97,9 @@ class TestSupportGroup:
         while "Okay," not in supportgroup.get_messages()[len(supportgroup.get_messages()) - 1].text:
             print(supportchat.get_messages()[len(supportchat.get_messages()) - 1].text)
             time.sleep(1)
-        assert "I hope the user can't read this" not in \
-               [msg.text for msg in supportchat.get_messages()]
+        assert "I hope the user can't read this" not in [
+            msg.text for msg in supportchat.get_messages()
+        ]
 
     def test_invite_bot_to_group(self, admingroup, supportuser):
         botcontact = supportuser.create_contact(admingroup.admbot.get_config("addr"))
@@ -142,8 +144,9 @@ class TestSupportGroup:
         # wait for supportgroup to be created
         while 1:
             try:
-                supportgroup = next(filter(lambda chat: chat.get_name() == support_group_name,
-                                           bot.get_chats()))
+                supportgroup = next(
+                    filter(lambda chat: chat.get_name() == support_group_name, bot.get_chats())
+                )
                 print(supportgroup.get_messages()[0].get_sender_contact().addr)
             except (StopIteration, IndexError):
                 time.sleep(0.1)

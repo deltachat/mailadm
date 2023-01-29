@@ -13,22 +13,24 @@ def test_new_user_random(request, db, monkeypatch, mailcow, mailcow_domain):
     app.debug = True
     app = app.test_client()
 
-    r = app.post('/?username=hello')
+    r = app.post("/?username=hello")
     assert r.status_code == 403
     assert r.json.get("reason") == "?t (token) parameter not specified"
-    r = app.post('/?t=00000')
+    r = app.post("/?t=00000")
     assert r.status_code == 403
     assert r.json.get("reason") == "token 00000 is invalid"
-    r = app.post('/?t=123123&username=hello')
+    r = app.post("/?t=123123&username=hello")
     assert r.status_code == 403
     assert r.json.get("reason") == "token 123123 is invalid"
 
     # delete a@x.testrun.org and b@x.testrun.org in case earlier tests failed to clean them up
     user_a = "pytest.a@" + mailcow_domain
     user_b = "pytest.b@" + mailcow_domain
+
     def clean_up_test_users():
         mailcow.del_user_mailcow(user_a)
         mailcow.del_user_mailcow(user_b)
+
     request.addfinalizer(clean_up_test_users)
 
     chars = list("ab")
@@ -38,19 +40,19 @@ def test_new_user_random(request, db, monkeypatch, mailcow, mailcow_domain):
 
     monkeypatch.setattr(mailadm.util, "get_human_readable_id", get_human_readable_id)
 
-    r = app.post('/?t=' + token)
+    r = app.post("/?t=" + token)
     assert r.status_code == 200
     assert r.json["email"].endswith(mailcow_domain)
     assert r.json["password"]
     email = r.json["email"]
     assert email in [user_a, user_b]
 
-    r2 = app.post('/?t=' + token)
+    r2 = app.post("/?t=" + token)
     assert r2.status_code == 200
     assert r2.json["email"] != email
     assert r2.json["email"] in [user_a, user_b]
 
-    r3 = app.post('/?t=' + token)
+    r3 = app.post("/?t=" + token)
     assert r3.status_code == 409
     assert r3.json.get("reason") == "user already exists in mailcow"
 
@@ -61,6 +63,7 @@ def test_new_user_random(request, db, monkeypatch, mailcow, mailcow_domain):
 def test_env(db, monkeypatch):
     monkeypatch.setenv("MAILADM_DB", str(db.path))
     from mailadm.app import app
+
     assert app.db.path == db.path
 
 
@@ -71,7 +74,7 @@ def test_user_in_db(db, mailcow):
     app.debug = True
     app = app.test_client()
 
-    r = app.post('/?t=' + token.token)
+    r = app.post("/?t=" + token.token)
     assert r.status_code == 200
     assert r.json["password"]
     addr = r.json["email"]
@@ -91,17 +94,17 @@ def xxxtest_new_user_usermod(db, mailcow_domain):
     app.debug = True
     app = app.test_client()
 
-    r = app.post('/?t=00000')
+    r = app.post("/?t=00000")
     assert r.status_code == 403
 
-    r = app.post('/?t=123123123123123&username=hello')
+    r = app.post("/?t=123123123123123&username=hello")
     assert r.status_code == 200
 
     assert r.json["email"] == "hello@" + mailcow_domain
     assert len(r.json["password"]) >= 12
 
     now = time.time()
-    r = app.post('/?t=123123123123123&username=hello2&password=l123123123123')
+    r = app.post("/?t=123123123123123&username=hello2&password=l123123123123")
     assert r.status_code == 200
     assert r.json["email"] == "hello2@" + mailcow_domain
     assert r.json["password"] == "l123123123123"

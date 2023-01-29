@@ -28,6 +28,7 @@ def _nocfg(monkeypatch):
 class ClickRunner:
     def __init__(self, main):
         from click.testing import CliRunner
+
         self.runner = CliRunner()
         self._main = main
         self._rootargs = []
@@ -41,8 +42,7 @@ class ClickRunner:
         argv = self._rootargs + args
         # we use our nextbackup helper to cache account creation
         # unless --no-test-cache is specified
-        res = self.runner.invoke(self._main, argv, catch_exceptions=False,
-                                 input=input)
+        res = self.runner.invoke(self._main, argv, catch_exceptions=False, input=input)
         if res.exit_code != 0:
             print(res.output)
             raise Exception("cmd exited with %d: %s" % (res.exit_code, argv))
@@ -51,12 +51,14 @@ class ClickRunner:
     def run_fail(self, args, fnl=None, input=None, code=None):
         __tracebackhide__ = True
         argv = self._rootargs + args
-        res = self.runner.invoke(self._main, argv, catch_exceptions=False,
-                                 input=input)
+        res = self.runner.invoke(self._main, argv, catch_exceptions=False, input=input)
         if res.exit_code == 0 or (code is not None and res.exit_code != code):
             print(res.output)
-            raise Exception("got exit code {!r}, expected {!r}, output: {}".format(
-                res.exit_code, code, res.output))
+            raise Exception(
+                "got exit code {!r}, expected {!r}, output: {}".format(
+                    res.exit_code, code, res.output
+                )
+            )
         return _perform_match(res.output, fnl)
 
 
@@ -75,7 +77,7 @@ def _perform_match(output, fnl):
 
 @pytest.fixture
 def cmd():
-    """ invoke a command line subcommand. """
+    """invoke a command line subcommand."""
     from mailadm.cmdline import mailadm_main
 
     return ClickRunner(mailadm_main)
@@ -205,6 +207,7 @@ def make_db(monkeypatch, mailcow_auth, mailcow_endpoint, mailcow_domain):
             else:
                 raise KeyError("don't know user {!r}".format(name))
             return ttype(name, p, 10000, 10000)  # uid/gid should play no role for testing
+
         monkeypatch.setattr(pwd, "getpwnam", getpwnam)
 
         gtype = collections.namedtuple("grpentry", ["gr_name", "gr_mem"])
@@ -215,6 +218,7 @@ def make_db(monkeypatch, mailcow_auth, mailcow_endpoint, mailcow_domain):
             else:
                 gr_mem = []
             return gtype(name, gr_mem)
+
         monkeypatch.setattr(grp, "getgrnam", getgrnam)
 
         return db

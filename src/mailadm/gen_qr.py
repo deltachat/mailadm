@@ -6,14 +6,16 @@ from PIL import ImageFont, ImageDraw, Image
 
 def gen_qr(config, token_info):
 
-    info = ("{prefix}******@{domain} {expiry}\n".format(
-            domain=config.mail_domain, prefix=token_info.prefix,
-            expiry=token_info.expiry))
+    info = "{prefix}******@{domain} {expiry}\n".format(
+        domain=config.mail_domain, prefix=token_info.prefix, expiry=token_info.expiry
+    )
 
-    steps = ("1. Install https://get.delta.chat\n"
-            "2. From setup screen scan above QR code\n"
-            "3. Choose nickname & avatar\n"
-            "+ chat with any e-mail address ...\n")
+    steps = (
+        "1. Install https://get.delta.chat\n"
+        "2. From setup screen scan above QR code\n"
+        "3. Choose nickname & avatar\n"
+        "+ chat with any e-mail address ...\n"
+    )
 
     # load QR code
     url = token_info.get_qr_uri()
@@ -28,8 +30,8 @@ def gen_qr(config, token_info):
     qr_img = qr.make_image(fill_color="black", back_color="white")
 
     # paint all elements
-    ttf_path = pkg_resources.resource_filename('mailadm', 'data/opensans-regular.ttf')
-    logo_red_path = pkg_resources.resource_filename('mailadm', 'data/delta-chat-red.png')
+    ttf_path = pkg_resources.resource_filename("mailadm", "data/opensans-regular.ttf")
+    logo_red_path = pkg_resources.resource_filename("mailadm", "data/delta-chat-red.png")
 
     assert os.path.exists(ttf_path), ttf_path
     font_size = 16
@@ -51,14 +53,22 @@ def gen_qr(config, token_info):
 
     # draw text
     info_pos = (width - font.getsize(info.strip())[0]) // 2
-    draw.multiline_text((info_pos, size - qr_padding // 2), info,
-                        font=font, fill="red", align="right")
-    draw.multiline_text((text_margin_right, height - text_height + font_size * 1.0), steps,
-                        font=font, fill="black", align="left")
+    draw.multiline_text(
+        (info_pos, size - qr_padding // 2), info, font=font, fill="red", align="right"
+    )
+    draw.multiline_text(
+        (text_margin_right, height - text_height + font_size * 1.0),
+        steps,
+        font=font,
+        fill="black",
+        align="left",
+    )
 
     # paste QR code
-    image.paste(qr_img.resize((qr_final_size, qr_final_size), resample=Image.NEAREST),
-               (qr_padding, qr_padding))
+    image.paste(
+        qr_img.resize((qr_final_size, qr_final_size), resample=Image.NEAREST),
+        (qr_padding, qr_padding),
+    )
 
     # paste black and white logo
     # logo_bw_path = pkg_resources.resource_filename('mailadm', 'data/delta-chat-bw.png')

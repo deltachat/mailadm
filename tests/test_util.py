@@ -1,21 +1,23 @@
-
 import sys
 import pytest
 
 from mailadm.util import parse_expiry_code, get_human_readable_id
 
 
-@pytest.mark.parametrize(("code", "duration"), [
-    ("never", sys.maxsize),
-    ("2y", 2 * 365 * 24 * 60 * 60),
-    ("1w", 7 * 24 * 60 * 60),
-    ("2w", 2 * 7 * 24 * 60 * 60),
-    ("2d", 2 * 24 * 60 * 60),
-    ("5h", 5 * 60 * 60),
-    ("15h", 15 * 60 * 60),
-    ("20s", 20),
-    ("0h", 0),
-])
+@pytest.mark.parametrize(
+    ("code", "duration"),
+    [
+        ("never", sys.maxsize),
+        ("2y", 2 * 365 * 24 * 60 * 60),
+        ("1w", 7 * 24 * 60 * 60),
+        ("2w", 2 * 7 * 24 * 60 * 60),
+        ("2d", 2 * 24 * 60 * 60),
+        ("5h", 5 * 60 * 60),
+        ("15h", 15 * 60 * 60),
+        ("20s", 20),
+        ("0h", 0),
+    ],
+)
 def test_parse_expiries(code, duration):
     res = parse_expiry_code(code)
     assert res == duration

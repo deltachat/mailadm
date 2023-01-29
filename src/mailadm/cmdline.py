@@ -27,15 +27,15 @@ from deltachat.events import FFIEventLogger
 from deltachat.tracker import ConfigureFailed
 
 option_dryrun = click.option(
-    "-n", "--dryrun", is_flag=True,
-    help="don't change any files, only show what would be changed.")
+    "-n", "--dryrun", is_flag=True, help="don't change any files, only show what would be changed."
+)
 
 
 @click.command(cls=click.Group, context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option()
 @click.pass_context
 def mailadm_main(context):
-    """e-mail account creation admin tool and web service. """
+    """e-mail account creation admin tool and web service."""
 
 
 def get_mailadm_db(ctx, show=False, fail_missing_config=True):
@@ -74,8 +74,10 @@ def create_bot_account(ctx, email: str, password=None) -> (str, str):
             mc.add_user_mailcow(email, password, "bot")
         except MailcowError as e:
             if "object_exists" in str(e):
-                ctx.fail("%s already exists; delete the account in mailcow or specify "
-                         "credentials with --email and --password." % (email,))
+                ctx.fail(
+                    "%s already exists; delete the account in mailcow or specify "
+                    "credentials with --email and --password." % (email,)
+                )
             else:
                 raise
         print("New account %s created as bot account." % (email,))
@@ -113,8 +115,10 @@ def setup_bot(ctx, email, password, show_ffi):
                 print("--password not specified, creating account automatically... ")
                 email, password = create_bot_account(ctx, email)
             else:
-                ctx.fail("You need to provide --password if you want to use an existing account "
-                         "for the mailadm bot.")
+                ctx.fail(
+                    "You need to provide --password if you want to use an existing account "
+                    "for the mailadm bot."
+                )
         elif not email and not password:
             print("--email and --password not specified, creating account automatically... ")
             email = "mailadm@" + mail_domain
@@ -153,16 +157,20 @@ def setup_bot(ctx, email, password, show_ffi):
     setupplugin.member_added.wait()
     setupplugin.message_sent.clear()
 
-    chat.send_text("Welcome to the Admin group on %s! Type /help to see the existing commands." %
-                   (mail_domain,))
+    chat.send_text(
+        "Welcome to the Admin group on %s! Type /help to see the existing commands."
+        % (mail_domain,)
+    )
     print("Welcome message sent.")
     setupplugin.message_sent.wait()
     if admingrpid_old is not None:
         setupplugin.message_sent.clear()
         try:
             oldgroup = ac.get_chat_by_id(int(admingrpid_old))
-            oldgroup.send_text("Someone created a new admin group on the command line. "
-                               "This one is not valid anymore.")
+            oldgroup.send_text(
+                "Someone created a new admin group on the command line. "
+                "This one is not valid anymore."
+            )
             setupplugin.message_sent.wait()
         except ValueError as e:
             if "cannot get chat with id=" + admingrpid_old in str(e):
@@ -180,7 +188,7 @@ def setup_bot(ctx, email, password, show_ffi):
 @click.command()
 @click.pass_context
 def config(ctx):
-    """show and manipulate config settings. """
+    """show and manipulate config settings."""
     db = get_mailadm_db(ctx)
     with db.read_connection() as conn:
         click.secho("** mailadm version: {}".format(mailadm.__version__))
@@ -192,7 +200,7 @@ def config(ctx):
 @click.command()
 @click.pass_context
 def list_tokens(ctx):
-    """list available tokens """
+    """list available tokens"""
     db = get_mailadm_db(ctx)
     click.secho(mailadm.commands.list_tokens(db))
 
@@ -201,7 +209,7 @@ def list_tokens(ctx):
 @click.option("--token", type=str, default=None, help="name of token")
 @click.pass_context
 def list_users(ctx, token):
-    """list users """
+    """list users"""
     db = get_mailadm_db(ctx)
     with db.read_connection() as conn:
         for user_info in conn.get_user_list(token=token):
@@ -221,17 +229,17 @@ def dump_token_info(token_info):
 
 @click.command()
 @click.argument("name", type=str, required=True)
-@click.option("--expiry", type=str, default="1d",
-              help="account expiry eg 1w 3d -- default is 1d")
-@click.option("--maxuse", type=int, default=50,
-              help="maximum number of accounts this token can create")
-@click.option("--prefix", type=str, default="tmp.",
-              help="prefix for all e-mail addresses for this token")
+@click.option("--expiry", type=str, default="1d", help="account expiry eg 1w 3d -- default is 1d")
+@click.option(
+    "--maxuse", type=int, default=50, help="maximum number of accounts this token can create"
+)
+@click.option(
+    "--prefix", type=str, default="tmp.", help="prefix for all e-mail addresses for this token"
+)
 @click.option("--token", type=str, default=None, help="name of token to be used")
 @click.pass_context
 def add_token(ctx, name, expiry, maxuse, prefix, token):
-    """add new token for generating new e-mail addresses
-    """
+    """add new token for generating new e-mail addresses"""
     db = get_mailadm_db(ctx)
     result = mailadm.commands.add_token(db, name, expiry, maxuse, prefix, token)
     if result["status"] == "error":
@@ -241,16 +249,24 @@ def add_token(ctx, name, expiry, maxuse, prefix, token):
 
 @click.command()
 @click.argument("name", type=str, required=True)
-@click.option("--expiry", type=str, default=None,
-              help="account expiry eg 1w 3d -- default is to not change")
-@click.option("--maxuse", type=int, default=None,
-              help="maximum number of accounts this token can create, default is not to change")
-@click.option("--prefix", type=str, default=None,
-              help="prefix for all e-mail addresses for this token, default is not to change")
+@click.option(
+    "--expiry", type=str, default=None, help="account expiry eg 1w 3d -- default is to not change"
+)
+@click.option(
+    "--maxuse",
+    type=int,
+    default=None,
+    help="maximum number of accounts this token can create, default is not to change",
+)
+@click.option(
+    "--prefix",
+    type=str,
+    default=None,
+    help="prefix for all e-mail addresses for this token, default is not to change",
+)
 @click.pass_context
 def mod_token(ctx, name, expiry, prefix, maxuse):
-    """modify a token selectively
-    """
+    """modify a token selectively"""
     db = get_mailadm_db(ctx)
 
     with db.write_transaction() as conn:
@@ -274,7 +290,7 @@ def del_token(ctx, name):
 @click.argument("tokenname", type=str, required=True)
 @click.pass_context
 def gen_qr(ctx, tokenname):
-    """generate qr code image for a token. """
+    """generate qr code image for a token."""
     db = get_mailadm_db(ctx)
     result = mailadm.commands.qr_from_token(db, tokenname)
     if result["status"] == "error":
@@ -285,14 +301,36 @@ def gen_qr(ctx, tokenname):
 
 
 @click.command()
-@click.option("--web-endpoint", type=str, help="external URL for Web API create-account requests",
-              envvar="WEB_ENDPOINT", default="https://example.org/new_email", show_default=True)
-@click.option("--mail-domain", type=str, help="mail domain for which we create new users",
-              envvar="MAIL_DOMAIN", default="example.org", show_default=True)
-@click.option("--mailcow-endpoint", type=str, required=True, envvar="MAILCOW_ENDPOINT",
-              help="the API endpoint of the mailcow instance")
-@click.option("--mailcow-token", type=str, required=True, envvar="MAILCOW_TOKEN",
-              help="you can get an API token in the mailcow web interface")
+@click.option(
+    "--web-endpoint",
+    type=str,
+    help="external URL for Web API create-account requests",
+    envvar="WEB_ENDPOINT",
+    default="https://example.org/new_email",
+    show_default=True,
+)
+@click.option(
+    "--mail-domain",
+    type=str,
+    help="mail domain for which we create new users",
+    envvar="MAIL_DOMAIN",
+    default="example.org",
+    show_default=True,
+)
+@click.option(
+    "--mailcow-endpoint",
+    type=str,
+    required=True,
+    envvar="MAILCOW_ENDPOINT",
+    help="the API endpoint of the mailcow instance",
+)
+@click.option(
+    "--mailcow-token",
+    type=str,
+    required=True,
+    envvar="MAILCOW_TOKEN",
+    help="you can get an API token in the mailcow web interface",
+)
 @click.pass_context
 def init(ctx, web_endpoint, mail_domain, mailcow_endpoint, mailcow_token):
     """(re-)initialize configuration in mailadm database.
@@ -308,31 +346,38 @@ def init(ctx, web_endpoint, mail_domain, mailcow_endpoint, mailcow_token):
         mail_domain=mail_domain,
         web_endpoint=web_endpoint,
         mailcow_endpoint=mailcow_endpoint,
-        mailcow_token=mailcow_token
+        mailcow_token=mailcow_token,
     )
 
 
 @click.command()
 @click.argument("addr", type=str, required=True)
-@click.option("--password", type=str, default=None,
-              help="if not specified, generate a random password")
-@click.option("--token", type=str, default=None,
-              help="name of token. if not specified, automatically use first token matching addr")
+@click.option(
+    "--password", type=str, default=None, help="if not specified, generate a random password"
+)
+@click.option(
+    "--token",
+    type=str,
+    default=None,
+    help="name of token. if not specified, automatically use first token matching addr",
+)
 @option_dryrun
 @click.pass_context
 def add_user(ctx, addr, password, token, dryrun):
-    """add user as a mailadm managed account.
-    """
+    """add user as a mailadm managed account."""
     db = get_mailadm_db(ctx)
     result = mailadm.commands.add_user(db, token, addr, password, dryrun)
     if result["status"] == "error":
         ctx.fail(result["message"])
     elif result["status"] == "success":
-        click.secho("Created %s with password: %s" %
-                    (result["message"].addr, result["message"].password))
+        click.secho(
+            "Created %s with password: %s" % (result["message"].addr, result["message"].password)
+        )
     elif result["status"] == "dryrun":
-        click.secho("Would create %s with password %s" %
-                    (result["message"].addr, result["message"].password))
+        click.secho(
+            "Would create %s with password %s"
+            % (result["message"].addr, result["message"].password)
+        )
 
 
 @click.command()
@@ -352,7 +397,7 @@ def del_user(ctx, addr):
 @option_dryrun
 @click.pass_context
 def prune(ctx, dryrun):
-    """prune expired users from postfix and dovecot configurations """
+    """prune expired users from postfix and dovecot configurations"""
     result = mailadm.commands.prune(get_mailadm_db(ctx), dryrun=dryrun)
     for msg in result.get("message"):
         if result.get("status") == "error":
@@ -363,8 +408,12 @@ def prune(ctx, dryrun):
 
 @click.command()
 @click.pass_context
-@click.option("--debug", is_flag=True, default=False,
-              help="run server in debug mode and don't change any files")
+@click.option(
+    "--debug",
+    is_flag=True,
+    default=False,
+    help="run server in debug mode and don't change any files",
+)
 def web(ctx, debug):
     """(debugging-only!) serve http account creation Web API on localhost"""
     from .web import create_app_from_db
@@ -386,7 +435,8 @@ def migrate_db(ctx):
         q = "DROP TABLE users"
         conn.execute(q)
 
-        conn.execute("""
+        conn.execute(
+            """
                     CREATE TABLE users (
                         addr TEXT PRIMARY KEY,
                         date INTEGER,
@@ -394,7 +444,8 @@ def migrate_db(ctx):
                         token_name TEXT NOT NULL,
                         FOREIGN KEY (token_name) REFERENCES tokens (name)
                     )
-                """)
+                """
+        )
         for u in users:
             q = """INSERT INTO users (addr, date, ttl, token_name)
                            VALUES (?, ?, ?, ?)"""

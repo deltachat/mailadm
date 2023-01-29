@@ -105,7 +105,8 @@ class DB:
         with self.write_transaction() as conn:
             logging.info("DB: Creating tables %s", self.path)
 
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE tokens (
                     name TEXT PRIMARY KEY,
                     token TEXT NOT NULL UNIQUE,
@@ -114,8 +115,10 @@ class DB:
                     maxuse INTEGER default 50,
                     usecount INTEGER default 0
                 )
-            """)
-            conn.execute("""
+            """
+            )
+            conn.execute(
+                """
                 CREATE TABLE users (
                     addr TEXT PRIMARY KEY,
                     date INTEGER,
@@ -123,11 +126,14 @@ class DB:
                     token_name TEXT NOT NULL,
                     FOREIGN KEY (token_name) REFERENCES tokens (name)
                 )
-            """)
-            conn.execute("""
+            """
+            )
+            conn.execute(
+                """
                 CREATE TABLE config (
                     name TEXT PRIMARY KEY,
                     value TEXT
                 )
-            """)
+            """
+            )
             conn.set_config("dbversion", self.CURRENT_DBVERSION)

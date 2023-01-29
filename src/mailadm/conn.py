@@ -6,15 +6,15 @@ from .mailcow import MailcowConnection, MailcowError
 
 
 class DBError(Exception):
-    """ error during an operation on the database. """
+    """error during an operation on the database."""
 
 
 class TokenExhaustedError(DBError):
-    """ A token has reached its max-use limit. """
+    """A token has reached its max-use limit."""
 
 
 class UserNotFoundError(DBError):
-    """ user not found in database. """
+    """user not found in database."""
 
 
 class Connection:
@@ -86,8 +86,14 @@ class Connection:
             return None
 
     def set_config(self, name, value):
-        ok = ["dbversion", "mail_domain", "web_endpoint", "mailcow_endpoint", "mailcow_token",
-              "admingrpid"]
+        ok = [
+            "dbversion",
+            "mail_domain",
+            "web_endpoint",
+            "mailcow_endpoint",
+            "mailcow_token",
+            "admingrpid",
+        ]
         assert name in ok, name
         q = "INSERT OR REPLACE INTO config (name, value) VALUES (?, ?)"
         self.cursor().execute(q, (name, value)).fetchone()
@@ -120,7 +126,7 @@ class Connection:
     def del_token(self, name):
         q = "DELETE FROM tokens WHERE name=?"
         c = self.cursor()
-        c.execute(q, (name, ))
+        c.execute(q, (name,))
         if c.rowcount == 0:
             raise ValueError("token {!r} does not exist".format(name))
         self.log("deleted token {!r}".format(name))
@@ -139,8 +145,9 @@ class Connection:
 
     def get_tokeninfo_by_addr(self, addr):
         if not addr.endswith(self.config.mail_domain):
-            raise ValueError("addr {!r} does not use mail domain {!r}".format(
-                             addr, self.config.mail_domain))
+            raise ValueError(
+                "addr {!r} does not use mail domain {!r}".format(addr, self.config.mail_domain)
+            )
         q = TokenInfo._select_token_columns
         for res in self.execute(q).fetchall():
             token_info = TokenInfo(self.config, *res)
@@ -178,15 +185,20 @@ class Connection:
             addr = "{}@{}".format(username, self.config.mail_domain)
         else:
             if not addr.endswith(self.config.mail_domain):
-                raise ValueError("email {!r} is not on domain {!r}".format(
-                    addr, self.config.mail_domain))
+                raise ValueError(
+                    "email {!r} is not on domain {!r}".format(addr, self.config.mail_domain)
+                )
 
         # first check that mailcow doesn't have a user with that name already:
         if self.get_mailcow_connection().get_user(addr):
             raise MailcowError("account does already exist")
 
-        self.add_user_db(addr=addr, date=int(time.time()),
-                         ttl=token_info.get_expiry_seconds(), token_name=token_info.name)
+        self.add_user_db(
+            addr=addr,
+            date=int(time.time()),
+            ttl=token_info.get_expiry_seconds(),
+            token_name=token_info.name,
+        )
 
         self.log("added addr {!r} with token {!r}".format(addr, token_info.name))
 
@@ -212,25 +224,24 @@ class Connection:
         q = """INSERT INTO users (addr, date, ttl, token_name)
                VALUES (?, ?, ?, ?)"""
         self.execute(q, (addr, date, ttl, token_name))
-        self.execute("UPDATE tokens SET usecount = usecount + 1"
-                     "  WHERE name=?", (token_name,))
+        self.execute("UPDATE tokens SET usecount = usecount + 1" "  WHERE name=?", (token_name,))
 
     def del_user_db(self, addr):
         q = "DELETE FROM users WHERE addr=?"
-        c = self.execute(q, (addr, ))
+        c = self.execute(q, (addr,))
         if c.rowcount == 0:
             raise UserNotFoundError("addr {!r} does not exist".format(addr))
         self.log("deleted user {!r}".format(addr))
 
     def get_user_by_addr(self, addr):
         q = UserInfo._select_user_columns + "WHERE addr = ?"
-        args = self._sqlconn.execute(q, (addr, )).fetchone()
+        args = self._sqlconn.execute(q, (addr,)).fetchone()
         return UserInfo(*args)
 
     def get_expired_users(self, sysdate):
         q = UserInfo._select_user_columns + "WHERE (date + ttl) < ?"
         users = []
-        for args in self._sqlconn.execute(q, (sysdate, )).fetchall():
+        for args in self._sqlconn.execute(q, (sysdate,)).fetchall():
             users.append(UserInfo(*args))
         return users
 
@@ -277,8 +288,9 @@ class TokenInfo:
         return mailadm.util.parse_expiry_code(self.expiry)
 
     def get_web_url(self):
-        return ("{web}?t={token}&n={name}".format(
-                web=self.config.web_endpoint, token=self.token, name=self.name))
+        return "{web}?t={token}&n={name}".format(
+            web=self.config.web_endpoint, token=self.token, name=self.name
+        )
 
     def get_qr_uri(self):
         return "DCACCOUNT:" + self.get_web_url()
@@ -309,8 +321,10 @@ class Config:
     :param mailcow_token: the token to authenticate with the mailcow API
     :param admingrpid: the ID of the admin group
     """
-    def __init__(self, mail_domain, web_endpoint, dbversion, mailcow_endpoint,
-                 mailcow_token, admingrpid=None):
+
+    def __init__(
+        self, mail_domain, web_endpoint, dbversion, mailcow_endpoint, mailcow_token, admingrpid=None
+    ):
         self.mail_domain = mail_domain
         self.web_endpoint = web_endpoint
         self.dbversion = dbversion

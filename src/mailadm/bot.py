@@ -62,10 +62,11 @@ class AdmBot:
         else:
             chat = message.create_chat()
             if chat.is_group():
-                logging.info("%s added me to a group, I'm leaving it.",
-                             message.get_sender_contact().addr)
+                logging.info(
+                    "%s added me to a group, I'm leaving it.", message.get_sender_contact().addr
+                )
                 chat.send_text("Sorry, you can not contact me in groups. Please use a 1:1 chat.")
-                chat.remove_contact(self.account.get_self_contact())   # leave group
+                chat.remove_contact(self.account.get_self_contact())  # leave group
             elif message.text[0:5] == "/help":
                 chat.send_text("You can use this chat to talk to the admins.")
             elif message.text[0] == "/":
@@ -77,8 +78,10 @@ class AdmBot:
 
     def is_support_group(self, chat: deltachat.Chat) -> bool:
         """Checks whether the group was created by the bot."""
-        return chat.is_group() \
-                and chat.get_messages()[0].get_sender_contact() == self.account.get_self_contact()
+        return (
+            chat.is_group()
+            and chat.get_messages()[0].get_sender_contact() == self.account.get_self_contact()
+        )
 
     def forward_to_support_group(self, message: deltachat.Message):
         """forward a support request to a support group; create one if it doesn't exist yet."""
@@ -107,17 +110,23 @@ class AdmBot:
     def is_admin_group_message(self, command: deltachat.Message):
         """Checks whether the incoming message was in the admin group."""
         if command.chat.is_group() and self.admingrpid == command.chat.id:
-            if command.chat.is_protected() \
-                    and command.is_encrypted() \
-                    and int(command.chat.num_contacts()) >= 2:
+            if (
+                command.chat.is_protected()
+                and command.is_encrypted()
+                and int(command.chat.num_contacts()) >= 2
+            ):
                 if command.get_sender_contact() in command.chat.get_contacts():
                     return True
                 else:
-                    logging.info("%s is not allowed to give commands to mailadm.",
-                          command.get_sender_contact())
+                    logging.info(
+                        "%s is not allowed to give commands to mailadm.",
+                        command.get_sender_contact(),
+                    )
             else:
-                logging.info("The admin group is broken. Try `mailadm setup-bot`. Group ID: %s",
-                      str(self.admingrpid))
+                logging.info(
+                    "The admin group is broken. Try `mailadm setup-bot`. Group ID: %s",
+                    str(self.admingrpid),
+                )
                 raise ValueError
         else:
             return False
@@ -143,11 +152,13 @@ class AdmBot:
             text = list_tokens(self.db)
 
         else:
-            text = ("/add-user addr password token\n"
-                    "/add-token name expiry maxuse (prefix)\n"
-                    "/gen-qr token\n"
-                    "/list-users (token)\n"
-                    "/list-tokens")
+            text = (
+                "/add-user addr password token\n"
+                "/add-token name expiry maxuse (prefix)\n"
+                "/gen-qr token\n"
+                "/list-users (token)\n"
+                "/list-tokens"
+            )
 
         if image_path:
             msg = deltachat.Message.new_empty(self.account, "image")
@@ -165,14 +176,22 @@ class AdmBot:
         if len(arguments) == 4:
             arguments.append("")  # add empty prefix
         if len(arguments) < 4:
-            result = {"status": "error",
-                      "message": "Sorry, you need to tell me more precisely what you want. For "
-                                 "example:\n\n/add-token oneweek 1w 50\n\nThis would create a token"
-                                 " which creates up to 50 accounts which each are valid for one "
-                                 "week."}
+            result = {
+                "status": "error",
+                "message": "Sorry, you need to tell me more precisely what you want. For "
+                "example:\n\n/add-token oneweek 1w 50\n\nThis would create a token"
+                " which creates up to 50 accounts which each are valid for one "
+                "week.",
+            }
         else:
-            result = add_token(self.db, name=arguments[1], expiry=arguments[2], maxuse=arguments[3],
-                               prefix=arguments[4], token=None)
+            result = add_token(
+                self.db,
+                name=arguments[1],
+                expiry=arguments[2],
+                maxuse=arguments[3],
+                prefix=arguments[4],
+                token=None,
+            )
         if result["status"] == "error":
             return "ERROR: " + result.get("message"), None
         text = result.get("message")
@@ -194,14 +213,15 @@ class AdmBot:
                     token_name = conn.get_token_list()[0]
             except IndexError:
                 return "You need to create a token with /add-token first."
-            result = {"status": "error",
-                      "message": "Sorry, you need to tell me more precisely what you want. For "
-                                 "example:\n\n/add-user test@%s p4$$w0rd %s\n\nThis would "
-                                 "create a user with the '%s' token and the password "
-                                 "'p4$$w0rd'." % (self.mail_domain, token_name, token_name)}
+            result = {
+                "status": "error",
+                "message": "Sorry, you need to tell me more precisely what you want. For "
+                "example:\n\n/add-user test@%s p4$$w0rd %s\n\nThis would "
+                "create a user with the '%s' token and the password "
+                "'p4$$w0rd'." % (self.mail_domain, token_name, token_name),
+            }
         else:
-            result = add_user(self.db, addr=arguments[1], password=arguments[2],
-                              token=arguments[3])
+            result = add_user(self.db, addr=arguments[1], password=arguments[2], token=arguments[3])
         if result.get("status") == "success":
             user = result.get("message")
             return "successfully created %s with password %s" % (user.addr, user.password)
@@ -233,8 +253,9 @@ def main(mailadm_db, admbot_db_path):
         with mailadm_db.read_connection() as conn:
             if "admingrpid" not in [item[0] for item in conn.get_config_items()]:
                 # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
-                print("To complete the mailadm setup, please run: mailadm setup-bot",
-                      file=sys.stderr)
+                print(
+                    "To complete the mailadm setup, please run: mailadm setup-bot", file=sys.stderr
+                )
                 os._exit(1)
             displayname = conn.config.mail_domain + " administration"
         ac.set_avatar("assets/avatar.jpg")

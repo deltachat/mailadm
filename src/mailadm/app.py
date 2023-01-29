@@ -9,8 +9,9 @@ from mailadm.bot import get_admbot_db_path
 
 
 def init_threads():
-    botthread = threading.Thread(target=run_bot, args=(DB(get_db_path()), get_admbot_db_path()),
-                                 daemon=True, name="bot")
+    botthread = threading.Thread(
+        target=run_bot, args=(DB(get_db_path()), get_admbot_db_path()), daemon=True, name="bot"
+    )
     botthread.start()
 
 

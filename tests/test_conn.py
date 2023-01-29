@@ -70,8 +70,9 @@ def test_email_tmp_gen(conn, mailcow):
 def test_adduser_mailcow_error(db):
     """Test that DB doesn't change if mailcow doesn't work"""
     with db.write_transaction() as conn:
-        token_info = conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3",
-                                    prefix="tmp.", maxuse=1)
+        token_info = conn.add_token(
+            "pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp.", maxuse=1
+        )
 
     with db.write_transaction() as conn:
         conn.set_config("mailcow_token", "wrong")
@@ -86,12 +87,14 @@ def test_adduser_mailcow_error(db):
 
 def test_adduser_db_error(conn, monkeypatch, mailcow_domain):
     """Test that no mailcow user is created if there is a DB error"""
-    token_info = conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3",
-                                prefix="tmp.")
+    token_info = conn.add_token(
+        "pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx96v3", prefix="tmp."
+    )
     addr = "pytest.%s@%s" % (randint(0, 99999), mailcow_domain)
 
     def add_user_db(*args, **kwargs):
         raise DBError
+
     monkeypatch.setattr(mailadm.conn.Connection, "add_user_db", add_user_db)
 
     with pytest.raises(DBError):

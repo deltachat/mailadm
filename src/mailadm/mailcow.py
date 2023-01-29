@@ -9,6 +9,7 @@ class MailcowConnection:
     :param mailcow_endpoint: the URL to the mailcow API
     :param mailcow_token: the access token to the mailcow API
     """
+
     def __init__(self, mailcow_endpoint, mailcow_token):
         self.mailcow_endpoint = mailcow_endpoint
         self.auth = {"X-API-Key": mailcow_token}
@@ -32,7 +33,7 @@ class MailcowConnection:
             "force_pw_update": False,
             "tls_enforce_in": False,
             "tls_enforce_out": False,
-            "tags": ["mailadm:" + token]
+            "tags": ["mailadm:" + token],
         }
         result = r.post(url, json=payload, headers=self.auth, timeout=HTTP_TIMEOUT)
         if type(result.json()) != list or result.json()[0].get("type") != "success":
