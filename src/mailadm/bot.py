@@ -46,7 +46,7 @@ class AdmBot:
         """This method is called on every incoming message and decides what to do with it."""
         logging.info("new message from %s: %s" % (message.get_sender_contact().addr, message.text))
         if self.is_admin_group_message(message):
-            if message.text[0] == "/":
+            if message.text.startswith("/"):
                 logging.info("%s seems to be a valid command.", message.text)
                 self.handle_command(message)
             else:
@@ -55,7 +55,7 @@ class AdmBot:
             if message.quote:
                 if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
                     self.forward_reply_to_support_user(message)
-            elif message.text[0] == "/":
+            elif message.text.startswith("/"):
                 logging.info("ignoring command, it wasn't given in the admin group")
                 message.chat.send_text("Sorry, I only take commands in the admin group.")
             else:
