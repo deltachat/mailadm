@@ -44,13 +44,13 @@ class AdmBot:
     @account_hookimpl
     def ac_incoming_message(self, message: deltachat.Message):
         """This method is called on every incoming message and decides what to do with it."""
-        logging.info("new message from %s: %s" % (message.get_sender_contact().addr, message.text))
+        logging.info("new message from %s: %s", message.get_sender_contact().addr, message.text)
         if self.is_admin_group_message(message):
             if message.text.startswith("/"):
                 logging.info("%s seems to be a valid command.", message.text)
                 self.handle_command(message)
             else:
-                logging.info("ignoring message, it's just admins discussing in the admin group")
+                logging.debug("ignoring message, it's just admins discussing in the admin group")
         elif self.is_support_group(message.chat):
             if message.quote:
                 if message.quote.get_sender_contact().addr == self.account.get_config("addr"):
@@ -59,7 +59,7 @@ class AdmBot:
                 logging.info("ignoring command, it wasn't given in the admin group")
                 message.chat.send_text("Sorry, I only take commands in the admin group.")
             else:
-                logging.info("ignoring message, it's just admins discussing in a support group")
+                logging.debug("ignoring message, it's just admins discussing in a support group")
         else:
             chat = message.create_chat()
             if chat.is_group():
