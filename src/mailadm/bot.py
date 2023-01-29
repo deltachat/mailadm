@@ -65,8 +65,11 @@ class AdmBot:
             if chat.is_protected() and not message.is_encrypted():
                 sender = message.get_sender_contact().addr
                 logging.warning("The bot doesn't trust %s, please re-add them to the group", sender)
-                message.chat.send_text("I didn't see %s being added to this group - can someone who"
-                                       " verified them re-add them?" % (sender,))
+                recovergroup = self.account.create_group_chat("Admin Group Recovery",
+                                                              contacts=message.chat.get_contacts())
+                recovergroup.send_text("I didn't see %s being added to the admin group - can "
+                                       "someone who verified them re-add them to it? Until then, I "
+                                       "can't write to the admin group." % (sender,))
             elif chat.is_group():
                 logging.info("%s added me to a group, I'm leaving it.",
                              message.get_sender_contact().addr)
@@ -105,7 +108,10 @@ class AdmBot:
 
     def forward_reply_to_support_user(self, message: deltachat.Message):
         """an admin replied in a support group; forward their reply to the user."""
-        recipient = message.quote.override_sender_name
+        try:
+            recipient = message.quote.override_sender_name
+        except AttributeError:
+            logging.debug("ignoring message in support group, no one to forward it to")
         logging.info("I'm forwarding the admin reply to the support user %s.", recipient)
         chat = self.account.create_chat(recipient)
         chat.send_msg(message)
