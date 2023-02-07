@@ -129,8 +129,8 @@ class TestUsers:
             *Created*pytest*@*
         """)
         mycmd.run_ok(["list-users"], """
-            *pytest*@*test1*
-        """)
+            *{addr}*
+        """.format(addr=addr))
         mycmd.run_fail(["add-user", addr], """
             *failed to add*pytest* account does already exist*
         """)
