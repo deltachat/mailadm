@@ -224,7 +224,7 @@ class Connection:
         q = """INSERT INTO users (addr, date, ttl, token_name)
                VALUES (?, ?, ?, ?)"""
         self.execute(q, (addr, date, ttl, token_name))
-        self.execute("UPDATE tokens SET usecount = usecount + 1" "  WHERE name=?", (token_name,))
+        self.execute("UPDATE tokens SET usecount = usecount + 1 WHERE name=?", (token_name,))
 
     def del_user_db(self, addr):
         q = "DELETE FROM users WHERE addr=?"
