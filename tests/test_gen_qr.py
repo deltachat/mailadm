@@ -9,4 +9,4 @@ def test_gen_qr(db):
 
     image = gen_qr(config=config, token_info=token)
     qr_decoded = decode(image)[0]
-    assert token.token in str(qr_decoded.data)
+    assert bytes(token.get_qr_uri(), encoding="ascii") == qr_decoded.data
