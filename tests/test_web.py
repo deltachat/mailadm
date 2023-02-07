@@ -4,7 +4,7 @@ import mailadm
 import random
 
 
-def test_new_user_random(db, monkeypatch, mailcow, mailcow_domain):
+def test_new_user_random(request, db, monkeypatch, mailcow, mailcow_domain):
     token = "12319831923123"
     with db.write_transaction() as conn:
         conn.add_token(name="pytest", token=token, prefix="pytest.", expiry="1w")
@@ -26,8 +26,10 @@ def test_new_user_random(db, monkeypatch, mailcow, mailcow_domain):
     # delete a@x.testrun.org and b@x.testrun.org in case earlier tests failed to clean them up
     user_a = "pytest.a@" + mailcow_domain
     user_b = "pytest.b@" + mailcow_domain
-    mailcow.del_user_mailcow(user_a)
-    mailcow.del_user_mailcow(user_b)
+    def clean_up_test_users():
+        mailcow.del_user_mailcow(user_a)
+        mailcow.del_user_mailcow(user_b)
+    request.addfinalizer(clean_up_test_users)
 
     chars = list("ab")
 
