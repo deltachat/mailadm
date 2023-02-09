@@ -132,7 +132,7 @@ def setup_bot(ctx, email, password, show_ffi):
     ac.set_config("mvbox_move", "1")
     ac.set_config("sentbox_watch", "0")
     ac.set_config("bot", "1")
-    configtracker = ac.configure(reconfigure=ac.is_configured())
+    configtracker = ac.configure()
     try:
         configtracker.wait_finish()
     except ConfigureFailed as e:
