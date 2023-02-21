@@ -12,6 +12,7 @@ select = [
   "YTT", # flake8-2020
   "C4", # flake8-comprehensions
   "ISC", # flake8-implicit-str-concat
+  "G", # flake8-logging-format
   "ICN", # flake8-import-conventions
   "PT", # flake8-pytest-style
   "TID", # flake8-tidy-imports
