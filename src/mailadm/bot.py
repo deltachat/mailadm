@@ -64,7 +64,8 @@ class AdmBot:
             chat = message.create_chat()
             if chat.is_group():
                 logging.info(
-                    "%s added me to a group, I'm leaving it.", message.get_sender_contact().addr
+                    "%s added me to a group, I'm leaving it.",
+                    message.get_sender_contact().addr,
                 )
                 chat.send_text("Sorry, you can not contact me in groups. Please use a 1:1 chat.")
                 chat.remove_contact(self.account.get_self_contact())  # leave group
@@ -255,7 +256,8 @@ def main(mailadm_db, admbot_db_path):
             if "admingrpid" not in [item[0] for item in conn.get_config_items()]:
                 # the file=sys.stderr seems to be necessary so the output is shown in `docker logs`
                 print(
-                    "To complete the mailadm setup, please run: mailadm setup-bot", file=sys.stderr
+                    "To complete the mailadm setup, please run: mailadm setup-bot",
+                    file=sys.stderr,
                 )
                 os._exit(1)
             displayname = conn.config.mail_domain + " administration"

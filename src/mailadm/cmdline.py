@@ -25,7 +25,10 @@ from .conn import DBError, UserInfo
 from .mailcow import MailcowError
 
 option_dryrun = click.option(
-    "-n", "--dryrun", is_flag=True, help="don't change any files, only show what would be changed."
+    "-n",
+    "--dryrun",
+    is_flag=True,
+    help="don't change any files, only show what would be changed.",
 )
 
 
@@ -74,7 +77,7 @@ def create_bot_account(ctx, email: str, password=None) -> (str, str):
             if "object_exists" in str(e):
                 ctx.fail(
                     "%s already exists; delete the account in mailcow or specify "
-                    "credentials with --email and --password." % (email,)
+                    "credentials with --email and --password." % (email,),
                 )
             else:
                 raise
@@ -115,7 +118,7 @@ def setup_bot(ctx, email, password, show_ffi):
             else:
                 ctx.fail(
                     "You need to provide --password if you want to use an existing account "
-                    "for the mailadm bot."
+                    "for the mailadm bot.",
                 )
         elif not email and not password:
             print("--email and --password not specified, creating account automatically... ")
@@ -157,7 +160,7 @@ def setup_bot(ctx, email, password, show_ffi):
 
     chat.send_text(
         "Welcome to the Admin group on %s! Type /help to see the existing commands."
-        % (mail_domain,)
+        % (mail_domain,),
     )
     print("Welcome message sent.")
     setupplugin.message_sent.wait()
@@ -167,7 +170,7 @@ def setup_bot(ctx, email, password, show_ffi):
             oldgroup = ac.get_chat_by_id(int(admingrpid_old))
             oldgroup.send_text(
                 "Someone created a new admin group on the command line. "
-                "This one is not valid anymore."
+                "This one is not valid anymore.",
             )
             setupplugin.message_sent.wait()
         except ValueError as e:
@@ -229,10 +232,16 @@ def dump_token_info(token_info):
 @click.argument("name", type=str, required=True)
 @click.option("--expiry", type=str, default="1d", help="account expiry eg 1w 3d -- default is 1d")
 @click.option(
-    "--maxuse", type=int, default=50, help="maximum number of accounts this token can create"
+    "--maxuse",
+    type=int,
+    default=50,
+    help="maximum number of accounts this token can create",
 )
 @click.option(
-    "--prefix", type=str, default="tmp.", help="prefix for all e-mail addresses for this token"
+    "--prefix",
+    type=str,
+    default="tmp.",
+    help="prefix for all e-mail addresses for this token",
 )
 @click.option("--token", type=str, default=None, help="name of token to be used")
 @click.pass_context
@@ -248,7 +257,10 @@ def add_token(ctx, name, expiry, maxuse, prefix, token):
 @click.command()
 @click.argument("name", type=str, required=True)
 @click.option(
-    "--expiry", type=str, default=None, help="account expiry eg 1w 3d -- default is to not change"
+    "--expiry",
+    type=str,
+    default=None,
+    help="account expiry eg 1w 3d -- default is to not change",
 )
 @click.option(
     "--maxuse",
@@ -351,7 +363,10 @@ def init(ctx, web_endpoint, mail_domain, mailcow_endpoint, mailcow_token):
 @click.command()
 @click.argument("addr", type=str, required=True)
 @click.option(
-    "--password", type=str, default=None, help="if not specified, generate a random password"
+    "--password",
+    type=str,
+    default=None,
+    help="if not specified, generate a random password",
 )
 @click.option(
     "--token",
@@ -369,12 +384,12 @@ def add_user(ctx, addr, password, token, dryrun):
         ctx.fail(result["message"])
     elif result["status"] == "success":
         click.secho(
-            "Created %s with password: %s" % (result["message"].addr, result["message"].password)
+            "Created %s with password: %s" % (result["message"].addr, result["message"].password),
         )
     elif result["status"] == "dryrun":
         click.secho(
             "Would create %s with password %s"
-            % (result["message"].addr, result["message"].password)
+            % (result["message"].addr, result["message"].password),
         )
 
 
@@ -442,7 +457,7 @@ def migrate_db(ctx):
                         token_name TEXT NOT NULL,
                         FOREIGN KEY (token_name) REFERENCES tokens (name)
                     )
-                """
+                """,
         )
         for u in users:
             q = """INSERT INTO users (addr, date, ttl, token_name)

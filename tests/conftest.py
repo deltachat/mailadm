@@ -55,8 +55,10 @@ class ClickRunner:
             print(res.output)
             raise Exception(
                 "got exit code {!r}, expected {!r}, output: {}".format(
-                    res.exit_code, code, res.output
-                )
+                    res.exit_code,
+                    code,
+                    res.output,
+                ),
             )
         return _perform_match(res.output, fnl)
 

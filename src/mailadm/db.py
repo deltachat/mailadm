@@ -115,7 +115,7 @@ class DB:
                     maxuse INTEGER default 50,
                     usecount INTEGER default 0
                 )
-            """
+            """,
             )
             conn.execute(
                 """
@@ -126,7 +126,7 @@ class DB:
                     token_name TEXT NOT NULL,
                     FOREIGN KEY (token_name) REFERENCES tokens (name)
                 )
-            """
+            """,
             )
             conn.execute(
                 """
@@ -134,6 +134,6 @@ class DB:
                     name TEXT PRIMARY KEY,
                     value TEXT
                 )
-            """
+            """,
             )
             conn.set_config("dbversion", self.CURRENT_DBVERSION)

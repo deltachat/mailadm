@@ -36,7 +36,11 @@ class TestTokenAccounts:
         db = make_db(tmpdir.mkdir("conn"))
         conn = db._get_connection(write=True)
         conn.add_token(
-            name="pytest:1h", prefix="xyz", expiry="1h", maxuse=self.MAXUSE, token="123456789012345"
+            name="pytest:1h",
+            prefix="xyz",
+            expiry="1h",
+            maxuse=self.MAXUSE,
+            token="123456789012345",
         )
         conn.commit()
         return conn

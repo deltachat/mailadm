@@ -85,7 +85,7 @@ class TestSupportGroup:
         for chat in admin.get_chats():
             print(chat.get_name() + str(chat.id))
         supportgroup = next(
-            filter(lambda chat: chat.get_name() == support_group_name, admin.get_chats())
+            filter(lambda chat: chat.get_name() == support_group_name, admin.get_chats()),
         )
         while "Yes of" not in supportchat.get_messages()[len(supportchat.get_messages()) - 1].text:
             print(supportchat.get_messages()[len(supportchat.get_messages()) - 1].text)
@@ -145,7 +145,7 @@ class TestSupportGroup:
         while 1:
             try:
                 supportgroup = next(
-                    filter(lambda chat: chat.get_name() == support_group_name, bot.get_chats())
+                    filter(lambda chat: chat.get_name() == support_group_name, bot.get_chats()),
                 )
                 print(supportgroup.get_messages()[0].get_sender_contact().addr)
             except (StopIteration, IndexError):

@@ -148,7 +148,7 @@ class Connection:
     def get_tokeninfo_by_addr(self, addr):
         if not addr.endswith(self.config.mail_domain):
             raise ValueError(
-                "addr {!r} does not use mail domain {!r}".format(addr, self.config.mail_domain)
+                "addr {!r} does not use mail domain {!r}".format(addr, self.config.mail_domain),
             )
         q = TokenInfo._select_token_columns
         for res in self.execute(q).fetchall():
@@ -188,7 +188,7 @@ class Connection:
         else:
             if not addr.endswith(self.config.mail_domain):
                 raise ValueError(
-                    "email {!r} is not on domain {!r}".format(addr, self.config.mail_domain)
+                    "email {!r} is not on domain {!r}".format(addr, self.config.mail_domain),
                 )
 
         # first check that mailcow doesn't have a user with that name already:
@@ -291,7 +291,9 @@ class TokenInfo:
 
     def get_web_url(self):
         return "{web}?t={token}&n={name}".format(
-            web=self.config.web_endpoint, token=self.token, name=self.name
+            web=self.config.web_endpoint,
+            token=self.token,
+            name=self.name,
         )
 
     def get_qr_uri(self):
@@ -325,7 +327,13 @@ class Config:
     """
 
     def __init__(
-        self, mail_domain, web_endpoint, dbversion, mailcow_endpoint, mailcow_token, admingrpid=None
+        self,
+        mail_domain,
+        web_endpoint,
+        dbversion,
+        mailcow_endpoint,
+        mailcow_token,
+        admingrpid=None,
     ):
         self.mail_domain = mail_domain
         self.web_endpoint = web_endpoint

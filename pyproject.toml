@@ -4,22 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [tool.ruff]
 select = [
-  "E",
-  "F",
-  "W",
-  "N",
+  "E", "W", # pycodestyle
+  "F", # Pyflakes
+  "N", # pep8-naming
   "I", # isort
-  "YTT",
-  "C4",
-  "ISC",
-  "ICN",
-  "PT",
-  "TID",
-  "DTZ",
-  "PLC",
-  "PLE",
-  "PLW",
-  "PIE"
+
+  "YTT", # flake8-2020
+  "C4", # flake8-comprehensions
+  "ISC", # flake8-implicit-str-concat
+  "ICN", # flake8-import-conventions
+  "PT", # flake8-pytest-style
+  "TID", # flake8-tidy-imports
+  "DTZ", # flake8-datetimez
+  "PIE", # flake8-pie
+  "COM", # flake8-commas
+
+  "PLC", # Pylint Convention
+  "PLE", # Pylint Error
+  "PLW", # Pylint Warning
 ]
 ignore = ["PT001", "PT016", "PT011"]
 line-length = 100

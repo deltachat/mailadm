@@ -24,7 +24,7 @@ def mycmd(cmd, make_db, tmpdir, monkeypatch, mailcow_domain, mailcow_endpoint):
             mailcow_domain,
             "--web-endpoint",
             "https://example.org/new_email",
-        ]
+        ],
     )
     return cmd
 
@@ -48,7 +48,7 @@ class TestInitAndInstall:
                 "unfortunately-required",
                 "--mailcow-token",
                 "unfortunately-required",
-            ]
+            ],
         )
 
 
@@ -65,7 +65,7 @@ class TestConfig:
 class TestQR:
     def test_gen_qr(self, mycmd, tmpdir, monkeypatch, mailcow_domain):
         mycmd.run_ok(
-            ["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V", "--prefix", "", "--expiry=1w"]
+            ["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V", "--prefix", "", "--expiry=1w"],
         )
         mycmd.run_ok(
             ["list-tokens"],
@@ -104,7 +104,7 @@ class TestTokens:
 
     def test_tokens(self, mycmd):
         mycmd.run_ok(
-            ["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V", "--prefix", "", "--expiry=1w"]
+            ["add-token", "oneweek", "--token=1w_Zeeg1RSOK4e3Nh0V", "--prefix", "", "--expiry=1w"],
         )
         mycmd.run_ok(
             ["list-tokens"],
@@ -196,7 +196,7 @@ class TestUsers:
             """
             *{addr}*
         """.format(
-                addr=addr
+                addr=addr,
             ),
         )
         mycmd.run_fail(

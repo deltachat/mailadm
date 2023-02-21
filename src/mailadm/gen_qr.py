@@ -7,7 +7,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 def gen_qr(config, token_info):
     info = "{prefix}******@{domain} {expiry}\n".format(
-        domain=config.mail_domain, prefix=token_info.prefix, expiry=token_info.expiry
+        domain=config.mail_domain,
+        prefix=token_info.prefix,
+        expiry=token_info.expiry,
     )
 
     steps = (
@@ -54,7 +56,11 @@ def gen_qr(config, token_info):
     # draw text
     info_pos = (width - font.getsize(info.strip())[0]) // 2
     draw.multiline_text(
-        (info_pos, size - qr_padding // 2), info, font=font, fill="red", align="right"
+        (info_pos, size - qr_padding // 2),
+        info,
+        font=font,
+        fill="red",
+        align="right",
     )
     draw.multiline_text(
         (text_margin_right, height - text_height + font_size * 1.0),

@@ -13,7 +13,11 @@ def add_token(db, name, expiry, maxuse, prefix, token) -> dict:
     with db.write_transaction() as conn:
         try:
             info = conn.add_token(
-                name=name, token=token, expiry=expiry, maxuse=maxuse, prefix=prefix
+                name=name,
+                token=token,
+                expiry=expiry,
+                maxuse=maxuse,
+                prefix=prefix,
             )
         except DBError:
             return {"status": "error", "message": "token %s does already exist" % (name,)}
@@ -70,7 +74,7 @@ def prune(db, dryrun=False) -> {}:
         result = {"status": "dryrun", "message": []}
         for user_info in expired_users:
             result["message"].append(
-                "would delete %s (token %s)" % (user_info.addr, user_info.token_name)
+                "would delete %s (token %s)" % (user_info.addr, user_info.token_name),
             )
     else:
         result = {"status": "success", "message": []}
@@ -85,7 +89,7 @@ def prune(db, dryrun=False) -> {}:
                 result["message"].append("failed to delete account %s: %s" % (user_info.addr, e))
                 continue
             result["message"].append(
-                "pruned %s (token %s)" % (user_info.addr, user_info.token_name)
+                "pruned %s (token %s)" % (user_info.addr, user_info.token_name),
             )
     return result
 

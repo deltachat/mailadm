@@ -32,7 +32,9 @@ def create_app_from_db(db):
             if token_info is None:
                 return (
                     jsonify(
-                        type="error", status_code=403, reason="token {} is invalid".format(token)
+                        type="error",
+                        status_code=403,
+                        reason="token {} is invalid".format(token),
                     ),
                     403,
                 )
@@ -48,14 +50,18 @@ def create_app_from_db(db):
                 if "does already exist" in str(e):
                     return (
                         jsonify(
-                            type="error", status_code=409, reason="user already exists in mailcow"
+                            type="error",
+                            status_code=409,
+                            reason="user already exists in mailcow",
                         ),
                         409,
                     )
                 if "UNIQUE constraint failed" in str(e):
                     return (
                         jsonify(
-                            type="error", status_code=409, reason="user already exists in mailadm"
+                            type="error",
+                            status_code=409,
+                            reason="user already exists in mailadm",
                         ),
                         409,
                     )
