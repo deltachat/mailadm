@@ -1,7 +1,7 @@
 import sys
-import pytest
 
-from mailadm.util import parse_expiry_code, get_human_readable_id
+import pytest
+from mailadm.util import get_human_readable_id, parse_expiry_code
 
 
 @pytest.mark.parametrize(

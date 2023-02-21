@@ -1,7 +1,8 @@
-import time
-from mailadm.web import create_app_from_db_path
-import mailadm
 import random
+import time
+
+import mailadm
+from mailadm.web import create_app_from_db_path
 
 
 def test_new_user_random(request, db, monkeypatch, mailcow, mailcow_domain):

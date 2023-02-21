@@ -1,16 +1,17 @@
-import mimetypes
-import sys
-import sqlite3
-import time
 import logging
+import mimetypes
+import os
+import sqlite3
+import sys
+import time
+from threading import Event
 
 import deltachat
 from deltachat import account_hookimpl
 from deltachat.capi import lib as dclib
+
+from mailadm.commands import add_token, add_user, list_tokens, prune, qr_from_token
 from mailadm.db import DB, get_db_path
-from mailadm.commands import add_user, add_token, list_tokens, qr_from_token, prune
-import os
-from threading import Event
 
 
 class SetupPlugin:

@@ -1,6 +1,6 @@
-import sys
-import random
 import base64
+import random
+import sys
 
 
 def gen_password():

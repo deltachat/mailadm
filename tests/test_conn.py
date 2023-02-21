@@ -1,8 +1,8 @@
-import pytest
 from random import randint
-import requests
 
 import mailadm
+import pytest
+import requests
 from mailadm.conn import DBError
 from mailadm.mailcow import MailcowError
 

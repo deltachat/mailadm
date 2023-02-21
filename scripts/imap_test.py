@@ -1,8 +1,9 @@
-from imapclient import IMAPClient
 import email
-import requests
 import smtplib
 import urllib.parse
+
+import requests
+from imapclient import IMAPClient
 
 
 def receive_imap(host, user, password, num):

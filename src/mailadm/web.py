@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
+from requests.exceptions import ReadTimeout
+
 import mailadm.db
 from mailadm.conn import DBError
 from mailadm.mailcow import MailcowError
-from requests.exceptions import ReadTimeout
 
 
 def create_app_from_db_path(db_path=None):

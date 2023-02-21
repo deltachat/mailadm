@@ -1,6 +1,6 @@
+import contextlib
 import logging
 import os
-import contextlib
 import sqlite3
 import time
 from pathlib import Path

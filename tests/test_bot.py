@@ -1,8 +1,8 @@
 import time
-import pytest
-import deltachat
-from deltachat.capi import lib as dclib
 
+import deltachat
+import pytest
+from deltachat.capi import lib as dclib
 
 TIMEOUT = 30
 

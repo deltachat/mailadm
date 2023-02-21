@@ -1,17 +1,16 @@
+import collections
+import grp
 import os
 import pwd
-import grp
-import collections
-from random import randint
-from pathlib import Path
 import time
+from pathlib import Path
+from random import randint
 
 import deltachat
+import mailadm.bot
+import mailadm.db
 import pytest
 from _pytest.pytester import LineMatcher
-
-import mailadm.db
-import mailadm.bot
 
 
 @pytest.fixture(autouse=True)

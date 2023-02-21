@@ -6,25 +6,23 @@ https://github.com/codespeaknet/sysadmin/blob/master/docs/postfix-virtual-domain
 
 from __future__ import print_function
 
-import mailadm
-import mailadm.db
-from .conn import UserInfo
-from .mailcow import MailcowError
-import mailadm.util
 import sys
+
 import click
-from click import style
 import qrcode
-
-import mailadm.db
-import mailadm.commands
-import mailadm.util
-from .conn import DBError
-from .bot import SetupPlugin, get_admbot_db_path
-
+from click import style
 from deltachat import Account, account_hookimpl
 from deltachat.events import FFIEventLogger
 from deltachat.tracker import ConfigureFailed
+
+import mailadm
+import mailadm.commands
+import mailadm.db
+import mailadm.util
+
+from .bot import SetupPlugin, get_admbot_db_path
+from .conn import DBError, UserInfo
+from .mailcow import MailcowError
 
 option_dryrun = click.option(
     "-n", "--dryrun", is_flag=True, help="don't change any files, only show what would be changed."

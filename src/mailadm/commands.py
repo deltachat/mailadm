@@ -1,8 +1,9 @@
 import time
-from mailadm.util import get_human_readable_id
+
 from mailadm.conn import DBError
-from mailadm.mailcow import MailcowError
 from mailadm.gen_qr import gen_qr
+from mailadm.mailcow import MailcowError
+from mailadm.util import get_human_readable_id
 
 
 def add_token(db, name, expiry, maxuse, prefix, token) -> dict:

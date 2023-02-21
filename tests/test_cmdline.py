@@ -1,7 +1,8 @@
-import os
-from random import randint
-import time
 import datetime
+import os
+import time
+from random import randint
+
 import pytest
 from mailadm.mailcow import MailcowError
 

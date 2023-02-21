@@ -1,5 +1,4 @@
 import pytest
-
 from mailadm.conn import DBError, TokenExhaustedError, UserNotFoundError
 from mailadm.util import gen_password
 

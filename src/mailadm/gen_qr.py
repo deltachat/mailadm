@@ -1,7 +1,8 @@
+import os
+
 import pkg_resources
 import qrcode
-import os
-from PIL import ImageFont, ImageDraw, Image
+from PIL import Image, ImageDraw, ImageFont
 
 
 def gen_qr(config, token_info):
