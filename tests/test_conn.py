@@ -65,7 +65,7 @@ def test_token_info(conn):
         ("weirdinput.{}", False),
         ("weirdinput+{}@", False),
         ("weirdinput_{}@", True),
-    ]
+    ],
 )
 def test_is_email_valid(conn, localpart, result, mailcow_domain):
     addr = localpart.format(randint(0, 99999)) + mailcow_domain

@@ -1,5 +1,4 @@
 import time
-from random import randint
 
 import deltachat
 import pytest
