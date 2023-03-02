@@ -3,7 +3,7 @@ from random import randint
 import mailadm
 import pytest
 import requests
-from mailadm.conn import DBError
+from mailadm.conn import DBError, InvalidInputError
 from mailadm.mailcow import MailcowError
 
 
@@ -47,6 +47,25 @@ def test_token_info(conn):
     conn.del_token("pytest:burner2")
     assert not conn.get_tokeninfo_by_token("10w_7wDioPeeXyZx96v3")
     assert not conn.get_tokeninfo_by_name("pytest:burner2")
+
+
+def test_token_sanitization(conn):
+    with pytest.raises(InvalidInputError):
+        conn.add_token("../test", expiry="1w", token="1w_7wDiPeeXyZx96v3", prefix="pp")
+    with pytest.raises(InvalidInputError):
+        conn.add_token("../../test", expiry="1w", token="1w_7DioPeeXyZx96v3", prefix="pp")
+    with pytest.raises(InvalidInputError):
+        conn.add_token("../../abc/../test", expiry="1w", token="1w_7wDioPeeXyZx963", prefix="pp")
+    with pytest.raises(InvalidInputError):
+        conn.add_token(".abc/../test/fixed", expiry="1w", token="1w_7wDioPeeXyZx6v3", prefix="pp")
+    with pytest.raises(InvalidInputError):
+        conn.add_token("../abc/../.test/fix", expiry="1w", token="1w_7wDioPeeXZx96v3", prefix="pp")
+    with pytest.raises(InvalidInputError):
+        conn.add_token("/test/foo", expiry="1w", token="1w_7wDioPeXyZx96v3", prefix="pp")
+    with pytest.raises(InvalidInputError):
+        conn.add_token("./test/baz", expiry="1w", token="1w_7wDioeeXyZx96v3", prefix="pp")
+    conn.add_token(".test/baz", expiry="1w", token="1w_7wDioPeXyx96v3", prefix="pp")
+    conn.add_token("baz", expiry="1w", token="1w_7wDioPeeXyZx96va3", prefix="pp")
 
 
 def test_email_tmp_gen(conn, mailcow):
