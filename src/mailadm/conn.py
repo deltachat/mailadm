@@ -1,6 +1,7 @@
 import logging
 import sqlite3
 import time
+from validate_email import validate_email
 
 import mailadm.util
 
@@ -186,9 +187,9 @@ class Connection:
             username = "{}{}".format(token_info.prefix, rand_part)
             addr = "{}@{}".format(username, self.config.mail_domain)
         else:
-            if not addr.endswith(self.config.mail_domain):
+            if not validate_email(addr, check_blacklist=False, check_smtp=False):
                 raise ValueError(
-                    "email {!r} is not on domain {!r}".format(addr, self.config.mail_domain),
+                    "email {!r} is not a valid email address".format(addr, self.config.mail_domain),
                 )
 
         # first check that mailcow doesn't have a user with that name already:

@@ -58,6 +58,11 @@ def add_user(db, token=None, addr=None, password=None, dryrun=False) -> {}:
                 "status": "error",
                 "message": "failed to add e-mail account {}: {}".format(addr, e),
             }
+        except ValueError as e:
+            return {
+                "status": "error",
+                "message": "failed to add e-mail account {}: {}".format(addr, e),
+            }
         if dryrun:
             conn.delete_email_account(user_info.addr)
             return {"status": "dryrun", "message": user_info}
