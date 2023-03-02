@@ -252,7 +252,7 @@ class Connection:
         chars_allowed = "abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ.0123456789_@"
         for char in addr:
             if char not in chars_allowed:
-                logging.error("letter %s in address %s is not in %s" % (char, addr, chars_allowed))
+                logging.error("letter %s in address %s is not in %s", char, addr, chars_allowed)
                 return False
         return True
 
