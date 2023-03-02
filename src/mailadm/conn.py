@@ -116,10 +116,8 @@ class Connection:
         return [x[0] for x in self.execute(q).fetchall()]
 
     def add_token(self, name, token, expiry, prefix, maxuse=50):
-        if "./" in name:
-            raise InvalidInputError("No ./ allowed in the token name")
-        if name[:1] == "/":
-            raise InvalidInputError("No / allowed in the beginning of the token name")
+        if "/" in name or "#" in name or "?" in name:
+            raise InvalidInputError("No /, ?, or # allowed in the token name")
         q = "INSERT INTO tokens (name, token, prefix, expiry, maxuse) VALUES (?, ?, ?, ?, ?)"
         self.execute(q, (name, token, prefix, expiry, int(maxuse)))
         self.log("added token {!r}".format(name))
