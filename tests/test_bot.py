@@ -56,9 +56,17 @@ class TestAdminGroup:
         admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_3,))
         input_4 = "weirdinput.%s@%s@test4@a%s" % (randint(0, 99999), mailcow_domain, mailcow_domain)
         admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_4,))
+        input_5 = "weirdinput.%s/../../@%s" % (randint(0, 99999), mailcow_domain)
+        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_5,))
+        input_6 = "weirdinput.%s?test6@%s" % (randint(0, 99999), mailcow_domain)
+        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_6,))
+        input_7 = "weirdinput.%s#test7@%s" % (randint(0, 99999), mailcow_domain)
+        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_7,))
+        input_8 = "weirdinput.%s\\test8\\\\@%s" % (randint(0, 99999), mailcow_domain)
+        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_8,))
         # wait until all messages were processed
         with db.read_connection() as conn:
-            while "failed to add e-mail account " + input_4 not in admingroup.get_messages()[-1].text:
+            while "iled to add e-mail account " + input_8 not in admingroup.get_messages()[-1].text:
                 print(admingroup.get_messages()[-1].text)
                 users = conn.get_user_list()
                 for user in users:
