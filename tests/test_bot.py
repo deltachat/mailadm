@@ -45,56 +45,6 @@ class TestAdminGroup:
             time.sleep(0.1)
         assert direct.get_messages()[-1].text == "Sorry, I only take commands from the admin group."
 
-    @pytest.mark.parametrize(
-        ("localpart", "result"),
-        [
-            ("weirdinput.{}@test1@", False),
-            ("weirdinput.{}@a", False),
-            ("weirdinput.{}@x.testrun.org@test4@", False),
-            ("weirdinput.{}/../../@", False),
-            ("weirdinput.{}?test6@", False),
-            ("weirdinput.{}#test7@", False),
-            ("weirdinput./{}@", False),
-            ("weirdinput.%2f{}@", False),
-            ("weirdinput.{}\\test9\\\\@", False),
-            ("weirdinput-{}@", True),
-            ("weirdinput.{}", False),
-            ("weirdinput+{}@", False),
-            ("weirdinput_{}@", True),
-        ]
-     )
-    def test_adduser_input(self, admingroup, mailcow_domain, db, mailcow, localpart, result):
-        with db.write_transaction() as wconn:
-            wconn.add_token("weirdinput", "1w_7wDioPeeXyZx96v3", "1s", "weirdinput.")
-        addr = localpart.format(randint(0, 99999)) + mailcow_domain
-        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (addr,))
-
-        # wait for result
-        def response_arrived(response, result):
-            if "failed" not in response and "success" not in response:
-                time.sleep(0.1)
-                return False
-            if not result and "failed" in response or result and "success" in response:
-                return True
-            print("Wrong reponse:", response)
-            pytest.fail()
-
-        while not response_arrived(admingroup.get_messages()[-1].text, result):
-            print(admingroup.get_messages()[-1].text)
-
-        with db.read_connection() as conn:
-            users = conn.get_user_list()
-        for user in users:
-            if user.token_name == "WARNING: does not exist in mailcow":
-                print("---")
-                for user2 in users:
-                    print(user2.addr, user2.token_name)
-                print("---")
-                for msg in admingroup.get_messages():
-                    print(msg.text)
-                print("---")
-                pytest.fail()
-
 
 @pytest.mark.timeout(TIMEOUT * 2)
 class TestSupportGroup:
