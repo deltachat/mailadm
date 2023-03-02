@@ -64,8 +64,13 @@ def test_token_sanitization(conn):
         conn.add_token("/test/foo", expiry="1w", token="1w_7wDioPeXyZx96v3", prefix="pp")
     with pytest.raises(InvalidInputError):
         conn.add_token("./test/baz", expiry="1w", token="1w_7wDioeeXyZx96v3", prefix="pp")
-    conn.add_token(".test/baz", expiry="1w", token="1w_7wDioPeXyx96v3", prefix="pp")
-    conn.add_token("baz", expiry="1w", token="1w_7wDioPeeXyZx96va3", prefix="pp")
+    with pytest.raises(InvalidInputError):
+        conn.add_token(".test/baz", expiry="1w", token="1w_7wDioPeXyx96v3", prefix="pp")
+    with pytest.raises(InvalidInputError):
+        conn.add_token("test?secret=asdf", expiry="1w", token="1w_7wDioPeXyx96v3", prefix="pp")
+    with pytest.raises(InvalidInputError):
+        conn.add_token("test#somewhere", expiry="1w", token="1w_7wDioPeXyx96v3", prefix="pp")
+    conn.add_token("baz123-.", expiry="1w", token="1w_7wDioPeeXyZx96va3", prefix="pp")
 
 
 def test_email_tmp_gen(conn, mailcow):
