@@ -64,6 +64,11 @@ def test_token_info(conn):
         ("weirdinput-{}@", True),
         ("weirdinput.{}", False),
         ("weirdinput+{}@", False),
+        ("¹weirdinput.{}@", False),
+        ("-weirdinput.{}@", False),
+        ("_weirdinput.{}@", False),
+        (".weirdinput.{}@", False),
+        ("½weirdinput.{}@", False),
         ("weirdinput_{}@", True),
     ],
 )
