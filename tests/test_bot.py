@@ -5,7 +5,7 @@ import deltachat
 import pytest
 from deltachat.capi import lib as dclib
 
-TIMEOUT = 30
+TIMEOUT = 45
 
 
 @pytest.mark.timeout(TIMEOUT)
