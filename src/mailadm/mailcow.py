@@ -1,4 +1,4 @@
-from urllib.parse import quote_plus
+from urllib.parse import quote
 
 import requests as r
 
@@ -54,7 +54,7 @@ class MailcowConnection:
 
     def get_user(self, addr):
         """HTTP Request to get a specific mailcow user (not only mailadm-generated ones)."""
-        url = self.mailcow_endpoint + "get/mailbox/" + quote_plus(addr, safe="")
+        url = self.mailcow_endpoint + "get/mailbox/" + quote(addr, safe="")
         result = r.get(url, headers=self.auth, timeout=HTTP_TIMEOUT)
         json = result.json()
         if json == {}:
