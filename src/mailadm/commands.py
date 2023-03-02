@@ -19,8 +19,8 @@ def add_token(db, name, expiry, maxuse, prefix, token) -> dict:
                 maxuse=maxuse,
                 prefix=prefix,
             )
-        except DBError:
-            return {"status": "error", "message": "token %s does already exist" % (name,)}
+        except DBError as e:
+            return {"status": "error", "message": "failed to add token {}: {}".format(name, e)}
         except ValueError:
             return {"status": "error", "message": "maxuse must be a number"}
         tc = conn.get_tokeninfo_by_name(info.name)
@@ -54,11 +54,6 @@ def add_user(db, token=None, addr=None, password=None, dryrun=False) -> {}:
                 "message": "failed to add e-mail account {}: {}".format(addr, e),
             }
         except MailcowError as e:
-            return {
-                "status": "error",
-                "message": "failed to add e-mail account {}: {}".format(addr, e),
-            }
-        except ValueError as e:
             return {
                 "status": "error",
                 "message": "failed to add e-mail account {}: {}".format(addr, e),

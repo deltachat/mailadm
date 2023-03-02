@@ -21,6 +21,10 @@ class UserNotFoundError(DBError):
     """user not found in database."""
 
 
+class InvalidInputError(DBError):
+    """Raised when user-specified input was invalid"""
+
+
 class Connection:
     def __init__(self, sqlconn, path, write):
         self._sqlconn = sqlconn
@@ -112,6 +116,10 @@ class Connection:
         return [x[0] for x in self.execute(q).fetchall()]
 
     def add_token(self, name, token, expiry, prefix, maxuse=50):
+        if "./" in name:
+            raise InvalidInputError("No ./ allowed in the token name")
+        if name[:1] == "/":
+            raise InvalidInputError("No / allowed in the beginning of the token name")
         q = "INSERT INTO tokens (name, token, prefix, expiry, maxuse) VALUES (?, ?, ?, ?, ?)"
         self.execute(q, (name, token, prefix, expiry, int(maxuse)))
         self.log("added token {!r}".format(name))
@@ -189,7 +197,7 @@ class Connection:
             addr = "{}@{}".format(username, self.config.mail_domain)
         else:
             if not validate_email(addr, check_blacklist=False, check_smtp=False):
-                raise ValueError("email %s is not a valid email address" % (addr,))
+                raise InvalidInputError("email %s is not a valid email address" % (addr,))
 
         # first check that mailcow doesn't have a user with that name already:
         if self.get_mailcow_connection().get_user(addr):
