@@ -1,4 +1,5 @@
 import requests as r
+from validate_email import validate_email
 
 HTTP_TIMEOUT = 5
 
@@ -52,6 +53,8 @@ class MailcowConnection:
 
     def get_user(self, addr):
         """HTTP Request to get a specific mailcow user (not only mailadm-generated ones)."""
+        if not validate_email(addr, check_blacklist=False, check_smtp=False):
+            raise MailcowError("not a valid email address")
         url = self.mailcow_endpoint + "get/mailbox/" + addr
         result = r.get(url, headers=self.auth, timeout=HTTP_TIMEOUT)
         json = result.json()
