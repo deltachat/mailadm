@@ -1,4 +1,5 @@
 import time
+from random import randint
 
 import deltachat
 import pytest
@@ -43,6 +44,34 @@ class TestAdminGroup:
             print(direct.get_messages()[-1].text)
             time.sleep(0.1)
         assert direct.get_messages()[-1].text == "Sorry, I only take commands from the admin group."
+
+    def test_adduser_input(self, admingroup, mailcow_domain, db):
+        with db.write_transaction() as wconn:
+            wconn.add_token("weirdinput", "1w_7wDioPeeXyZx96v3", "1s", "weirdinput.")
+        input_1 = "weirdinput.%s@test1@%s" % (randint(0, 99999), mailcow_domain)
+        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_1,))
+        input_2 = "weirdinput.%s@test2@a%s" % (randint(0, 99999), mailcow_domain)
+        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_2,))
+        input_3 = "weirdinput.%s@%s@test3@%s" % (randint(0, 99999), mailcow_domain, mailcow_domain)
+        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_3,))
+        input_4 = "weirdinput.%s@%s@test4@a%s" % (randint(0, 99999), mailcow_domain, mailcow_domain)
+        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_4,))
+        # wait until all messages were processed
+        with db.read_connection() as conn:
+            while "failed to add e-mail account " + input_4 not in admingroup.get_messages()[-1].text:
+                print(admingroup.get_messages()[-1].text)
+                users = conn.get_user_list()
+                for user in users:
+                    if user.token_name == "WARNING: does not exist in mailcow":
+                        print("---")
+                        for user2 in users:
+                            print(user2.addr, user2.token_name)
+                        print("---")
+                        for msg in admingroup.get_messages():
+                            print(msg.text)
+                        print("---")
+                        pytest.fail()
+                time.sleep(0.1)
 
 
 @pytest.mark.timeout(TIMEOUT * 2)
