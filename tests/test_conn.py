@@ -72,28 +72,27 @@ def test_is_email_valid(conn, localpart, result, mailcow_domain):
     assert conn.is_valid_email(addr) == result
 
 
-def test_token_sanitization(conn):
-    with pytest.raises(InvalidInputError):
-        conn.add_token("../test", expiry="1w", token="1w_7wDiPeeXyZx96v3", prefix="pp")
-    with pytest.raises(InvalidInputError):
-        conn.add_token("../../test", expiry="1w", token="1w_7DioPeeXyZx96v3", prefix="pp")
-    with pytest.raises(InvalidInputError):
-        conn.add_token("../../abc/../test", expiry="1w", token="1w_7wDioPeeXyZx963", prefix="pp")
-    with pytest.raises(InvalidInputError):
-        conn.add_token(".abc/../test/fixed", expiry="1w", token="1w_7wDioPeeXyZx6v3", prefix="pp")
-    with pytest.raises(InvalidInputError):
-        conn.add_token("../abc/../.test/fix", expiry="1w", token="1w_7wDioPeeXZx96v3", prefix="pp")
-    with pytest.raises(InvalidInputError):
-        conn.add_token("/test/foo", expiry="1w", token="1w_7wDioPeXyZx96v3", prefix="pp")
-    with pytest.raises(InvalidInputError):
-        conn.add_token("./test/baz", expiry="1w", token="1w_7wDioeeXyZx96v3", prefix="pp")
-    with pytest.raises(InvalidInputError):
-        conn.add_token(".test/baz", expiry="1w", token="1w_7wDioPeXyx96v3", prefix="pp")
-    with pytest.raises(InvalidInputError):
-        conn.add_token("test?secret=asdf", expiry="1w", token="1w_7wDioPeXyx96v3", prefix="pp")
-    with pytest.raises(InvalidInputError):
-        conn.add_token("test#somewhere", expiry="1w", token="1w_7wDioPeXyx96v3", prefix="pp")
-    conn.add_token("baz123-.", expiry="1w", token="1w_7wDioPeeXyZx96va3", prefix="pp")
+@pytest.mark.parametrize(
+    ("token_name", "result"),
+    [
+        ("../test", False),
+        ("../../test", False),
+        ("../../abc/../test", False),
+        (".abc/../test/fixed", False),
+        ("/test/foo", False),
+        ("./test/baz", False),
+        (".test/baz", False),
+        ("test?secret=asdf", False),
+        ("test#somewhere", False),
+        ("baz123-._@", True),
+    ],
+)
+def test_token_sanitization(conn, token_name, result):
+    if result:
+        conn.add_token(token_name, expiry="1w", token="1w_7wDioPeeXyZx96va3", prefix="pp")
+    else:
+        with pytest.raises(InvalidInputError):
+            conn.add_token(token_name, expiry="1w", token="1w_7wDioPeeXyZx96va3", prefix="pp")
 
 
 def test_email_tmp_gen(conn, mailcow):
