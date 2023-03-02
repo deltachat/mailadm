@@ -192,6 +192,9 @@ class Connection:
             username = "{}{}".format(token_info.prefix, rand_part)
             addr = "{}@{}".format(username, self.config.mail_domain)
 
+        if not self.is_valid_email(addr):
+            raise InvalidInputError("not a valid email address")
+
         # first check that mailcow doesn't have a user with that name already:
         if self.get_mailcow_connection().get_user(addr):
             raise MailcowError("account does already exist")
@@ -235,6 +238,23 @@ class Connection:
         if c.rowcount == 0:
             raise UserNotFoundError("addr {!r} does not exist".format(addr))
         self.log("deleted user {!r}".format(addr))
+
+    def is_valid_email(self, addr):
+        if not addr.endswith("@" + self.config.mail_domain):
+            logging.error("address %s doesn't end with @x.testrun.org", addr)
+            return False
+        if not addr.count("@") == 1:
+            logging.error("address %s doesn't have exactly one @", addr)
+            return False
+        if not addr[0].isalnum():
+            logging.error("address %s doesn't start alphanumeric", addr)
+            return False
+        chars_allowed = "abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ.0123456789_@"
+        for char in addr:
+            if char not in chars_allowed:
+                logging.error("letter %s in address %s is not in %s" % (char, addr, chars_allowed))
+                return False
+        return True
 
     def get_user_by_addr(self, addr):
         q = UserInfo._select_user_columns + "WHERE addr = ?"
