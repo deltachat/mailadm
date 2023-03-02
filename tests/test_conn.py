@@ -49,6 +49,29 @@ def test_token_info(conn):
     assert not conn.get_tokeninfo_by_name("pytest:burner2")
 
 
+@pytest.mark.parametrize(
+    ("localpart", "result"),
+    [
+        ("weirdinput.{}@test1@", False),
+        ("weirdinput.{}@a", False),
+        ("weirdinput.{}@x.testrun.org@test4@", False),
+        ("weirdinput.{}/../../@", False),
+        ("weirdinput.{}?test6@", False),
+        ("weirdinput.{}#test7@", False),
+        ("weirdinput./{}@", False),
+        ("weirdinput.%2f{}@", False),
+        ("weirdinput.{}\\test9\\\\@", False),
+        ("weirdinput-{}@", True),
+        ("weirdinput.{}", False),
+        ("weirdinput+{}@", False),
+        ("weirdinput_{}@", True),
+    ]
+)
+def test_is_email_valid(conn, localpart, result, mailcow_domain):
+    addr = localpart.format(randint(0, 99999)) + mailcow_domain
+    assert conn.is_valid_email(addr) == result
+
+
 def test_token_sanitization(conn):
     with pytest.raises(InvalidInputError):
         conn.add_token("../test", expiry="1w", token="1w_7wDiPeeXyZx96v3", prefix="pp")
