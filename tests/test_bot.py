@@ -45,41 +45,55 @@ class TestAdminGroup:
             time.sleep(0.1)
         assert direct.get_messages()[-1].text == "Sorry, I only take commands from the admin group."
 
-    def test_adduser_input(self, admingroup, mailcow_domain, db):
+    @pytest.mark.parametrize(
+        ("localpart", "result"),
+        [
+            ("weirdinput.{}@test1@", False),
+            ("weirdinput.{}@a", False),
+            ("weirdinput.{}@x.testrun.org@test4@", False),
+            ("weirdinput.{}/../../@", False),
+            ("weirdinput.{}?test6@", False),
+            ("weirdinput.{}#test7@", False),
+            ("weirdinput./{}@", False),
+            ("weirdinput.%2f{}@", False),
+            ("weirdinput.{}\\test9\\\\@", False),
+            ("weirdinput-{}@", True),
+            ("weirdinput.{}", False),
+            ("weirdinput+{}@", False),
+            ("weirdinput_{}@", True),
+        ]
+     )
+    def test_adduser_input(self, admingroup, mailcow_domain, db, mailcow, localpart, result):
         with db.write_transaction() as wconn:
             wconn.add_token("weirdinput", "1w_7wDioPeeXyZx96v3", "1s", "weirdinput.")
-        input_1 = "weirdinput.%s@test1@%s" % (randint(0, 99999), mailcow_domain)
-        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_1,))
-        input_2 = "weirdinput.%s@test2@a%s" % (randint(0, 99999), mailcow_domain)
-        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_2,))
-        input_3 = "weirdinput.%s@%s@test3@%s" % (randint(0, 99999), mailcow_domain, mailcow_domain)
-        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_3,))
-        input_4 = "weirdinput.%s@%s@test4@a%s" % (randint(0, 99999), mailcow_domain, mailcow_domain)
-        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_4,))
-        input_5 = "weirdinput.%s/../../@%s" % (randint(0, 99999), mailcow_domain)
-        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_5,))
-        input_6 = "weirdinput.%s?test6@%s" % (randint(0, 99999), mailcow_domain)
-        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_6,))
-        input_7 = "weirdinput.%s#test7@%s" % (randint(0, 99999), mailcow_domain)
-        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_7,))
-        input_8 = "weirdinput.%s\\test8\\\\@%s" % (randint(0, 99999), mailcow_domain)
-        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (input_8,))
-        # wait until all messages were processed
-        with db.read_connection() as conn:
-            while "iled to add e-mail account " + input_8 not in admingroup.get_messages()[-1].text:
-                print(admingroup.get_messages()[-1].text)
-                users = conn.get_user_list()
-                for user in users:
-                    if user.token_name == "WARNING: does not exist in mailcow":
-                        print("---")
-                        for user2 in users:
-                            print(user2.addr, user2.token_name)
-                        print("---")
-                        for msg in admingroup.get_messages():
-                            print(msg.text)
-                        print("---")
-                        pytest.fail()
+        addr = localpart.format(randint(0, 99999)) + mailcow_domain
+        admingroup.send_text("/add-user %s abcd1234 weirdinput" % (addr,))
+
+        # wait for result
+        def response_arrived(response, result):
+            if "failed" not in response and "success" not in response:
                 time.sleep(0.1)
+                return False
+            if not result and "failed" in response or result and "success" in response:
+                return True
+            print("Wrong reponse:", response)
+            pytest.fail()
+
+        while not response_arrived(admingroup.get_messages()[-1].text, result):
+            print(admingroup.get_messages()[-1].text)
+
+        with db.read_connection() as conn:
+            users = conn.get_user_list()
+        for user in users:
+            if user.token_name == "WARNING: does not exist in mailcow":
+                print("---")
+                for user2 in users:
+                    print(user2.addr, user2.token_name)
+                print("---")
+                for msg in admingroup.get_messages():
+                    print(msg.text)
+                print("---")
+                pytest.fail()
 
 
 @pytest.mark.timeout(TIMEOUT * 2)
