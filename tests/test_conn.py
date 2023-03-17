@@ -1,10 +1,13 @@
+import time
 from random import randint
 
+import deltachat
 import mailadm
 import pytest
 import requests
 from mailadm.conn import DBError, InvalidInputError
 from mailadm.mailcow import MailcowError
+from mailadm.util import parse_expiry_code
 
 
 @pytest.fixture
@@ -182,10 +185,46 @@ def test_adduser_mailcow_exists(conn, mailcow, mailcow_domain):
     mailcow.del_user_mailcow(addr)
 
 
+@pytest.mark.parametrize(
+    ("expiry", "time_overdue", "time_since_last_login", "to_be_pruned"),
+    [
+        ("1h", "1h", "0s", True),
+        ("1s", "1s", "0s", True),
+        ("5w", "2w", "1w", False),
+        ("2y", "2y", "20d", False),
+        ("2y", "1d", "1y", True),
+        ("90d", "30d", "2d", False),
+    ],
+)
+def test_soft_expiry(conn, mailcow_domain, tmp_db_path, monkeypatch, expiry, time_overdue,
+                     time_since_last_login, to_be_pruned, mailcow):
+    """Test whether a user expires depending on last login"""
+    to_expire = time.time() - parse_expiry_code(expiry) - parse_expiry_code(time_overdue)
+    # create an account which is living for longer than its expiry time so far
+    with monkeypatch.context() as m:
+        m.setattr(time, "time", lambda: to_expire)
+        token_info = conn.add_token("pytest:soft", expiry=expiry, token="1w_7wDioPeex", prefix="p.")
+        addr = "pytest.%s@%s" % (randint(0, 99999), mailcow_domain)
+        mailadm_user = conn.add_email_account(token_info, addr=addr)
+
+    # login with IMAP
+    ac = deltachat.Account(tmp_db_path)
+    ac.run_account(addr=mailadm_user.addr, password=mailadm_user.password)
+
+    # make mailadm think that it's in the future and user hasn't been logged in for a while
+    future = time.time() + parse_expiry_code(time_since_last_login)
+
+    expired_users = conn.get_expired_users(future)
+    expired = mailadm_user.addr in [user.addr for user in expired_users]
+    assert expired == to_be_pruned
+
+    mailcow.del_user_mailcow(addr)
+
+
 def test_delete_user_mailcow_missing(conn, mailcow, mailcow_domain):
     """Test if a mailadm user is deleted successfully if mailcow user is already missing"""
     token_info = conn.add_token("pytest:burner1", expiry="1w", token="1w_7wDioPeeXyZx", prefix="p.")
-    addr = "%s@%s" % (randint(0, 99999), mailcow_domain)
+    addr = "pytest.%s@%s" % (randint(0, 99999), mailcow_domain)
 
     conn.add_email_account(token_info, addr=addr)
     mailcow.del_user_mailcow(addr)
