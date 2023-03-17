@@ -89,6 +89,7 @@ class MailcowUser(object):
     def __init__(self, json):
         self.addr = json.get("username")
         self.quota = json.get("quota")
+        self.last_login = json.get("last_imap_login")
         for tag in json.get("tags", []):
             if "mailadm:" in tag:
                 self.token = tag.removeprefix("mailadm:")

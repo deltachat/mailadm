@@ -192,12 +192,21 @@ def test_adduser_mailcow_exists(conn, mailcow, mailcow_domain):
         ("1s", "1s", "0s", True),
         ("5w", "2w", "1w", False),
         ("2y", "2y", "20d", False),
-        ("2y", "1d", "1y", True),
+        ("2y", "1d", "30w", True),
         ("90d", "30d", "2d", False),
     ],
 )
-def test_soft_expiry(conn, mailcow_domain, tmp_db_path, monkeypatch, expiry, time_overdue,
-                     time_since_last_login, to_be_pruned, mailcow):
+def test_soft_expiry(
+    conn,
+    mailcow_domain,
+    tmp_db_path,
+    monkeypatch,
+    expiry,
+    time_overdue,
+    time_since_last_login,
+    to_be_pruned,
+    mailcow,
+):
     """Test whether a user expires depending on last login"""
     to_expire = time.time() - parse_expiry_code(expiry) - parse_expiry_code(time_overdue)
     # create an account which is living for longer than its expiry time so far
