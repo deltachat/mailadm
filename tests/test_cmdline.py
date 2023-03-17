@@ -13,7 +13,7 @@ def mycmd(cmd, make_db, tmpdir, monkeypatch, mailcow_domain, mailcow_endpoint):
     monkeypatch.setenv("MAILADM_DB", str(db.path))
     monkeypatch.setenv("ADMBOT_DB", str(tmpdir.mkdir("admbot")) + "admbot.db")
     cmd.db = db
-    if os.environ["MAILCOW_TOKEN"] == "":
+    if not os.environ["MAILCOW_TOKEN"]:
         raise KeyError("Please set mailcow API Key with the environment variable MAILCOW_TOKEN")
     cmd.run_ok(
         [
