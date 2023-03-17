@@ -194,6 +194,7 @@ def test_adduser_mailcow_exists(conn, mailcow, mailcow_domain):
         ("2y", "2y", "20d", False),
         ("2y", "1d", "30w", True),
         ("90d", "30d", "2d", False),
+        ("30d", "2y", "1w", False),
     ],
 )
 def test_soft_expiry(
