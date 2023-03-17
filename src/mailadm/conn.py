@@ -265,10 +265,20 @@ class Connection:
 
     def get_expired_users(self, sysdate):
         q = UserInfo._select_user_columns + "WHERE (date + ttl) < ?"
-        users = []
+        overdue_users = []
+        expired_users = []
         for args in self._sqlconn.execute(q, (sysdate,)).fetchall():
-            users.append(UserInfo(*args))
-        return users
+            overdue_users.append(UserInfo(*args))
+        for user in overdue_users:
+            # hard expire users who were supposed to live less than a month
+            if user.ttl < mailadm.util.parse_expiry_code("27d"):
+                expired_users.append(user)
+                continue
+            last_login = self.get_mailcow_connection().get_user(user.addr).last_login
+            # hard expire users who weren't online for longer than 25% of their TTL:
+            if sysdate - last_login > user.ttl * 0.25:
+                expired_users.append(user)
+        return expired_users
 
     def get_user_list(self, token=None):
         q = UserInfo._select_user_columns
