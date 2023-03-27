@@ -176,6 +176,8 @@ def setup_bot(ctx, email, password, show_ffi):
         except ValueError as e:
             if "cannot get chat with id=" + admingrpid_old in str(e):
                 print("Could not notify the old admin group.")
+            elif "message could not be send, does chat exist" in str(e):
+                print("Could not notify the old admin group.")
             else:
                 raise
         print("The old admin group was deactivated.")
