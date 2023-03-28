@@ -174,12 +174,7 @@ def setup_bot(ctx, email, password, show_ffi):
             )
             setupplugin.message_sent.wait()
         except ValueError as e:
-            if "cannot get chat with id=" + admingrpid_old in str(e):
-                print("Could not notify the old admin group.")
-            elif "message could not be send, does chat exist" in str(e):
-                print("Could not notify the old admin group.")
-            else:
-                raise
+            print("Could not notify the old admin group:", str(e))
         print("The old admin group was deactivated.")
     sys.stdout.flush()  # flush stdout to actually show the messages above
     ac.shutdown()
