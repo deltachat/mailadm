@@ -1,6 +1,14 @@
 Unreleased
 -------------
 
+0.12.0
+------
+
+- added the bot interface for giving mailadm commands via chat
+
+0.11.0
+------
+
 - breaking change: mailadm now uses mailcow REST API for creating/manipulating e-mail accounts instead of fiddling with postfix/dovecot config
 - deprecate dovecot/postfix support
 - provider instructions for docker setup
