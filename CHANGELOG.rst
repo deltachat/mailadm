@@ -1,6 +1,13 @@
 Unreleased
 -------------
 
+1.0.0
+-----
+
+- only expire accounts which are not actively used (unless they were supposed to live less than 27 days).
+- After a refactoring, mailadm requires you to run `setup-bot` now before starting mailadm - the [installation steps](https://mailadm.readthedocs.io/en/latest/) have been updated accordingly.
+- mailadm was successfully [security audited](https://delta.chat/en/2023-03-27-third-independent-security-audit) - the few issues which have been found were all fixed. Read the [full report here](https://delta.chat/assets/blog/MER-01-report.pdf).
+
 0.12.0
 ------
 
