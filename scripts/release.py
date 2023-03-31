@@ -110,8 +110,8 @@ def main():
     subprocess.call(["git", "diff", "--staged"])
     print()
     choice = input(f"commit these changes as 'new {newversion} release', tag it, and push it? [Y/n] ")
+    print()
     if choice.lower() == "n":
-        print()
         print(f"you can commit the changes yourself with: git commit -m 'new {newversion} release'")
         print("after commit, on master make sure to: ")
         print()
@@ -123,8 +123,18 @@ def main():
         subprocess.call(["git", "tag", "-a", f"{newversion}"])
         subprocess.call(["git", "push", "origin", f"{newversion}"])
 
-    subprocess.call(["python3", "setup.py", "sdist"])
-    subprocess.call(["twine", "upload", f"dist/mailadm-{newversion}.tar.gz"])
+    print()
+    choice = input(f"build the package and upload it to pypi.org? [y/N] ")
+    print()
+    if choice.lower() == "y":
+        subprocess.call(["python3", "setup.py", "sdist"])
+        subprocess.call(["twine", "upload", f"dist/mailadm-{newversion}.tar.gz"])
+    else:
+        print("you can build and push to pypi.org with the following commands:")
+        print()
+        print("    python3 setup.py sdist")
+        print(f"    twine upload dist/mailadm-{newversion}.tar.gz")
+        print()
 
 
 if __name__ == "__main__":
