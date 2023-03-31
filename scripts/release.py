@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import os
 import pathlib
 import re
@@ -39,24 +38,6 @@ def replace_toml_version(relpath, newversion):
             else:
                 f.write(line)
     os.rename(tmp_path, str(p))
-
-
-def read_json_version(relpath):
-    p = pathlib.Path(relpath)
-    assert p.exists()
-    with open(p) as f:
-        json_data = json.loads(f.read())
-    return json_data["version"]
-
-
-def update_package_json(relpath, newversion):
-    p = pathlib.Path(relpath)
-    assert p.exists()
-    with open(p) as f:
-        json_data = json.loads(f.read())
-    json_data["version"] = newversion
-    with open(p, "w") as f:
-        f.write(json.dumps(json_data, sort_keys=True, indent=2))
 
 
 def main():
