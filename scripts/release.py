@@ -109,19 +109,19 @@ def main():
     print()
     subprocess.call(["git", "diff", "--staged"])
     print()
-    choice = input(f"commit these changes as 'new {newversion} release', tag it, and push it? [Y/n] ")
+    choice = input(f"commit these changes as 'new {newversion} release', tag it, and push it? [y/N] ")
     print()
-    if choice.lower() == "n":
+    if choice.lower() == "y":
+        subprocess.call(["git", "commit", "-m", f"'new {newversion} release'"])
+        subprocess.call(["git", "tag", "-a", f"{newversion}"])
+        subprocess.call(["git", "push", "origin", f"{newversion}"])
+    else:
         print(f"you can commit the changes yourself with: git commit -m 'new {newversion} release'")
         print("after commit, on master make sure to: ")
         print()
         print(f"   git tag -a {newversion}")
         print(f"   git push origin {newversion}")
         print()
-    else:
-        subprocess.call(["git", "commit", "-m", f"'new {newversion} release'"])
-        subprocess.call(["git", "tag", "-a", f"{newversion}"])
-        subprocess.call(["git", "push", "origin", f"{newversion}"])
 
     print()
     choice = input(f"build the package and upload it to pypi.org? [y/N] ")
