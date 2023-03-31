@@ -102,6 +102,7 @@ def main():
             raise SystemExit("Please provide a MAILCOW_TOKEN environment variable to run CI")
     else:
         subprocess.call(["tox"])
+
     subprocess.call(["git", "add", "-u"])
     print()
     print("showing changes:")
@@ -121,6 +122,9 @@ def main():
         subprocess.call(["git", "commit", "-m", f"'new {newversion} release'"])
         subprocess.call(["git", "tag", "-a", f"{newversion}"])
         subprocess.call(["git", "push", "origin", f"{newversion}"])
+
+    subprocess.call(["python3", "setup.py", "sdist"])
+    subprocess.call(["twine", "upload", f"dist/mailadm-{newversion}.tar.gz"])
 
 
 if __name__ == "__main__":
