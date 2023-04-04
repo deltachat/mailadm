@@ -22,4 +22,4 @@ So far only the `Delta Chat messenger <https://delta.chat/>`_ supports mailadm.
 setup & usage
 -------------
 
-See the `docs/index.rst` file or https://mailadm.readthedocs.io for more info.
+See the `doc/index.rst` file or https://mailadm.readthedocs.io for more info.
