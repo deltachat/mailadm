@@ -276,10 +276,41 @@ When you have activated the API, you can pass the token to mailadm like this::
     MAILCOW_TOKEN=932848-324B2E-787E98-FCA29D-89789A
 
 
+Upgrading Mailadm
+-----------------
+
+You can build the new container like this:
+
+.. code:: bash
+
+    cd mailadm
+    git pull origin 1.0.0  # or whatever version you want to upgrade to
+    sudo docker build . -t mailadm-mailcow
+
+Then stop and remove the old container:
+
+.. code:: bash
+
+   sudo docker stop mailadm && sudo docker rm mailadm
+
+And finally you can start the new container:
+
+.. code:: bash
+
+    sudo docker run -d -p 3691:3691 --restart=unless-stopped --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --name mailadm mailadm-mailcow gunicorn --timeout 60 -b :3691 -w 4 mailadm.app:app
+
+That's it :) you can look in the logs if everything is running fine:
+
+.. code:: bash
+
+    sudo docker logs -ft mailadm
+
 Setup Development Environment
 -----------------------------
 
-To setup your development environment, you need to do something like this::
+To setup your development environment, you need to do something like this:
+
+.. code:: bash
 
     git clone https://github.com/deltachat/mailadm
     python3 -m venv venv
