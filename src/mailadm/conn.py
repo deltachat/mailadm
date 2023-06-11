@@ -243,7 +243,7 @@ class Connection:
 
     def is_valid_email(self, addr):
         if not addr.endswith("@" + self.config.mail_domain):
-            logging.error("address %s doesn't end with @x.testrun.org", addr)
+            logging.error("address %s doesn't end with @%s", addr, self.config.mail_domain)
             return False
         if not addr.count("@") == 1:
             logging.error("address %s doesn't have exactly one @", addr)
