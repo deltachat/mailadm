@@ -18,4 +18,4 @@ jobs:
           python -m pip install -U pip
           pip install tox tox-gh-actions
       - name: Run Tox
-        run: MAILCOW_TOKEN=${{ secrets.MAILCOW_TOKEN }} tox
+        run: MAILCOW_TOKEN=${{ secrets.MAILCOW_TOKEN }} MAILCOW_ENDPOINT=${{ vars.MAILCOW_ENDPOINT }} MAIL_DOMAIN=${{ vars.MAIL_DOMAIN }} tox
