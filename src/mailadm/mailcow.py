@@ -38,7 +38,7 @@ class MailcowConnection:
             "tags": ["mailadm:" + token],
         }
         result = r.post(url, json=payload, headers=self.auth, timeout=HTTP_TIMEOUT)
-        if type(result.json()) != list or result.json()[0].get("type") != "success":
+        if not isinstance(result.json(), list) or result.json()[0].get("type") != "success":
             raise MailcowError(result.json())
 
     def del_user_mailcow(self, addr):
@@ -59,12 +59,12 @@ class MailcowConnection:
         json = result.json()
         if json == {}:
             return None
-        if type(json) == dict:
+        if isinstance(json, dict):
             if json.get("type") == "error":
                 raise MailcowError(json)
             return MailcowUser(json)
         # some mailcow versions return all users, even if you only ask for a specific one:
-        if type(json) == list:
+        if isinstance(json, list):
             for user in [MailcowUser(user) for user in json]:
                 if user.addr == addr:
                     return user
@@ -79,7 +79,7 @@ class MailcowConnection:
         json = result.json()
         if json == {}:
             return []
-        if type(json) == dict:
+        if isinstance(json, dict):
             if json.get("type") == "error":
                 raise MailcowError(json)
         return [MailcowUser(user) for user in json]
