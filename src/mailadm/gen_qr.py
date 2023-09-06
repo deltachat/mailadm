@@ -54,7 +54,9 @@ def gen_qr(config, token_info):
     qr_final_size = width - (qr_padding * 2)
 
     # draw text
-    info_pos = (width - font.getsize(info.strip())[0]) // 2
+    font_left, _font_top, font_right, _font_bottom = font.getbbox(info.strip())
+    font_width = font_right - font_left
+    info_pos = (width - font_width) // 2
     draw.multiline_text(
         (info_pos, size - qr_padding // 2),
         info,
