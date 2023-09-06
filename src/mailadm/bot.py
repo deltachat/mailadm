@@ -269,7 +269,7 @@ def main(mailadm_db, admbot_db_path):
         while 1:
             for logmsg in prune(mailadm_db).get("message"):
                 logging.info("%s", logmsg)
-            for _second in range(0, 600):
+            for _second in range(600):
                 if not ac._event_thread.is_alive():
                     logging.error("dc core event thread died, exiting now")
                     os._exit(1)

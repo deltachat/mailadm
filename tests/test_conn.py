@@ -166,7 +166,7 @@ def test_adduser_db_error(conn, monkeypatch, mailcow_domain):
     auth = {"X-API-Key": conn.config.mailcow_token}
     result = requests.get(url, headers=auth)
     assert result.status_code == 200
-    if result.json() is not {} and type(result.json()) == list:
+    if result.json() is not {} and not isinstance(result.json(), list):
         for user in result.json():
             assert user["username"] != addr
 
@@ -243,4 +243,4 @@ def test_delete_user_mailcow_missing(conn, mailcow, mailcow_domain):
 
 def test_db_version(conn):
     version = conn.get_dbversion()
-    assert type(version) == int
+    assert isinstance(version, int)
