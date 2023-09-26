@@ -1,7 +1,7 @@
 mailadm: managing token-based temporary e-mail accounts
 ========================================================
 
-mailadm is automated e-mail account management tooling
+`mailadm <https://github.com/deltachat/mailadm>`_ is automated e-mail account management tooling
 for use by `Delta Chat <https://delta.chat>`_.
 
 The ``mailadm`` command line tool allows to add or remove tokens which are
