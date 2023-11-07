@@ -1,12 +1,10 @@
-import base64
 import random
+import secrets
 import sys
 
 
 def gen_password():
-    with open("/dev/urandom", "rb") as f:
-        s = f.read(21)
-    return base64.b64encode(s).decode("ascii")[:12]
+    return secrets.token_urlsafe(20)
 
 
 def get_human_readable_id(len=5, chars="2345789acdefghjkmnpqrstuvwxyz"):
