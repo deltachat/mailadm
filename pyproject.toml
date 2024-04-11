@@ -3,7 +3,7 @@ requires = ["setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.ruff]
-select = [
+lint.select = [
   "E", "W", # pycodestyle
   "F", # Pyflakes
   "N", # pep8-naming
@@ -24,7 +24,7 @@ select = [
   "PLE", # Pylint Error
   "PLW", # Pylint Warning
 ]
-ignore = ["PT001", "PT016", "PT011"]
+lint.ignore = ["PT001", "PT016", "PT011"]
 line-length = 100
 
 [tool.black]
