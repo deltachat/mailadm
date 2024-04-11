@@ -315,7 +315,7 @@ To setup your development environment, you need to do something like this:
     git clone https://github.com/deltachat/mailadm
     python3 -m venv venv
     . venv/bin/activate
-    pip install pytest tox pytest-xdist pytest-timeout pyzbar
+    pip install pytest tox pytest-xdist pytest-timeout pyzbar black ruff
     sudo apt install -y libzbar0
     pip install .
 

@@ -1,6 +1,7 @@
 """
 help gunicorn and other WSGI servers to instantiate a web instance of mailadm
 """
+
 import threading
 
 from mailadm.bot import get_admbot_db_path
