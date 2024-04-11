@@ -274,7 +274,11 @@ class Connection:
             if user.ttl < mailadm.util.parse_expiry_code("27d"):
                 expired_users.append(user)
                 continue
-            last_login = self.get_mailcow_connection().get_user(user.addr).last_login
+            mc_user = self.get_mailcow_connection().get_user(user.addr)
+            if not mc_user:
+                logging.warning("user %s doesn't exist in mailcow", user.addr)
+                continue
+            last_login = mc_user.last_login
             # expire users who weren't online for longer than 25% of their TTL:
             if sysdate - last_login > user.ttl * 0.25:
                 expired_users.append(user)
