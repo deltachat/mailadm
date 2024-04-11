@@ -275,7 +275,7 @@ class Connection:
                 expired_users.append(user)
                 continue
             mc_user = self.get_mailcow_connection().get_user(user.addr)
-            if not mc_user:
+            if mc_user is None:
                 logging.warning("user %s doesn't exist in mailcow", user.addr)
                 continue
             last_login = mc_user.last_login
