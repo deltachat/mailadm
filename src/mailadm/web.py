@@ -6,6 +6,20 @@ from mailadm.conn import DBError
 from mailadm.mailcow import MailcowError
 
 
+def idempotent(handler):
+    """Decorator making route support Idempotency-Key header."""
+    cache = {}
+
+    def idempotent_handler():
+        key = request.headers.get("Idempotency-Key")
+        if key and key in cache:
+            return cache[key]
+        result = handler()
+        if key:
+            cache[key] = result
+        return result
+
+
 def create_app_from_db_path(db_path=None):
     if db_path is None:
         db_path = mailadm.db.get_db_path()
@@ -19,6 +33,7 @@ def create_app_from_db(db):
     app.db = db
 
     @app.route("/", methods=["POST"])
+    @idempotent()
     def new_email():
         token = request.args.get("t")
         if token is None:
