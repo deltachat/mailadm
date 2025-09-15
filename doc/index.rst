@@ -79,7 +79,7 @@ Now, as everything is configured, we can start the mailadm container for good:
 
 .. code:: bash
 
-    $ sudo docker run -d -p 3691:3691 --restart=unless-stopped --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --name mailadm mailadm-mailcow gunicorn --timeout 60 -b :3691 -w 4 mailadm.app:app
+    $ sudo docker run -d -p 3691:3691 --restart=unless-stopped --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --name mailadm mailadm-mailcow gunicorn --timeout 60 -b :3691 -w 1 mailadm.app:app
 
 .. note::
 
@@ -297,7 +297,7 @@ And finally you can start the new container:
 
 .. code:: bash
 
-    sudo docker run -d -p 3691:3691 --restart=unless-stopped --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --name mailadm mailadm-mailcow gunicorn --timeout 60 -b :3691 -w 4 mailadm.app:app
+    sudo docker run -d -p 3691:3691 --restart=unless-stopped --mount type=bind,source=$PWD/docker-data,target=/mailadm/docker-data --name mailadm mailadm-mailcow gunicorn --timeout 60 -b :3691 -w 1 mailadm.app:app
 
 That's it :) you can look in the logs if everything is running fine:
 
