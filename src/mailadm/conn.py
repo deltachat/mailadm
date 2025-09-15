@@ -45,6 +45,14 @@ class Connection:
         cur = self.cursor()
         try:
             cur.execute(query, params)
+        except sqlite3.OperationalError as e:
+            if "disk I/O error" in str(e):
+                time.sleep(0.1)
+                try:
+                    cur.execute(query, params)
+                except sqlite3.OperationalError as e:
+                    pass
+            raise DBError(e)
         except sqlite3.IntegrityError as e:
             raise DBError(e)
         return cur
