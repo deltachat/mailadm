@@ -51,7 +51,7 @@ class Connection:
                 try:
                     cur.execute(query, params)
                 except sqlite3.OperationalError as e:
-                    pass
+                    raise DBError(e)
             raise DBError(e)
         except sqlite3.IntegrityError as e:
             raise DBError(e)
