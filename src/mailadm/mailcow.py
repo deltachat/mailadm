@@ -1,6 +1,7 @@
 from urllib.parse import quote
 
 import requests as r
+from json.decoder import JSONDecodeError
 
 HTTP_TIMEOUT = 5
 
@@ -48,7 +49,10 @@ class MailcowConnection:
         """
         url = self.mailcow_endpoint + "delete/mailbox"
         result = r.post(url, json=[addr], headers=self.auth, timeout=HTTP_TIMEOUT)
-        json = result.json()
+        try:
+            json = result.json()
+        except JSONDecodeError:
+            raise MailcowError(f"This is not json: {result.text}")
         if not isinstance(json, list) or json[0].get("type" != "success"):
             raise MailcowError(json)
 
@@ -56,7 +60,10 @@ class MailcowConnection:
         """HTTP Request to get a specific mailcow user (not only mailadm-generated ones)."""
         url = self.mailcow_endpoint + "get/mailbox/" + quote(addr, safe="")
         result = r.get(url, headers=self.auth, timeout=HTTP_TIMEOUT)
-        json = result.json()
+        try:
+            json = result.json()
+        except JSONDecodeError:
+            raise MailcowError(f"This is not json: {result.text}")
         if json == {}:
             return None
         if isinstance(json, dict):
@@ -76,7 +83,10 @@ class MailcowConnection:
         # Using larger timeout here than for other requests,
         # because some mailcow instances may have a large number of users.
         result = r.get(url, headers=self.auth, timeout=30)
-        json = result.json()
+        try:
+            json = result.json()
+        except JSONDecodeError:
+            raise MailcowError(f"This is not json: {result.text}")
         if json == {}:
             return []
         if isinstance(json, dict):
